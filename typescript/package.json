@@ -1,0 +1,69 @@
+{
+  "name": "covertable",
+  "version": "1.0.0",
+  "description": "It makes combinations covering pairs for pairwise testing.",
+  "homepage": "https://github.com/walkframe/covertable",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/walkframe/covertable.git"
+  },
+  "bugs": {
+    "url": "https://github.com/walkframe/covertable/issues"
+  },
+  "keywords": [
+    "allpair",
+    "all-pair",
+    "allpairs",
+    "all-pairs",
+    "pairwise",
+    "N-wise",
+    "2-wise",
+    "3-wise",
+    "two-wise",
+    "three-wise",
+    "N-term",
+    "2-term",
+    "3-term",
+    "two-term",
+    "three-term",
+    "pairs",
+    "pair",
+    "combinatorial",
+    "covering-array",
+    "covering-arrays",
+    "pict"
+  ],
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "jest",
+    "build": "$(npm bin)/tsc",
+    "watch": "$(npm bin)/tsc -w",
+    "codecov": "$(npm bin)/codecov"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+    "moduleFileExtensions": [
+      "js",
+      "ts",
+      "json",
+      "node"
+    ]
+  },
+  "author": "righ",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/jest": "^24.0.13",
+    "codecov": "^3.5.0",
+    "jest": "^24.8.0",
+    "nyc": "^14.1.1",
+    "ts-jest": "^24.0.2",
+    "typescript": "^3.5.1"
+  },
+  "dependencies": {
+    "@types/node": "^12.0.8",
+    "crypto": "^1.0.1"
+  }
+}

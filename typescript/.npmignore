@@ -1,0 +1,6 @@
+.prettierrc
+tsconfig.json
+tslint.json
+src/
+coverage/
+dist/__tests__/

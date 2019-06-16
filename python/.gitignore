@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.tox/
+venv/
+.coverage
+.junit.xml
+htmlcov/
+pip-wheel-metadata
+*.egg-info
+build/
+dist/
