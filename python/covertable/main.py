@@ -92,13 +92,11 @@ def make(
     incompleted = make_incompleted(serials, length)
     len_incompleted = float(len(incompleted))
 
-    def get_candidate(pair):
-        keys = [parents[p] for p in pair]
-        return list(zip(keys, pair))
-
     rows, row = [], Row(None, factors, serials, pre_filter)
-    for pair in list(incompleted):
-        if not row.storable(get_candidate(pair)):
+    # When pre_filter is supecified, 
+    # it will be applied to incompleted through `row.storable` beforehand.
+    for pair in filter(lambda _: pre_filter, incompleted):
+        if not row.storable([(parents[p], p) for p in pair]):
             incompleted.discard(pair)
 
     while incompleted:
@@ -112,10 +110,10 @@ def make(
         for pair in sorter.sort(incompleted, **sort_kwargs, **required_args):
             if row.filled():
                 break
-            candidate = get_candidate(pair)
-            if not row.storable(candidate):
+            items = [(parents[p], p) for p in pair]
+            if not row.storable(items):
                 continue
-            row.update(candidate)
+            row.update(items)
             incompleted.discard(pair)
         else:
             row.complement()
