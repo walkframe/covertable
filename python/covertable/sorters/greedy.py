@@ -7,13 +7,12 @@ from collections import defaultdict
 from itertools import product, combinations, permutations
 
 
-def get_num_remaining(indexes, incompleted, length):
-    copied = incompleted.copy()
-
-    for vs in combinations(indexes, length):
-        copied.discard(tuple(sorted(vs)))
-
-    return len(copied)
+def get_num_removable_pairs(indexes, incompleted, length):
+    removing_keys = {
+        tuple(sorted(vs))
+        for vs in combinations(indexes, length)
+    }
+    return len(removing_keys & incompleted)
 
 
 def sort(incompleted, row, parents, length, seed="", *args, **kwargs):
@@ -22,17 +21,19 @@ def sort(incompleted, row, parents, length, seed="", *args, **kwargs):
         return hashlib.md5("{} {}".format(pair, seed).encode("utf-8")).hexdigest()
 
     while True:
-        min_remaining = None
+        max_num_pairs = None
         efficient_pair = None
         for pair in sorted(incompleted, key=comparer):
-            keys = [parents[p] for p in pair]
-            candidate = list(zip(keys, pair))
+            if not row:
+                efficient_pair = pair
+                break
+            candidate = [(parents[p], p) for p in pair]
             if not row.storable(candidate):
                 continue
 
-            remaining = get_num_remaining([*row.values(), *pair], incompleted, length)
-            if min_remaining is None or remaining < min_remaining:
-                min_remaining = remaining
+            num_pairs = get_num_removable_pairs([*row.values(), *pair], incompleted, length)
+            if max_num_pairs is None or max_num_pairs < num_pairs:
+                max_num_pairs = num_pairs
                 efficient_pair = pair
         if not efficient_pair:
             break

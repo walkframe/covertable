@@ -11,14 +11,18 @@ interface sortArgsType {
 
 const ascendant = (a: number, b: number) => a > b ? 1 : -1
 
-const getNumRemaining = (
+const getNumRemovablePairs = (
   indexes: number[],
   incompletedKeys: Set<string>, length: number
 ) => {
+  let num = 0
   for (let vs of combinations(indexes, length)) {
-    incompletedKeys.delete(vs.sort(ascendant).toString())
+    const key = vs.sort(ascendant).toString()
+    if (incompletedKeys.has(key)) {
+      num ++
+    }
   }
-  return incompletedKeys.size
+  return num
 }
 
 
@@ -33,7 +37,7 @@ export default function* (
   }
 
   while (true) {
-    let minRemaining: number | null = null
+    let maxNumPairs: number | null = null
     let efficientPair: number[] | null = null
     for (let [_, pair] of [... incompleted].sort(comparer)) {
       const keys = pair.map(p => parents.get(p) || 0)
@@ -42,9 +46,9 @@ export default function* (
         continue
       }
       const incompletedKeys = new Set(incompleted.keys())
-      const remaining = getNumRemaining([... row.values(), ...pair], incompletedKeys, length)
-      if (minRemaining === null || remaining < minRemaining) {
-        minRemaining = remaining
+      const numPairs = getNumRemovablePairs([... row.values(), ...pair], incompletedKeys, length)
+      if (maxNumPairs === null || maxNumPairs < numPairs) {
+        maxNumPairs = numPairs
         efficientPair = pair
       }
     }

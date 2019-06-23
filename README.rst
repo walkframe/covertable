@@ -58,3 +58,16 @@ Versioning
 .. note::
 
   It moved from `twopairs`.
+
+History
+=======
+
+:1.1.x:
+
+  - Greedy sorter improved in both implementations.
+  
+    - It got increased in speed.
+
+:1.0.x:
+
+  - First release 🎉

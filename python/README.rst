@@ -146,11 +146,3 @@ Publish
 
   (venv) $ python setup.py sdist bdist_wheel
   (venv) $ twine upload --repository pypi dist/*
-
-
-History
-=======
-
-:1.0.x:
-
-  - First release 🎉
