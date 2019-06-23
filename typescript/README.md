@@ -167,6 +167,7 @@ $ npm test -- --coverage
 
 ```sh
 $ # npm adduser
+$ npm run build
 $ npm version patch
 $ npm publish
 ```

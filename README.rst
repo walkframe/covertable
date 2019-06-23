@@ -55,10 +55,6 @@ Versioning
   
   e.g. An implementation in Python is fixed: `1.0.0` -> `1.0.1`
 
-.. note::
-
-  It moved from `twopairs`.
-
 History
 =======
 
@@ -71,3 +67,7 @@ History
 :1.0.x:
 
   - First release 🎉
+
+.. note::
+
+  It moved from `twopairs`.
