@@ -93,9 +93,9 @@ def make(
     len_incompleted = float(len(incompleted))
 
     rows, row = [], Row(None, factors, serials, pre_filter)
-    # When pre_filter is supecified, 
+    # When pre_filter is supecified,
     # it will be applied to incompleted through `row.storable` beforehand.
-    for pair in filter(lambda _: pre_filter, incompleted):
+    for pair in list(filter(lambda _: pre_filter, incompleted)):
         if not row.storable([(parents[p], p) for p in pair]):
             incompleted.discard(pair)
 
