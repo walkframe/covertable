@@ -27,7 +27,7 @@ def call(
 
 class Test_covertable:
     def _get_pairs(self, factors, length=2):
-        from covertable.utils import get_items
+        from covertable.main import get_items
 
         all_keys = [k for k, _ in get_items(factors)]
         for keys in combinations(all_keys, length):
