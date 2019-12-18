@@ -1,5 +1,6 @@
-import * as crypto from "crypto"
-import {FactorsType, SerialsType, Scala} from './types'
+
+export {hex as md5} from 'js-md5'
+import {FactorsType, Scalar} from './types'
 
 export const all = (values: any[]) => {
   for (let value of values) {
@@ -8,11 +9,6 @@ export const all = (values: any[]) => {
     }
   }
   return true
-}
-
-export const md5 = (str: string): string => {
-  const md5 = crypto.createHash('md5')
-  return md5.update(str, 'utf8').digest('hex')
 }
 
 export const zip = (... lists: [... any[]]): [... any[]] => {
@@ -34,7 +30,7 @@ export const len = (obj: any[] | object): number => {
   return Object.keys(obj).length
 }
 
-export const getItems = (container: FactorsType | Map<Scala, any[]>): [Scala, any[]][] => {
+export const getItems = (container: FactorsType | Map<Scalar, any[]>): [Scalar, any[]][] => {
   if (Array.isArray(container)) {
     return container.map((v, i) => [i, v])
   }

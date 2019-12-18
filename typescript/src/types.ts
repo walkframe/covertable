@@ -1,4 +1,4 @@
-export type Scala = number | string
+export type Scalar = number | string
 export type Dict = {[s: string]: any}
 export type List = {[index: number]: any[]}
 

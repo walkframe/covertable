@@ -1,10 +1,10 @@
 import {zip, combinations, md5} from '../utils'
-import {Scala, IncompletedType} from '../types'
+import {Scalar, IncompletedType} from '../types'
 
 
 interface sortArgsType {
   row: any,
-  parents: Map<number, Scala>,
+  parents: Map<number, Scalar>,
   length: number,
   seed: any,
 }

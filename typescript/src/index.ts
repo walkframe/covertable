@@ -1,13 +1,13 @@
 import * as sorters from './sorters/index'
 import * as exceptions from './exceptions'
 import {zip, range, product, combinations, copy, len, getItems} from './utils'
-import {FactorsType, SerialsType, Scala, Dict, IncompletedType} from './types'
+import {FactorsType, SerialsType, Scalar, Dict, IncompletedType} from './types'
 
 
-const convertFactorsToSerials = (factors: FactorsType): [SerialsType, Map<number, Scala>] => {
+const convertFactorsToSerials = (factors: FactorsType): [SerialsType, Map<number, Scalar>] => {
   let origin = 0
   const serials: SerialsType = copy(factors)
-  const parents: Map<number, Scala> = new Map()
+  const parents: Map<number, Scalar> = new Map()
   getItems(factors).map(([subscript, factorList]) => {
     const length = len(factorList)
     const serialList: number[] = []
@@ -33,7 +33,7 @@ const makeIncompleted = (serials: SerialsType, length: number): IncompletedType 
   return incompleted
 }
 
-class Row extends Map implements Map<Scala, number[]> {
+class Row extends Map implements Map<Scalar, number[]> {
   private length: number
   public isArray: Boolean
   constructor (
@@ -58,7 +58,7 @@ class Row extends Map implements Map<Scala, number[]> {
     return new Row(row || [], this.factors, this.serials, this.preFilter)
   }
 
-  storable (candidate: [Scala, number][]) {
+  storable (candidate: [Scalar, number][]) {
     for (let [key, el] of candidate) {
       let existing = this.get(key)
       if (!(existing === undefined || existing === el)) {
@@ -126,7 +126,7 @@ const make = (factors: FactorsType, options: makeOptions = {}) => {
   const incompleted = makeIncompleted(indexes, length)
 
   const getCandidate = (pair: number[]) => {
-    const keys: Scala[] = pair.map(p => parents.get(p) || 0)
+    const keys: Scalar[] = pair.map(p => parents.get(p) || 0)
     return zip(keys, pair)
   }
 

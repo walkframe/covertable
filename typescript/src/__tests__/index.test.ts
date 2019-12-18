@@ -1,6 +1,6 @@
 import {default as make, sorters} from '../index'
 import {product, combinations, range, len, all, getItems} from '../utils'
-import {FactorsType, Scala, Dict} from '../types'
+import {FactorsType, Scalar, Dict} from '../types'
 
 const getPairs = function* (factors: FactorsType, length=2) {
   const allKeys = getItems(factors).map(([k, _]) => k)
@@ -169,7 +169,7 @@ test('dict type factors make dict row', () => {
     'key5': ["m", "n", "o"],
   }
   const rows = make(factors)
-  const sorter = (a: Scala, b: Scala) => a > b ? 1 : -1
+  const sorter = (a: Scalar, b: Scalar) => a > b ? 1 : -1
   for (let row of rows) {
     const keys1 = Object.keys(row).sort(sorter)
     const keys2 = Object.keys(factors).sort(sorter)
