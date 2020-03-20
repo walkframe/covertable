@@ -3,6 +3,7 @@ import * as exceptions from './exceptions'
 import {zip, range, product, combinations, copy, len, getItems} from './utils'
 import {FactorsType, SerialsType, Scalar, Dict, IncompletedType} from './types'
 
+const ascOrder = (a:number, b:number) => a > b ? 1 : -1
 
 const convertFactorsToSerials = (factors: FactorsType): [SerialsType, Map<number, Scalar>] => {
   let origin = 0
@@ -27,6 +28,7 @@ const makeIncompleted = (serials: SerialsType, length: number): IncompletedType 
   for (let keys of combinations(allKeys, length)) {
     const comb = range(0, length).map(i => serials[keys[i]])
     for (let pair of product(... comb)) {
+      pair = pair.sort(ascOrder)
       incompleted.set(pair.toString(), pair)
     }
   }
@@ -141,8 +143,8 @@ const make = (factors: FactorsType, options: makeOptions = {}) => {
   while (incompleted.size) {
     if (row.filled()) {
       rows.push(row)
-      for (let vs of combinations([... row.values()].sort(), length)) {
-        incompleted.delete(vs.sort((a, b) => a > b ? 1 : -1).toString())
+      for (let vs of combinations([... row.values()].sort(ascOrder), length)) {
+        incompleted.delete(vs.toString())
       }
       row = row.New([])
     }
