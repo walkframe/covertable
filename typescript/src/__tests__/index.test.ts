@@ -125,7 +125,7 @@ test("greedy sorter should make rows less than seed's one with 2", () => {
   expect(len1).toBeLessThan(len2)
 })
 
-test("greedy sorter should make rows less than seed's one with 2", () => {
+test("greedy sorter should make rows less than seed's one with 3", () => {
   const factors = [
     ["a", "b", "c"],
     ["d", "e", "f"],
