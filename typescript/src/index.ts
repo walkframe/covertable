@@ -143,8 +143,8 @@ const make = (factors: FactorsType, options: makeOptions = {}) => {
   while (incompleted.size) {
     if (row.filled()) {
       rows.push(row)
-      for (let vs of combinations([... row.values()].sort(ascOrder), length)) {
-        incompleted.delete(vs.toString())
+      for (let vs of combinations([... row.values()], length)) {
+        incompleted.delete(vs.sort(ascOrder).toString())
       }
       row = row.New([])
     }

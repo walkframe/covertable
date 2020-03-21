@@ -1,7 +1,7 @@
 .. image:: https://circleci.com/gh/walkframe/covertable.svg?style=shield
   :target: https://circleci.com/gh/walkframe/covertable
 
-It makes pairs covering pairs for pairwise testing.
+It makes combinations covering pairs for pairwise testing.
 
 Now there are 2 implementations:
 
