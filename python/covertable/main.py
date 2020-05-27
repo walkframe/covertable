@@ -125,8 +125,7 @@ def make(
         for pair in criterion.extract(sorted_incompleted, **common_kwargs, **options):
             if row.filled():
                 break
-            items = [(parents[p], p) for p in pair]
-            row.update(items)
+            row.update((parents[p], p) for p in pair)
             for vs in combinations(sorted(row.values()), length):
                 incompleted.discard(vs)
         else:
