@@ -23,40 +23,17 @@ Now there are 2 implementations:
 
 Go see the detail from these links.
 
-Versioning
-==========
-`covertable` may have a different version each implementation.
-
-**X.Y.Z**
-
-:X: 
-
-  *Major version*
-
-  When is this number increased?:
-
-  This lib has been added a new function to every implementations.
-
-:Y: 
-
-  *Minor version*
-
-  When is this number increased?:
-
-  Bugs (or documents) in all implementations have been fixed.
-
-:Z: 
-
-  *Unique version*
-
-  When is this number increased?:
-
-  A bug (or document) in either implementation has been fixed.
-  
-  e.g. An implementation in Python is fixed: `1.0.0` -> `1.0.1`
-
 History
 =======
+:2.0.x:
+
+  - sorter option splitted into sorter and criterion.
+
+    - e.g. greedy -> hash sorter + greedy criterion.
+
+  - greedy method is about seven times faster than before.
+  - greedy method got an option `tolerance` to balance speed and results.
+
 
 :1.1.x:
 

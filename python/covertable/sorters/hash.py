@@ -4,10 +4,13 @@
 import hashlib
 
 
-def sort(incompleted, seed="", *args, **kwargs):
+def sort(incompleted, md5_cache, seed="", *args, **kwargs):
     def comparer(v):
-        pair = ",".join(map(str, v))
-        return hashlib.md5("{} {}".format(pair, seed).encode("utf-8")).hexdigest()
+        if v in md5_cache:
+            return md5_cache[v]
 
-    for pair in sorted(incompleted, key=comparer):
-        yield pair
+        s = "{} {}".format(",".join(map(str, v)), seed)
+        md5_cache[v] = value = hashlib.md5(s.encode("utf-8")).hexdigest()
+        return value
+
+    return sorted(incompleted, key=comparer)

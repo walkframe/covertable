@@ -1,6 +1,7 @@
 from itertools import product, combinations
 
 from . import sorters
+from . import criteria
 from .exceptions import InvalidCondition
 
 
@@ -54,18 +55,24 @@ class Row(dict):
         return Row(row, self.factors, self.serials, self.pre_filter)
 
     def storable(self, candidate=[]):
+        num = 0
         for key, el in candidate:
-            if self.get(key, el) != el:
-                return False
+            _el = self.get(key)
+            if _el is None:
+                num += 1
+            elif _el != el:
+                return None
         if self.pre_filter is None:
-            return True
+            return num
         nxt = self.new({**self, **dict(candidate)})
-        return self.pre_filter(nxt.restore())
+        if not self.pre_filter(nxt.restore()):
+            return None
+        return num
 
     def complement(self):
         for k, vs in get_items(self.serials):
             for v in vs:
-                if self.storable([(k, v)]):
+                if self.storable([(k, v)]) is not None:
                     self[k] = v
                     break
         if not self.filled():
@@ -84,16 +91,18 @@ def make(
     length=2,
     progress=False,
     sorter=sorters.sequential,
-    sort_kwargs={},
+    criterion=criteria.greedy,
+    options={},
     pre_filter=None,
     post_filter=None,
 ):
     serials, parents = convert_factors_to_serials(factors)
     incompleted = make_incompleted(serials, length)
     len_incompleted = float(len(incompleted))
+    md5_cache = {}
 
     rows, row = [], Row(None, factors, serials, pre_filter)
-    # When pre_filter is supecified,
+    # When pre_filter is specified,
     # it will be applied to incompleted through `row.storable` beforehand.
     for pair in list(filter(lambda _: pre_filter, incompleted)):
         if not row.storable([(parents[p], p) for p in pair]):
@@ -102,21 +111,27 @@ def make(
     while incompleted:
         if row.filled():
             rows.append(row)
-            for vs in combinations(sorted(row.values()), length):
-                incompleted.discard(tuple(vs))
             row = row.new()
 
-        required_args = {"row": row, "parents": parents, "length": length}
-        for pair in sorter.sort(incompleted, **sort_kwargs, **required_args):
+        common_kwargs = {
+            "row": row,
+            "parents": parents,
+            "length": length,
+            "incompleted": incompleted,
+            "md5_cache": md5_cache,
+        }
+        sorted_incompleted = sorter.sort(**common_kwargs, **options)
+
+        for pair in criterion.extract(sorted_incompleted, **common_kwargs, **options):
             if row.filled():
                 break
             items = [(parents[p], p) for p in pair]
-            if not row.storable(items):
-                continue
             row.update(items)
-            incompleted.discard(pair)
+            for vs in combinations(sorted(row.values()), length):
+                incompleted.discard(vs)
         else:
-            row.complement()
+            if not row.filled():
+                row.complement()
 
         if progress:
             rate = (len_incompleted - len(incompleted)) / len_incompleted
