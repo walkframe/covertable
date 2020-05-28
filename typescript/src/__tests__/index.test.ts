@@ -1,4 +1,4 @@
-import {default as make, sorters} from '../index'
+import {default as make, sorters, criteria} from '../index'
 import {product, combinations, range, len, all, getItems} from '../utils'
 import {FactorsType, Scalar, Dict} from '../types'
 
@@ -116,9 +116,8 @@ test("greedy sorter should make rows less than seed's one with 2", () => {
   let len1 = 0, len2 = 0
   const length = 2
   for (let i of range(0, 10)) {
-    const sortArgs = {seed: Math.random()}
-    const rows1 = make(factors, {length, sortArgs, sorter: sorters.greedy})
-    const rows2 = make(factors, {length, sortArgs, sorter: sorters.hash})
+    const rows1 = make(factors, {length, seed: Math.random(), sorter: sorters.hash, criterion: criteria.greedy})
+    const rows2 = make(factors, {length, seed: Math.random(), sorter: sorters.hash})
     len1 += len(rows1)
     len2 += len(rows2)
   }
@@ -136,9 +135,8 @@ test("greedy sorter should make rows less than seed's one with 3", () => {
   let len1 = 0, len2 = 0
   const length = 3
   for (let i of range(0, 10)) {
-    const sortArgs = {seed: Math.random()}
-    const rows1 = make(factors, {length, sortArgs, sorter: sorters.greedy})
-    const rows2 = make(factors, {length, sortArgs, sorter: sorters.hash})
+    const rows1 = make(factors, {length, seed: Math.random(), sorter: sorters.hash, criterion: criteria.greedy})
+    const rows2 = make(factors, {length, seed: Math.random(), sorter: sorters.hash})
     len1 += len(rows1)
     len2 += len(rows2)
   }

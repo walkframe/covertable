@@ -1,77 +1,96 @@
 import * as sorters from './sorters/index'
+import * as criteria from './criteria/index'
 import * as exceptions from './exceptions'
-import {zip, range, product, combinations, copy, len, getItems} from './utils'
-import {FactorsType, SerialsType, Scalar, Dict, IncompletedType} from './types'
+import {range, product, combinations, copy, len, getItems, getCandidate} from './utils'
+import {
+  FactorsType, 
+  SerialsType, 
+  Scalar, 
+  Dict, 
+  IncompletedType, 
+  MD5CacheType, 
+  ParentsType, 
+  CandidateType,
+  CriterionArgsType,
+  RowType,
+} from './types'
 
-const ascOrder = (a:number, b:number) => a > b ? 1 : -1
+const ascOrder = (a:number, b:number) => a > b ? 1 : -1;
 
-const convertFactorsToSerials = (factors: FactorsType): [SerialsType, Map<number, Scalar>] => {
-  let origin = 0
-  const serials: SerialsType = copy(factors)
-  const parents: Map<number, Scalar> = new Map()
+const convertFactorsToSerials = (factors: FactorsType): [SerialsType, ParentsType] => {
+  let origin = 0;
+  const serials: SerialsType = copy(factors);
+  const parents: Map<number, Scalar> = new Map();
   getItems(factors).map(([subscript, factorList]) => {
-    const length = len(factorList)
-    const serialList: number[] = []
+    const length = len(factorList);
+    const serialList: number[] = [];
     range(origin, origin + length).map((serial) => {
-      serialList.push(serial)
-      parents.set(serial, subscript)
+      serialList.push(serial);
+      parents.set(serial, subscript);
     })
-    serials[subscript] = serialList
-    origin += length
+    serials[subscript] = serialList;
+    origin += length;
   })
-  return [serials, parents]
+  return [serials, parents];
 }
 
 const makeIncompleted = (serials: SerialsType, length: number): IncompletedType => {
-  const incompleted: IncompletedType = new Map()
-  const allKeys = getItems(serials).map(([k, _]) => k)
+  const incompleted: IncompletedType = new Map();
+  const allKeys = getItems(serials).map(([k, _]) => k);
   for (let keys of combinations(allKeys, length)) {
-    const comb = range(0, length).map(i => serials[keys[i]])
+    const comb = range(0, length).map(i => serials[keys[i]]);
     for (let pair of product(... comb)) {
-      pair = pair.sort(ascOrder)
-      incompleted.set(pair.toString(), pair)
+      pair = pair.sort(ascOrder);
+      incompleted.set(pair.toString(), pair);
     }
   }
-  return incompleted
+  return incompleted;
 }
 
-class Row extends Map implements Map<Scalar, number[]> {
+class Row extends Map<Scalar, number> implements RowType {
   private length: number
   public isArray: Boolean
   constructor (
-    row: number[][], 
+    row: CandidateType, 
     public factors: FactorsType,
     public serials: SerialsType,
     public preFilter?: Function,
   ) {
-    super()
+    super();
     for (let [k, v] of row) {
-      this.set(k, v)
+      this.set(k, v);
     }
-    this.length= len(factors)
-    this.isArray = factors instanceof Array
+    this.length= len(factors);
+    this.isArray = factors instanceof Array;
   }
 
   filled (): boolean {
-    return this.size === this.length
+    return this.size === this.length;
   }
 
-  New (row?: number[][]) {
+  New (row?: CandidateType) {
     return new Row(row || [], this.factors, this.serials, this.preFilter)
   }
 
-  storable (candidate: [Scalar, number][]) {
+  storable (candidate: CandidateType) {
+    let num = 0;
     for (let [key, el] of candidate) {
-      let existing = this.get(key)
-      if (!(existing === undefined || existing === el)) {
-        return false
+      let existing: number | undefined = this.get(key);
+      if (!existing) {
+        num++;
+      } else if (existing != el) {
+        return null;
       }
     }
     if (!this.preFilter) {
-      return true
+      return num;
     }
-    const nxt: Row = this.New([... this.entries()].concat(candidate))
-    return this.preFilter(nxt.toObject())
+    const candidates: CandidateType = [... this.entries()].concat(candidate)
+    const nxt: Row = this.New(candidates)
+    if (!this.preFilter(nxt.toObject())) {
+      return null;
+    }
+    return num
   }
 
   toObject () {
@@ -97,10 +116,11 @@ class Row extends Map implements Map<Scalar, number[]> {
     return this
   }
 
-  restore (): Map<number, number[]> {
-    const result: Map<number, number[]> = new Map()
+  restore (): Map<Scalar, number[]> {
+    const result: Map<Scalar, number[]> = new Map()
     for (let [key, index] of this.entries()) {
-      result.set(key, this.factors[key][index - this.serials[key][0]])
+      // @ts-ignore TS7015
+      result.set(key, this.factors[key][index - this.serials[key][0]]) 
     }
     return result
   }
@@ -109,81 +129,84 @@ class Row extends Map implements Map<Scalar, number[]> {
 interface makeOptions {
   length?: number,
   sorter?: Function,
-  sortArgs?: object,
+  criterion?: (sortedIncompleted: any, options: CriterionArgsType) => IterableIterator<number[]>,
+  seed?: Scalar,
+  tolerance?: number,
   preFilter?: Function,
   postFilter?: Function,
-}
+};
 
 
 const make = (factors: FactorsType, options: makeOptions = {}) => {
-  let {length, sorter} = options
+  let {length, sorter, criterion, seed, tolerance} = options;
   if (!length) {
-    length = 2
+    length = 2;
   }
   if (!sorter) {
-    sorter = sorters.sequential
+    sorter = sorters.sequential;
   }
-  const {sortArgs, preFilter, postFilter} = options
-  const [indexes, parents] = convertFactorsToSerials(factors)
-  const incompleted = makeIncompleted(indexes, length)
-
-  const getCandidate = (pair: number[]) => {
-    const keys: Scalar[] = pair.map(p => parents.get(p) || 0)
-    return zip(keys, pair)
+  if (!criterion) {
+    criterion = criteria.greedy;
+  }
+  if (typeof seed === 'undefined') {
+    seed = '';
   }
 
-  const rows: Row[] = []
-  let row: Row = new Row([], factors, indexes, preFilter)
+  const {preFilter, postFilter} = options;
+  const [indexes, parents] = convertFactorsToSerials(factors);
+  const incompleted = makeIncompleted(indexes, length);
+  const md5Cache: MD5CacheType = new Map();
+
+  const rows: Row[] = [];
+  let row: Row = new Row([], factors, indexes, preFilter);
 
   for (let [pairStr, pair] of incompleted.entries()) {
-    if (!row.storable(getCandidate(pair))) {
-      incompleted.delete(pairStr)
+    if (!row.storable(getCandidate(pair, parents))) {
+      incompleted.delete(pairStr);
     }
   }
   while (incompleted.size) {
     if (row.filled()) {
-      rows.push(row)
-      for (let vs of combinations([... row.values()], length)) {
-        incompleted.delete(vs.sort(ascOrder).toString())
-      }
-      row = row.New([])
+      rows.push(row);
+      row = row.New([]);
     }
-    let finished = true
-    for (let pair of sorter(incompleted, {... sortArgs, row, parents, length})) {
+    let finished = true;
+
+    const sortedIncompleted = sorter(incompleted, {row, parents, length, seed, md5Cache})
+    for (let pair of criterion(sortedIncompleted, {row, parents, length, incompleted, tolerance})) {
       if (row.filled()) {
-        finished = false
-        break
+        finished = false;
+        break;
       }
-      const candidate: [number, number][] = getCandidate(pair)
-      if (!row.storable(candidate)) {
-        continue
+
+      for (let [key, value] of getCandidate(pair, parents)) {
+        row.set(key, value);
       }
-      for (let [key, value] of candidate) {
-        row.set(key, value)
+      for (let vs of combinations([... row.values()], length)) {
+        incompleted.delete(vs.sort(ascOrder).toString());
       }
-      incompleted.delete(pair.toString())
     }
-    if (finished) {
-      row.complement()
+    if (finished && !row.filled()) {
+      row.complement();
     }
   }
   if (row.size) {
-    rows.push(row.complement())
+    rows.push(row.complement());
   }
   const result: any[] = []
   for (let row of rows) {
-    const restored = row.restore()
-    const restoredObject = row.toObject()
+    const restored = row.restore();
+    const restoredObject = row.toObject();
     if (postFilter && !postFilter(restoredObject)) {
-      continue
+      continue;
     }
     if (row.isArray) {
-      result.push(getItems(restored).sort().map(([_, v]) => v))
+      result.push(getItems(restored).sort().map(([_, v]) => v));
     } else {
-      result.push(restoredObject)
+      result.push(restoredObject);
     }
   }
-  return result
+  return result;
 }
 
-export {make as default, sorters}
+export {make as default, sorters, criteria};

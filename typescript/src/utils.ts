@@ -1,6 +1,7 @@
 
+// @ts-ignore 2307
 export {hex as md5} from 'js-md5'
-import {FactorsType, Scalar} from './types'
+import {FactorsType, Scalar, ParentsType, CandidateType} from './types'
 
 export const all = (values: any[]) => {
   for (let value of values) {
@@ -37,7 +38,7 @@ export const getItems = (container: FactorsType | Map<Scalar, any[]>): [Scalar, 
   if (container instanceof Map) {
     return [... container.entries()]
   }
-  return Object.entries(container)
+  return [... Object.entries(container)];
 }
 
 export const range = (start: number, stop: number, step: number=1) => {
@@ -77,4 +78,9 @@ export const product = (... list: number[][]): number[][] => {
   }
   set([], 0)
   return pairs
+}
+
+export const getCandidate = (pair: number[], parents: ParentsType): CandidateType => {
+  const keys: Scalar[] = pair.map(p => parents.get(p) || 0);
+  return zip(keys, pair);
 }
