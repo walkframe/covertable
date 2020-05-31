@@ -90,7 +90,7 @@ def make(
     factors,
     length=2,
     progress=False,
-    sorter=sorters.sequential,
+    sorter=sorters.hash,
     criterion=criteria.greedy,
     options={},
     pre_filter=None,

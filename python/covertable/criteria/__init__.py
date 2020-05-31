@@ -1,1 +1,1 @@
-from . import simple, greedy, minimal  # NOQA
+from . import simple, greedy  # NOQA

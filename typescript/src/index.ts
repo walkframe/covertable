@@ -151,7 +151,7 @@ const make = (factors: FactorsType, options: makeOptions = {}) => {
     length = 2;
   }
   if (!sorter) {
-    sorter = sorters.sequential;
+    sorter = sorters.hash;
   }
   if (!criterion) {
     criterion = criteria.greedy;
