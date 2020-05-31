@@ -77,7 +77,7 @@ class Row extends Map<Scalar, number> implements RowType {
     let num = 0;
     for (let [key, el] of candidate) {
       let existing: number | undefined = this.get(key);
-      if (!existing) {
+      if (typeof existing === 'undefined') {
         num++;
       } else if (existing != el) {
         return null;

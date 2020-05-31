@@ -37,7 +37,6 @@ test('2pair', () => {
   }
 });
 
-/*
 test('3pair', () => {
   const factors = [
     ["a", "b", "c"],
@@ -118,7 +117,7 @@ test("greedy sorter should make rows less than seed's one with 2", () => {
   const length = 2
   for (let i of range(0, 10)) {
     const rows1 = make(factors, {length, seed: Math.random(), sorter: sorters.hash, criterion: criteria.greedy})
-    const rows2 = make(factors, {length, seed: Math.random(), sorter: sorters.hash})
+    const rows2 = make(factors, {length, seed: Math.random(), sorter: sorters.hash, criterion: criteria.simple})
     len1 += len(rows1)
     len2 += len(rows2)
   }
@@ -137,7 +136,7 @@ test("greedy sorter should make rows less than seed's one with 3", () => {
   const length = 3
   for (let i of range(0, 10)) {
     const rows1 = make(factors, {length, seed: Math.random(), sorter: sorters.hash, criterion: criteria.greedy})
-    const rows2 = make(factors, {length, seed: Math.random(), sorter: sorters.hash})
+    const rows2 = make(factors, {length, seed: Math.random(), sorter: sorters.hash, criterion: criteria.simple})
     len1 += len(rows1)
     len2 += len(rows2)
   }
@@ -175,4 +174,3 @@ test('dict type factors make dict row', () => {
     expect(keys1.toString()).toBe(keys2.toString())
   }
 })
-*/

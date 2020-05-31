@@ -28,10 +28,7 @@ export default function* (
   let maxNumPairs: number | null = null;
   let efficientPair: number[] | null = null;
 
-  console.log('sortedIncompleted', sortedIncompleted)
-
   while (true) {
-
     maxNumPairs = null;
     efficientPair = null;
 
@@ -51,7 +48,6 @@ export default function* (
       }
 
       if (storable === 0) {
-        //console.log('pair', pair, [... incompleted])
         incompleted.delete(pair.sort(ascendant).toString());
         continue;
       }
@@ -60,7 +56,6 @@ export default function* (
         new Set([... row.values(), ...pair]), incompleted, length
       )
 
-      //console.log('debug', incompleted.size, numPairs + tolerance, rowSize * storable)
       if (numPairs + tolerance > rowSize * storable) {
         efficientPair = pair;
         break;
@@ -68,10 +63,8 @@ export default function* (
       if (maxNumPairs === null || maxNumPairs < numPairs) {
         maxNumPairs = numPairs;
         efficientPair = pair;
-        console.log('pair', pair)
       }
     }
-    //console.log("ep", efficientPair)
     if (efficientPair === null) {
       break;
     }
