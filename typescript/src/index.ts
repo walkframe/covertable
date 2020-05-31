@@ -48,6 +48,7 @@ const makeIncompleted = (serials: SerialsType, length: number): IncompletedType 
 }
 
 class Row extends Map<Scalar, number> implements RowType {
+  // index: number
   private length: number
   public isArray: Boolean
   constructor (
@@ -126,11 +127,18 @@ class Row extends Map<Scalar, number> implements RowType {
   }
 }
 
+type optionsType = {
+  length?: number;
+  seed?: Scalar;
+  tolerance?: number;
+}
+
 interface makeOptions {
   length?: number,
   sorter?: Function,
   criterion?: (sortedIncompleted: any, options: CriterionArgsType) => IterableIterator<number[]>,
   seed?: Scalar,
+  options?: optionsType,
   tolerance?: number,
   preFilter?: Function,
   postFilter?: Function,
@@ -154,7 +162,7 @@ const make = (factors: FactorsType, options: makeOptions = {}) => {
 
   const {preFilter, postFilter} = options;
   const [indexes, parents] = convertFactorsToSerials(factors);
-  const incompleted = makeIncompleted(indexes, length);
+  const incompleted = makeIncompleted(indexes, length); // {"1,2": [1,2], "3,4": [3,4]}
   const md5Cache: MD5CacheType = new Map();
 
   const rows: Row[] = [];
@@ -182,6 +190,7 @@ const make = (factors: FactorsType, options: makeOptions = {}) => {
       for (let [key, value] of getCandidate(pair, parents)) {
         row.set(key, value);
       }
+      
       for (let vs of combinations([... row.values()], length)) {
         incompleted.delete(vs.sort(ascOrder).toString());
       }

@@ -49,15 +49,14 @@ export const range = (start: number, stop: number, step: number=1) => {
 export const combinations = (list: Iterable<any>, length: number): number[][] => {
   const pairs: Map<string, number[]> = new Map()
   const set = (remains: any[], pair: any[]) => {
+    if (pair.length == length) {
+      const key = pair.sort().toString()
+      pairs.set(key, pair)
+      return
+    }
     for (let i of remains) {
       if (pair.length < length) {
         set(remains.filter(j => j !== i), pair.concat(i))
-      } else {
-        const key = pair.sort().toString()
-        if (!pairs.has(key)) {
-          pairs.set(key, pair)
-        }
-        return
       }
     }
   }
