@@ -37,64 +37,65 @@ Performance
      - Fastest
    * - 3^4
      - 
-       - num: `9`
+       - num: ``9``
+       - cond: *default*
+       - time: ``0.0006s``
+     - - num: ``9``
        - cond: default
-       - time: `0.0005s`
-     - - num: `9`
-       - time: `0.0006s`
-     - - num: `14`
-       - cond: `sorter: sequential, criterion: simple`
-       - time: `0.0004s`
+       - time: ``0.0006s``
+     - - num: ``14``
+       - cond: ``sorter: sequential, criterion: simple``
+       - time: ``0.0004s``
    * - 3^13
-     - - num: `19`
-       - cond: default
-       - time: `0.03s`
-     - - num: `17`
-       - cond: `seed: 1084`
-       - time: `0.03s`
-     - - num: `22`
-       - cond: `sorter: sequential, criterion: simple`
-       - time: `0.002s`
+     - - num: ``19``
+       - cond: *default*
+       - time: ``0.03s``
+     - - num: ``17``
+       - cond: ``seed: 1084``
+       - time: ``0.03s``
+     - - num: ``22``
+       - cond: ``sorter: sequential, criterion: simple``
+       - time: ``0.002s``
    * - 4^15 + 3^17 + 2^29
-     - - num: `36`
-       - cond: default
-       - time: `7.41s`
-     - - num: `34`
-       - cond: `seed: 19`
-       - time: `7.47s`
-     - - num: `42`
-       - cond: `sorter: sequential, criterion: simple`
-       - time: `00.38s`
+     - - num: ``36``
+       - cond: *default*
+       - time: ``7.41s`
+     - - num: ``34``
+       - cond: ``seed: 19``
+       - time: ``7.47s``
+     - - num: ``42``
+       - cond: ``sorter: sequential, criterion: simple``
+       - time: ``00.38s``
    * - 4^1 + 3^39 + 2^35
-     - - num: `27`
-       - cond: default 
-       - time: `15.19s`
-     - - num: `26`
-       - cond: `seed: 14`
-       - time: `14.70s`
-     - - num: `30`
-       - cond: `sorter: sequential, criterion: simple`
-       - time: `0.56s`
+     - - num: ``27``
+       - cond: *default* 
+       - time: ``15.19s``
+     - - num: ``26``
+       - cond: ``seed: 14``
+       - time: ``14.70s``
+     - - num: ``30``
+       - cond: ``sorter: sequential, criterion: simple``
+       - time: ``0.56s``
    * - 2^100
-     - - num: `14`
-       - cond: default
-       - time: `23.97s`
-     - - num: `12`
-       - cond: `seed: 6, criterion: simple`
-       - time: `00.63s`
-     - - num: `13`
-       - cond: `sorter: sequential, criterion: simple`
-       - time: `0.56s`
+     - - num: ``14``
+       - cond: *default*
+       - time: ``23.97s``
+     - - num: ``12``
+       - cond: ``seed: 6, criterion: simple``
+       - time: ``00.63s``
+     - - num: ``13``
+       - cond: ``sorter: sequential, criterion: simple``
+       - time: ``0.56s``
    * - 10^20
-     - - num: `198`
-       - cond: default
-       - time: `14.28s`
-     - - num: `195`
-       - cond: `seed: 1139`
-       - time: `14.48s`
-     - - num: `284`
-       - cond: `sorter: sequential, criterion: simple`
-       - time: `0.14s`
+     - - num: ``198``
+       - cond: *default*
+       - time: ``14.28s``
+     - - num: ``195``
+       - cond: ``seed: 1139``
+       - time: ``14.48s``
+     - - num: ``284``
+       - cond: ``sorter: sequential, criterion: simple``
+       - time: ``0.14s``
 
 
 History
