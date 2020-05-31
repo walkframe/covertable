@@ -33,15 +33,15 @@ Performance
 
    * - Combination
      - Default
-     - Minimum
-     - Fastest
+     - Minimum case
+     - Fastest case
    * - 3^4
      - 
        - num: ``9``
        - cond: *default*
        - time: ``0.0006s``
      - - num: ``9``
-       - cond: default
+       - cond: *default*
        - time: ``0.0006s``
      - - num: ``14``
        - cond: ``sorter: sequential, criterion: simple``
@@ -59,7 +59,7 @@ Performance
    * - 4^15 + 3^17 + 2^29
      - - num: ``36``
        - cond: *default*
-       - time: ``7.41s`
+       - time: ``7.41s``
      - - num: ``34``
        - cond: ``seed: 19``
        - time: ``7.47s``
