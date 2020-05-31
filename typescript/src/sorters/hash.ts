@@ -20,7 +20,7 @@ export default function (
       md5Cache.set(aKey, aValue);
     }
     const bKey = `${b[0]} ${seed}`;
-    let bValue = md5Cache.get(aKey);
+    let bValue = md5Cache.get(bKey);
     if (typeof bValue === 'undefined') {
       bValue = md5(bKey);
       // @ts-ignore 2345
