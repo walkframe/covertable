@@ -54,11 +54,6 @@ export interface OptionsType {
   sorter?: (incompleted: IncompletedType, options: SortArgsType) => PairType[],
   criterion?: (sortedIncompleted: PairType[], options: CriterionArgsType) => IterableIterator<PairType>,
   seed?: Scalar,
-  options?: {
-    length?: number;
-    seed?: Scalar;
-    tolerance?: number;
-  },
   tolerance?: number,
   preFilter?: FilterType,
   postFilter?: FilterType,
