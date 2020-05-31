@@ -1,10 +1,9 @@
-import {CriterionArgsType} from '../types'
-import {getCandidate} from '../utils'
-
+import {CriterionArgsType, PairType} from '../types';
+import {getCandidate} from '../utils';
 
 
 export default function* (
-  sortedIncompleted: number[][],
+  sortedIncompleted: PairType[],
   criterionArgs: CriterionArgsType,
 ) {
   const {row, parents} = criterionArgs;
@@ -13,6 +12,6 @@ export default function* (
     if (!storable) {
       continue;
     }
-    yield pair
+    yield pair;
   }
-}
+};

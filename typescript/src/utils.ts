@@ -83,3 +83,5 @@ export const getCandidate = (pair: number[], parents: ParentsType): CandidateTyp
   const keys: Scalar[] = pair.map(p => parents.get(p) || 0);
   return zip(keys, pair);
 }
+
+export const ascOrder = (a:number, b:number) => a > b ? 1 : -1;

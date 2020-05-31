@@ -1,23 +1,21 @@
-import {CriterionArgsType, IncompletedType} from '../types'
-import {getCandidate, combinations} from '../utils'
-
-const ascendant = (a: number, b: number) => a > b ? 1 : -1
+import {CriterionArgsType, IncompletedType, PairType} from '../types';
+import {getCandidate, combinations, ascOrder} from '../utils';
 
 const getNumRemovablePairs = (indexes: Set<number>, incompleted: IncompletedType, length: number) => {
   let num = 0;
   const removingKeys = combinations([... indexes], length);
   for (let vs of removingKeys) {
-    const key = vs.sort(ascendant).toString();
+    const key = vs.sort(ascOrder).toString();
     if (incompleted.has(key)) {
       num++;
     }
   }
-  return num
-}
+  return num;
+};
 
 
 export default function* (
-  sortedIncompleted: number[][],
+  sortedIncompleted: PairType[],
   criterionArgs: CriterionArgsType,
 ) {
   let {row, parents, incompleted, length, tolerance} = criterionArgs;
@@ -26,7 +24,7 @@ export default function* (
   }
 
   let maxNumPairs: number | null = null;
-  let efficientPair: number[] | null = null;
+  let efficientPair: PairType | null = null;
 
   while (true) {
     maxNumPairs = null;
@@ -48,13 +46,13 @@ export default function* (
       }
 
       if (storable === 0) {
-        incompleted.delete(pair.sort(ascendant).toString());
+        incompleted.delete(pair.sort(ascOrder).toString());
         continue;
       }
       
       const numPairs = getNumRemovablePairs(
         new Set([... row.values(), ...pair]), incompleted, length
-      )
+      );
 
       if (numPairs + tolerance > rowSize * storable) {
         efficientPair = pair;
@@ -70,4 +68,4 @@ export default function* (
     }
     yield efficientPair;
   }
-}
+};

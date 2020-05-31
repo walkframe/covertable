@@ -12,24 +12,33 @@ export type SerialsType = {
   [index: number]: number[];
 } | any[][]
 
-export type IncompletedType = Map<string, number[]>
+export type FilterType = (row: {
+  [key: string]: any;
+  [index: number]: any;
+}) => boolean;
+
+export type PairType = number[];
+
+export type IncompletedType = Map<string, PairType>
 export type MD5CacheType = Map<string, string>
 export type ParentsType =  Map<number, Scalar>;
 
 export type CandidateType = [Scalar, number][];
 
 export interface RowType {
+  size: number;
   isArray: Boolean;
   filled: () => Boolean;
   values: () => IterableIterator<number>;
   storable: (candidate: CandidateType) => number | null;
-  size: number;
 };
 
 export interface SortArgsType {
   row: RowType;
   parents: ParentsType;
+  length: number;
   seed?: Scalar;
+  md5Cache: MD5CacheType;
 };
 
 export interface CriterionArgsType {
@@ -38,4 +47,19 @@ export interface CriterionArgsType {
   length: number;
   incompleted: IncompletedType;
   tolerance?: number;
+};
+
+export interface OptionsType {
+  length?: number,
+  sorter?: (incompleted: IncompletedType, options: SortArgsType) => PairType[],
+  criterion?: (sortedIncompleted: PairType[], options: CriterionArgsType) => IterableIterator<PairType>,
+  seed?: Scalar,
+  options?: {
+    length?: number;
+    seed?: Scalar;
+    tolerance?: number;
+  },
+  tolerance?: number,
+  preFilter?: FilterType,
+  postFilter?: FilterType,
 };

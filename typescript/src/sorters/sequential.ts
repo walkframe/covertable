@@ -1,7 +1,9 @@
+import {PairType} from '../types';
+
 
 export default function (
-  incompleted: Map<string, number[]>,
-  sortArgs: any
+  incompleted: Map<string, PairType>,
+  sortArgs: any,
 ) {
   return [... incompleted.values()];
-}
+};

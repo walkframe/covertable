@@ -1,7 +1,7 @@
 import * as sorters from './sorters/index'
 import * as criteria from './criteria/index'
 import * as exceptions from './exceptions'
-import {range, product, combinations, copy, len, getItems, getCandidate} from './utils'
+import {range, product, combinations, copy, len, getItems, getCandidate, ascOrder} from './utils'
 import {
   FactorsType, 
   SerialsType, 
@@ -11,11 +11,10 @@ import {
   MD5CacheType, 
   ParentsType, 
   CandidateType,
-  CriterionArgsType,
   RowType,
+  OptionsType,
+  FilterType,
 } from './types'
-
-const ascOrder = (a:number, b:number) => a > b ? 1 : -1;
 
 const convertFactorsToSerials = (factors: FactorsType): [SerialsType, ParentsType] => {
   let origin = 0;
@@ -49,13 +48,13 @@ const makeIncompleted = (serials: SerialsType, length: number): IncompletedType 
 
 class Row extends Map<Scalar, number> implements RowType {
   // index: number
-  private length: number
-  public isArray: Boolean
+  private length: number;
+  public isArray: Boolean;
   constructor (
     row: CandidateType, 
-    public factors: FactorsType,
-    public serials: SerialsType,
-    public preFilter?: Function,
+    private factors: FactorsType,
+    private serials: SerialsType,
+    public preFilter?: FilterType,
   ) {
     super();
     for (let [k, v] of row) {
@@ -70,7 +69,7 @@ class Row extends Map<Scalar, number> implements RowType {
   }
 
   New (row?: CandidateType) {
-    return new Row(row || [], this.factors, this.serials, this.preFilter)
+    return new Row(row || [], this.factors, this.serials, this.preFilter);
   }
 
   storable (candidate: CandidateType) {
@@ -86,66 +85,48 @@ class Row extends Map<Scalar, number> implements RowType {
     if (!this.preFilter) {
       return num;
     }
-    const candidates: CandidateType = [... this.entries()].concat(candidate)
-    const nxt: Row = this.New(candidates)
+    const candidates: CandidateType = [... this.entries()].concat(candidate);
+    const nxt: Row = this.New(candidates);
     if (!this.preFilter(nxt.toObject())) {
       return null;
     }
-    return num
+    return num;
   }
 
   toObject () {
-    const obj: Dict = {}
+    const obj: Dict = {};
     for (let [key, value] of this.restore().entries()) {
-      obj[key] = value
+      obj[key] = value;
     }
-    return obj
+    return obj;
   }
 
   complement (): Row {
     getItems(this.serials).map(([k, vs]) => {
       for (let v of vs) {
         if (this.storable([[k, v]])) {
-          this.set(k, v)
-          break
+          this.set(k, v);
+          break;
         }
       }
     })
     if (!this.filled()) {
-      throw new exceptions.InvalidCondition()
+      throw new exceptions.InvalidCondition();
     }
-    return this
+    return this;
   }
 
   restore (): Map<Scalar, number[]> {
-    const result: Map<Scalar, number[]> = new Map()
+    const result: Map<Scalar, number[]> = new Map();
     for (let [key, index] of this.entries()) {
       // @ts-ignore TS7015
-      result.set(key, this.factors[key][index - this.serials[key][0]]) 
+      result.set(key, this.factors[key][index - this.serials[key][0]]);
     }
-    return result
+    return result;
   }
 }
 
-type optionsType = {
-  length?: number;
-  seed?: Scalar;
-  tolerance?: number;
-}
-
-interface makeOptions {
-  length?: number,
-  sorter?: Function,
-  criterion?: (sortedIncompleted: any, options: CriterionArgsType) => IterableIterator<number[]>,
-  seed?: Scalar,
-  options?: optionsType,
-  tolerance?: number,
-  preFilter?: Function,
-  postFilter?: Function,
-};
-
-
-const make = (factors: FactorsType, options: makeOptions = {}) => {
+const make = (factors: FactorsType, options: OptionsType = {}) => {
   let {length, sorter, criterion, seed, tolerance} = options;
   if (!length) {
     length = 2;
@@ -180,7 +161,7 @@ const make = (factors: FactorsType, options: makeOptions = {}) => {
     }
     let finished = true;
 
-    const sortedIncompleted = sorter(incompleted, {row, parents, length, seed, md5Cache})
+    const sortedIncompleted = sorter(incompleted, {row, parents, length, seed, md5Cache});
     for (let pair of criterion(sortedIncompleted, {row, parents, length, incompleted, tolerance})) {
       if (row.filled()) {
         finished = false;
@@ -202,7 +183,7 @@ const make = (factors: FactorsType, options: makeOptions = {}) => {
   if (row.size) {
     rows.push(row.complement());
   }
-  const result: any[] = []
+  const result: any[] = [];
   for (let row of rows) {
     const restored = row.restore();
     const restoredObject = row.toObject();

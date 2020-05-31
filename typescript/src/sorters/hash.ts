@@ -1,17 +1,15 @@
-import {md5} from '../utils'
-import {Scalar, MD5CacheType} from '../types'
-
-interface sortArgsType {
-  seed: Scalar,
-  md5Cache: MD5CacheType,
-}
+import {md5} from '../utils';
+import {
+  PairType,
+  SortArgsType,
+} from '../types';
 
 export default function (
-  incompleted: Map<string, number[]>,
-  sortArgs: sortArgsType,
-): number[][] {
+  incompleted: Map<string, PairType>,
+  sortArgs: SortArgsType,
+): PairType[] {
   const {seed, md5Cache} = sortArgs;
-  const comparer = (a: [string, number[]], b: [string, number[]]) => {
+  const comparer = (a: [string, PairType], b: [string, PairType]) => {
     const aKey = `${a[0]} ${seed}`;
     let aValue = md5Cache.get(aKey);
     if (typeof aValue === 'undefined') {
@@ -29,9 +27,9 @@ export default function (
     // @ts-ignore 2532
     return aValue > bValue ? 1 : -1;
   }
-  const pairs: number[][] = [];
+  const pairs: PairType[] = [];
   for (let [_, pair] of [... incompleted.entries()].sort(comparer)) {
-    pairs.push(pair)
+    pairs.push(pair);
   }
-  return pairs
-}
+  return pairs;
+};
