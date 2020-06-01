@@ -7,10 +7,10 @@ export type FactorsType = {
   [index: number]: any[];
 } | any[][]
 
-export type SerialsType = {
+export interface SerialsType {
   [key: string]: number[];
   [index: number]: number[];
-} | any[][]
+}
 
 export type FilterType = (row: {
   [key: string]: any;
@@ -46,7 +46,7 @@ export interface CriterionArgsType {
   parents: ParentsType;
   length: number;
   incompleted: IncompletedType;
-  tolerance?: number;
+  tolerance: number;
 };
 
 export interface OptionsType {

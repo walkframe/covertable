@@ -9,7 +9,7 @@ export default function* (
   const {row, parents} = criterionArgs;
   for (let pair of sortedIncompleted) {
     const storable = row.storable(getCandidate(pair, parents));
-    if (!storable) {
+    if (storable === null || storable === 0) {
       continue;
     }
     yield pair;

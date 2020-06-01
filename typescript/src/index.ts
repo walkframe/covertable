@@ -127,19 +127,7 @@ class Row extends Map<Scalar, number> implements RowType {
 }
 
 const make = (factors: FactorsType, options: OptionsType = {}) => {
-  let {length, sorter, criterion, seed, tolerance} = options;
-  if (!length) {
-    length = 2;
-  }
-  if (!sorter) {
-    sorter = sorters.hash;
-  }
-  if (!criterion) {
-    criterion = criteria.greedy;
-  }
-  if (typeof seed === 'undefined') {
-    seed = '';
-  }
+  let {length=2, sorter=sorters.hash, criterion=criteria.greedy, seed='', tolerance=0} = options;
 
   const {preFilter, postFilter} = options;
   const [indexes, parents] = convertFactorsToSerials(factors);
@@ -172,8 +160,8 @@ const make = (factors: FactorsType, options: OptionsType = {}) => {
         row.set(key, value);
       }
       
-      for (let vs of combinations([... row.values()], length)) {
-        incompleted.delete(vs.sort(ascOrder).toString());
+      for (let vs of combinations([... row.values()].sort(ascOrder), length)) {
+        incompleted.delete(vs.toString());
       }
     }
     if (finished && !row.filled()) {
