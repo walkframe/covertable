@@ -17,7 +17,7 @@ const getNumRemovablePairs = (indexes: Set<number>, incompleted: IncompletedType
 export default function* (
   sortedIncompleted: PairType[],
   criterionArgs: CriterionArgsType,
-) {
+): Generator<PairType> {
   let {row, parents, incompleted, length, tolerance} = criterionArgs;
 
   while (true) {

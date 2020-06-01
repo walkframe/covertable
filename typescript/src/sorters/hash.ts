@@ -14,17 +14,14 @@ export default function (
     let aValue = md5Cache.get(aKey);
     if (typeof aValue === 'undefined') {
       aValue = md5(aKey);
-      // @ts-ignore 2345
       md5Cache.set(aKey, aValue);
     }
     const bKey = `${b[0]} ${seed}`;
     let bValue = md5Cache.get(bKey);
     if (typeof bValue === 'undefined') {
       bValue = md5(bKey);
-      // @ts-ignore 2345
       md5Cache.set(bKey, bValue);
     }
-    // @ts-ignore 2532
     return aValue > bValue ? 1 : -1;
   }
   const pairs: PairType[] = [];

@@ -1,7 +1,7 @@
-import * as sorters from './sorters/index'
-import * as criteria from './criteria/index'
-import * as exceptions from './exceptions'
-import {range, product, combinations, copy, len, getItems, getCandidate, ascOrder} from './utils'
+import * as sorters from './sorters/index';
+import * as criteria from './criteria/index';
+import * as exceptions from './exceptions';
+import {range, product, combinations, copy, len, getItems, getCandidate, ascOrder} from './utils';
 import {
   FactorsType, 
   SerialsType, 
@@ -14,7 +14,7 @@ import {
   RowType,
   OptionsType,
   FilterType,
-} from './types'
+} from './types';
 
 const convertFactorsToSerials = (factors: FactorsType): [SerialsType, ParentsType] => {
   let origin = 0;
@@ -31,7 +31,7 @@ const convertFactorsToSerials = (factors: FactorsType): [SerialsType, ParentsTyp
     origin += length;
   })
   return [serials, parents];
-}
+};
 
 const makeIncompleted = (serials: SerialsType, length: number): IncompletedType => {
   const incompleted: IncompletedType = new Map();
@@ -44,7 +44,7 @@ const makeIncompleted = (serials: SerialsType, length: number): IncompletedType 
     }
   }
   return incompleted;
-}
+};
 
 class Row extends Map<Scalar, number> implements RowType {
   // index: number
@@ -124,7 +124,7 @@ class Row extends Map<Scalar, number> implements RowType {
     }
     return result;
   }
-}
+};
 
 const make = (factors: FactorsType, options: OptionsType = {}) => {
   let {length=2, sorter=sorters.hash, criterion=criteria.greedy, seed='', tolerance=0} = options;
@@ -185,6 +185,6 @@ const make = (factors: FactorsType, options: OptionsType = {}) => {
     }
   }
   return result;
-}
+};
 
 export {make as default, sorters, criteria};
