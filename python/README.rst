@@ -38,34 +38,39 @@ Just import ``covertable`` and call ``make`` function.
   >>> machine_list = ['iphone', 'pixel']
   >>> os_list = ['ios', 'android']
   >>> browser_list = ['FireFox', 'Chrome', 'Safari']
-  
   >>> # list input and output
-  ... make(
+  >>> make(
   ...     [machine_list, os_list, browser_list],  # list factors
   ...     length=2,  # default: 2
   ...     sorter=sorters.random,  # default: sorters.hash
   ...     criterion=criteria.simple,  # default: criteria.greedy
   ...     seed=100,  # default: ''
-  ...     pre_filter=lambda row: not(row[1] == 'android' and row[0] != 'pixel'),  # default: None
-  ...     post_filter=lambda row: not(row[1] == 'ios' and row[2] != 'Safari'),  # default: None
+  ...     pre_filter=lambda row: not(row[1] == 'android' and row[0] != 'pixel') and not(row[1] == 'ios' and row[0] != 'iphone'),  # default: None
   ... )
   [
-    ['iphone', 'ios', 'Safari'],
-    ['pixel', 'android', 'Safari']
+    ['pixel', 'android', 'Safari'], 
+    ['iphone', 'ios', 'Chrome'], 
+    ['iphone', 'ios', 'Safari'], 
+    ['pixel', 'android', 'Chrome'], 
+    ['pixel', 'android', 'FireFox'], 
+    ['iphone', 'ios', 'FireFox']
   ]
 
+
   >>> # dict input and output
-  ... make(
+  >>> make(
   ...     {'machine': machine_list, 'os': os_list, 'browser': browser_list},  # dict factors
   ...     length=2,  # default: 2
   ...     tolerance=3,  # default: 0
-  ...     pre_filter=lambda row: not(row['os'] == 'android' and row['machine'] != 'pixel'),  # default: None
-  ...     post_filter=lambda row: not(row['os'] == 'ios' and row['browser'] != 'Safari'),  # default: None
+  ...     post_filter=lambda row: not(row['os'] == 'android' and row['machine'] != 'pixel') and not(row['os'] == 'ios' and row['machine'] != 'iphone'),  # default: None
   ... )
   [
-    {'os': 'ios', 'browser': 'Safari', 'machine': 'iphone'},
-    {'machine': 'pixel', 'browser': 'Safari', 'os': 'android'}
+    {'machine': 'pixel', 'browser': 'Chrome', 'os': 'android'}, 
+    {'machine': 'pixel', 'browser': 'FireFox', 'os': 'android'}, 
+    {'machine': 'iphone', 'os': 'ios', 'browser': 'Chrome'}, 
+    {'os': 'ios', 'browser': 'FireFox', 'machine': 'iphone'}
   ]
+
 
 Options
 ---------------
@@ -94,7 +99,7 @@ You can choice a sorter from the following:
 
   This makes combinations depending on hash of the pair and seed. (default)
 
-  - It receives `seed` and `useCache`.
+  - It receives `seed` and `useCache` options.
 
     - `seed` option decides the order of storing from unstored pairs, therefore it outputs the same result every time when number of factors and seed are the same.
     - `useCache` option decide if using cache of hash or not. (default: `true`)
@@ -114,7 +119,7 @@ criterion
   This attempts to make most efficient combinations. (default)
   
     - These combinations are not always shorter than `simple` criterion.
-
+    - It receives `tolerance <https://github.com/walkframe/covertable#tolerance>`__ option.
 
 .. note::
 

@@ -111,7 +111,7 @@ it can increase the speed at the expense of the number of combinations.
 
 The greater the number, the greater the speed.
 
-.. list-table:: Table for the case when combinations are created from 10^20` test cases.
+.. list-table:: Table for the case when combinations are created from ``10^20`` test cases.
    :widths: 1 3 3  
    :header-rows: 1
    :stub-columns: 1
@@ -178,10 +178,8 @@ History
   - `greedy` method got an option `tolerance` to balance speed and results.
 
   - sequenctial sorter was dropped.
-  
-    - It does not work well in TypeScript. 
     
-      - The number of combinations would be huge.
+    - The number of combinations would be huge in TypeScript.
 
 :1.1.x:
 
