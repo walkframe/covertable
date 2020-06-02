@@ -118,8 +118,8 @@ criterion
 
   This attempts to make most efficient combinations. (default)
   
-    - These combinations are not always shorter than `simple` criterion.
-    - It receives `tolerance <https://github.com/walkframe/covertable#tolerance>`__ option.
+  - These combinations are not always shorter than `simple` criterion.
+  - It receives `tolerance <https://github.com/walkframe/covertable#tolerance>`__ option.
 
 .. note::
 
