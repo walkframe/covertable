@@ -135,7 +135,7 @@ It receives an argument `row` as `object` type.
 When the function returns `false`, the row combination will not registered.
 
 - If factors type is `Array`, you should specify an index at the subscript like ``row => row[1] < 6``.
-- If factors type is `Object`, you should specify a key at the subscript like ``row => row.month < 6` or `row => row['month'] < 6``
+- If factors type is `Object`, you should specify a key at the subscript like ``row => row['month'] < 6``
 
 post_filter
 ~~~~~~~~~~~~~~~~
