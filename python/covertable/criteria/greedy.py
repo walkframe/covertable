@@ -28,7 +28,6 @@ def extract(
                 continue
 
             if storable == 0:
-                incompleted.discard(pair)
                 continue
 
             num_pairs = get_num_removable_pairs(
