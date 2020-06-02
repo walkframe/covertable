@@ -7,7 +7,7 @@ import pytest
 def call(
     factors,
     length,
-    sorter="sequential",
+    sorter="hash",
     criterion="greedy",
     options={},
     pre_filter=None,
