@@ -12,7 +12,6 @@ Now there are 2 implementations:
   - `README <https://github.com/walkframe/covertable/blob/master/python/README.rst>`__
   - `Code <https://github.com/walkframe/covertable/tree/master/python>`__
 
-
 :TypeScript:
 
   - .. image:: https://badge.fury.io/js/covertable.svg
@@ -170,7 +169,7 @@ History
 =======
 :2.0.x:
 
-  - sorter option splitted into sorter and criterion.
+  - sorter option was splitted into sorter and criterion.
 
     - e.g. greedy -> hash sorter + greedy criterion.
 
@@ -179,7 +178,7 @@ History
 
   - sequenctial sorter was dropped.
     
-    - The number of combinations would be huge in TypeScript.
+    - Because The number of combinations would be huge in TypeScript.
 
 :1.1.x:
 
