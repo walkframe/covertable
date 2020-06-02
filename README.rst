@@ -44,8 +44,8 @@ Performance
        - cond: *default*
        - time: ``0.0006s``
      - - num: ``14``
-       - cond: ``sorter: sequential, criterion: simple``
-       - time: ``0.0004s``
+       - cond: ``sorter: random, criterion: simple``
+       - time: ``0.0006s``
    * - 3^13
      - - num: ``19``
        - cond: *default*
@@ -53,9 +53,9 @@ Performance
      - - num: ``17``
        - cond: ``seed: 1084``
        - time: ``0.03s``
-     - - num: ``22``
-       - cond: ``sorter: sequential, criterion: simple``
-       - time: ``0.002s``
+     - - num: ``21``
+       - cond: ``sorter: random, criterion: simple``
+       - time: ``0.003s``
    * - 4^15 + 3^17 + 2^29
      - - num: ``36``
        - cond: *default*
@@ -64,8 +64,8 @@ Performance
        - cond: ``seed: 19``
        - time: ``7.47s``
      - - num: ``42``
-       - cond: ``sorter: sequential, criterion: simple``
-       - time: ``00.38s``
+       - cond: ``sorter: random, criterion: simple``
+       - time: ``0.40s``
    * - 4^1 + 3^39 + 2^35
      - - num: ``27``
        - cond: *default* 
@@ -74,18 +74,18 @@ Performance
        - cond: ``seed: 14``
        - time: ``14.70s``
      - - num: ``30``
-       - cond: ``sorter: sequential, criterion: simple``
-       - time: ``0.56s``
+       - cond: ``sorter: random, criterion: simple``
+       - time: ``0.51s``
    * - 2^100
      - - num: ``14``
        - cond: *default*
        - time: ``23.97s``
      - - num: ``12``
        - cond: ``seed: 6, criterion: simple``
-       - time: ``00.63s``
+       - time: ``0.63s``
      - - num: ``13``
-       - cond: ``sorter: sequential, criterion: simple``
-       - time: ``0.56s``
+       - cond: ``sorter: random, criterion: simple``
+       - time: ``0.48s``
    * - 10^20
      - - num: ``198``
        - cond: *default*
@@ -94,8 +94,8 @@ Performance
        - cond: ``seed: 1139``
        - time: ``14.48s``
      - - num: ``284``
-       - cond: ``sorter: sequential, criterion: simple``
-       - time: ``0.14s``
+       - cond: ``sorter: random, criterion: simple``
+       - time: ``0.53s``
 
 
 History
@@ -109,6 +109,11 @@ History
   - greedy method is about seven times faster than before.
   - greedy method got an option `tolerance` to balance speed and results.
 
+  - sequenctial sorter has already dropped.
+  
+    - It does not work well in TypeScript. 
+    
+      - The number of combinations would be huge.
 
 :1.1.x:
 

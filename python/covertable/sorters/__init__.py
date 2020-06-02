@@ -1,1 +1,1 @@
-from . import sequential, random, hash  # NOQA
+from . import random, hash  # NOQA
