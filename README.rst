@@ -28,7 +28,9 @@ Performance
 
 .. note::
   
-  The following data was measured in Python 3.7.7 and ``3.1 GHz 6 Cores Intel Core i5``.
+  - The following data was measured in Python 3.7.7 and ``3.1 GHz 6 Cores Intel Core i5``.
+  - TypeScript(JavaScript) version is around 2 times slower than Python version.
+
 
 .. list-table:: Number and time of combinations. 
    :widths: 1 3 3 3 
@@ -40,8 +42,7 @@ Performance
      - Minimum case
      - Fastest case
    * - 3^4
-     - 
-       - num: ``9``
+     - - num: ``9``
        - cond: *default*
        - time: ``0.0006s``
      - - num: ``9``
@@ -101,7 +102,6 @@ Performance
        - cond: ``sorter: random, criterion: simple``
        - time: ``0.53s``
 
-.. 
 
 Tolerance
 ----------------
@@ -111,9 +111,7 @@ it can increase the speed at the expense of the number of combinations.
 
 The greater the number, the greater the speed.
 
-The following data is measured in testcase ``10^20``.
-
-.. list-table:: the tolerance option, the number of combinations, and the processing time when the combination is made from `10^20` test cases.
+.. list-table:: Table for the case when combinations are created from 10^20` test cases.
    :widths: 1 3 3  
    :header-rows: 1
    :stub-columns: 1
