@@ -92,9 +92,9 @@ def make(
     progress=False,
     sorter=sorters.hash,
     criterion=criteria.greedy,
-    options={},
     pre_filter=None,
     post_filter=None,
+    **params,
 ):
     serials, parents = convert_factors_to_serials(factors)
     incompleted = make_incompleted(serials, length)
@@ -114,15 +114,15 @@ def make(
             row = row.new()
 
         common_kwargs = {
+            **params,
             "row": row,
             "parents": parents,
             "length": length,
             "incompleted": incompleted,
             "md5_cache": md5_cache,
         }
-        sorted_incompleted = sorter.sort(**common_kwargs, **options)
-
-        for pair in criterion.extract(sorted_incompleted, **common_kwargs, **options):
+        sorted_incompleted = sorter.sort(**common_kwargs)
+        for pair in criterion.extract(sorted_incompleted, **common_kwargs):
             if row.filled():
                 break
             row.update((parents[p], p) for p in pair)

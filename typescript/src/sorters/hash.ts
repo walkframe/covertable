@@ -8,15 +8,21 @@ export default function (
   incompleted: Map<string, PairType>,
   sortArgs: SortArgsType,
 ): PairType[] {
-  const {seed, md5Cache} = sortArgs;
+  const {seed, md5Cache, useCache} = sortArgs;
   const comparer = (a: [string, PairType], b: [string, PairType]) => {
     const aKey = `${a[0]} ${seed}`;
+    const bKey = `${b[0]} ${seed}`;
+
+    if (!useCache) {
+      return md5(aKey) > md5(bKey) ? 1 : -1;
+    }
+
     let aValue = md5Cache.get(aKey);
     if (typeof aValue === 'undefined') {
       aValue = md5(aKey);
       md5Cache.set(aKey, aValue);
     }
-    const bKey = `${b[0]} ${seed}`;
+
     let bValue = md5Cache.get(bKey);
     if (typeof bValue === 'undefined') {
       bValue = md5(bKey);

@@ -127,7 +127,7 @@ class Row extends Map<Scalar, number> implements RowType {
 };
 
 const make = (factors: FactorsType, options: OptionsType = {}) => {
-  let {length=2, sorter=sorters.hash, criterion=criteria.greedy, seed='', tolerance=0} = options;
+  let {length=2, sorter=sorters.hash, criterion=criteria.greedy, seed='', tolerance=0, useCache=true} = options;
 
   const {preFilter, postFilter} = options;
   const [indexes, parents] = convertFactorsToSerials(factors);
@@ -149,7 +149,7 @@ const make = (factors: FactorsType, options: OptionsType = {}) => {
     }
     let finished = true;
 
-    const sortedIncompleted = sorter(incompleted, {row, parents, length, seed, md5Cache});
+    const sortedIncompleted = sorter(incompleted, {row, parents, length, seed, md5Cache, useCache});
     for (let pair of criterion(sortedIncompleted, {row, parents, length, incompleted, tolerance})) {
       if (row.filled()) {
         finished = false;

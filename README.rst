@@ -26,7 +26,11 @@ Go see the detail from these links.
 Performance
 ===================
 
-.. list-table:: Number and time of combinations in Python
+.. note::
+  
+  The following data was measured in Python 3.7.7 and ``3.1 GHz 6 Cores Intel Core i5``.
+
+.. list-table:: Number and time of combinations. 
    :widths: 1 3 3 3 
    :header-rows: 1
    :stub-columns: 1
@@ -45,7 +49,7 @@ Performance
        - time: ``0.0006s``
      - - num: ``14``
        - cond: ``sorter: random, criterion: simple``
-       - time: ``0.0006s``
+       - time: ``0.0005s``
    * - 3^13
      - - num: ``19``
        - cond: *default*
@@ -97,6 +101,72 @@ Performance
        - cond: ``sorter: random, criterion: simple``
        - time: ``0.53s``
 
+.. 
+
+Tolerance
+----------------
+
+If you use `greedy` criterion and specify a positive integer to `tolerance` option,
+it can increase the speed at the expense of the number of combinations.
+
+The greater the number, the greater the speed.
+
+The following data is measured in testcase ``10^20``.
+
+.. list-table:: the tolerance option, the number of combinations, and the processing time when the combination is made from `10^20` test cases.
+   :widths: 1 3 3  
+   :header-rows: 1
+   :stub-columns: 1
+
+   * - tolerance
+     - num
+     - time
+   * - 0 (default)
+     - ``195``
+     - ``14.48s``
+   * - 1
+     - ``199``
+     - ``12.45s``
+   * - 2
+     - ``201``
+     - ``9.48s``
+   * - 3
+     - ``201``
+     - ``7.17s``
+   * - 4
+     - ``207``
+     - ``5.70s``
+   * - 5
+     - ``212``
+     - ``4.58s``
+   * - 6
+     - ``212``
+     - ``3.65s``
+   * - 7
+     - ``216``
+     - ``3.07s``
+   * - 8
+     - ``223``
+     - ``2.57s``
+   * - 9
+     - ``226``
+     - ``2.14s``
+   * - 10
+     - ``233``
+     - ``1.84s``
+   * - 11
+     - ``237``
+     - ``1.61s``
+   * - 12
+     - ``243``
+     - ``1.43s``
+   * - 13
+     - ``249``
+     - ``1.28s``
+   * - 14
+     - ``254``
+     - ``1.19s``
+
 
 History
 =======
@@ -106,10 +176,10 @@ History
 
     - e.g. greedy -> hash sorter + greedy criterion.
 
-  - greedy method is about seven times faster than before.
-  - greedy method got an option `tolerance` to balance speed and results.
+  - `greedy` method is much faster than before.
+  - `greedy` method got an option `tolerance` to balance speed and results.
 
-  - sequenctial sorter has already dropped.
+  - sequenctial sorter was dropped.
   
     - It does not work well in TypeScript. 
     

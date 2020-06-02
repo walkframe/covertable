@@ -37,7 +37,8 @@ export interface SortArgsType {
   row: RowType;
   parents: ParentsType;
   length: number;
-  seed?: Scalar;
+  seed: Scalar;
+  useCache: Boolean;
   md5Cache: MD5CacheType;
 };
 
@@ -50,11 +51,12 @@ export interface CriterionArgsType {
 };
 
 export interface OptionsType {
-  length?: number,
-  sorter?: (incompleted: IncompletedType, options: SortArgsType) => PairType[],
-  criterion?: (sortedIncompleted: PairType[], options: CriterionArgsType) => IterableIterator<PairType>,
-  seed?: Scalar,
-  tolerance?: number,
-  preFilter?: FilterType,
-  postFilter?: FilterType,
+  length?: number;
+  sorter?: (incompleted: IncompletedType, options: SortArgsType) => PairType[];
+  criterion?: (sortedIncompleted: PairType[], options: CriterionArgsType) => IterableIterator<PairType>;
+  seed?: Scalar;
+  useCache?: Boolean;
+  tolerance?: number;
+  preFilter?: FilterType;
+  postFilter?: FilterType;
 };
