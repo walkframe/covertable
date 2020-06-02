@@ -170,4 +170,5 @@ Publish
 
 More info
 ===================
-See also: `walkframe/covertable - GitHub <https://github.com/walkframe/covertable>`__
+
+- `walkframe/covertable - GitHub <https://github.com/walkframe/covertable>`__

@@ -176,4 +176,4 @@ $ npm publish
 
 # More info
 
-See also: [walkframe/covertable - GitHub](https://github.com/walkframe/covertable)
+- [walkframe/covertable - GitHub](https://github.com/walkframe/covertable)
