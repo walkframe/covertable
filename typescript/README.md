@@ -59,8 +59,8 @@ Output:
 
 ```typescript
 [ // filtered
-  [ 'iphone', 'ios', 'Safari' ],
-  [ 'pixel', 'android', 'Safari' ]
+  [ 'pixel', 'android', 'Safari' ],
+  [ 'iphone', 'ios', 'Safari' ]
 ]
 ```
 
@@ -69,7 +69,7 @@ Output:
 You can specify `factors` as object type:
 
 ```typescript
-import { default as make, sorters } from "covertable";
+import { default as make, sorters, criteria } from "covertable";
 
 const machine = ['iphone', 'pixel'];
 const os = ['ios', 'android'];
@@ -87,9 +87,8 @@ Then the output will change as follows:
 
 ```typescript
 [ // filtered
-  { browser: 'Safari', machine: 'iphone', os: 'ios' },
-  { machine: 'pixel', os: 'ios', browser: 'Safari' },
-  { machine: 'pixel', os: 'android', browser: 'FireFox' }
+  { os: 'ios', browser: 'Safari', machine: 'iphone' },
+  { machine: 'pixel', browser: 'Safari', os: 'android' }
 ]
 ```
 
@@ -125,6 +124,7 @@ You can choice a sorter from the following:
 - `criteria.simple`: This criterion extracts any pairs that can be stored into the processing row.
 - `criteria.greedy`: This criterion attempts to make most efficient combinations. (default)
   - These combinations are not always shorter than `simple` criterion.
+  - It receives [tolerance](https://github.com/walkframe/covertable#tolerance) option.
 
 Not relevant options will be ignored.
 
