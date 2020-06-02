@@ -7,18 +7,20 @@ import pytest
 def call(
     factors,
     length,
-    sorter="sequential",
-    sort_kwargs={},
+    sorter="hash",
+    criterion="greedy",
+    options={},
     pre_filter=None,
     post_filter=None,
 ):
-    from covertable import make, sorters
+    from covertable import make, sorters, criteria
 
     return make(
         factors=factors,
         length=length,
         sorter=getattr(sorters, sorter),
-        sort_kwargs=sort_kwargs,
+        criterion=getattr(criteria, criterion),
+        options=options,
         progress=True,
         pre_filter=pre_filter,
         post_filter=post_filter,
@@ -104,9 +106,13 @@ class Test_covertable:
         ]
         len1, len2 = 0, 0
         for _ in range(0, 10):
-            sort_kwargs = {"seed": random.randint(0, 100000)}
-            rows1 = call(factors, length=2, sorter="greedy", sort_kwargs=sort_kwargs)
-            rows2 = call(factors, length=2, sorter="hash", sort_kwargs=sort_kwargs)
+            options = {"seed": random.randint(0, 100000)}
+            rows1 = call(
+                factors, length=2, sorter="hash", criterion="greedy", options=options
+            )
+            rows2 = call(
+                factors, length=2, sorter="hash", criterion="simple", options=options
+            )
             len1 += len(rows1)
             len2 += len(rows2)
         assert len1 < len2
@@ -121,9 +127,13 @@ class Test_covertable:
         ]
         len1, len2 = 0, 0
         for _ in range(0, 10):
-            sort_kwargs = {"seed": random.randint(0, 100000)}
-            rows1 = call(factors, length=3, sorter="greedy", sort_kwargs=sort_kwargs)
-            rows2 = call(factors, length=3, sorter="hash", sort_kwargs=sort_kwargs)
+            options = {"seed": random.randint(0, 100000)}
+            rows1 = call(
+                factors, length=3, sorter="hash", criterion="greedy", options=options
+            )
+            rows2 = call(
+                factors, length=3, sorter="hash", criterion="simple", options=options
+            )
             len1 += len(rows1)
             len2 += len(rows2)
         assert len1 < len2

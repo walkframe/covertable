@@ -15,13 +15,12 @@ $ npm install covertable --save
 ```javascript
 var module = require('covertable');
 var make = module.default;
-var sorters = module.sorters;
 
 var machine = ['iphone', 'pixel'];
 var os = ['ios', 'android'];
 var browser = ['FireFox', 'Chrome', 'Safari'];
 
-make([machine, os, browser], {sorter: sorters.random});
+make([machine, os, browser]);
 ```
 
 Output:
@@ -41,27 +40,27 @@ Output:
 ## Advanced demo in TypeScript:
 
 ```typescript
-import { default as make, sorters } from "covertable"
+import { default as make, sorters, criteria } from "covertable";
 
-const machine = ['iphone', 'pixel']
-const os = ['ios', 'android']
-const browser = ['FireFox', 'Chrome', 'Safari']
+const machine = ['iphone', 'pixel'];
+const os = ['ios', 'android'];
+const browser = ['FireFox', 'Chrome', 'Safari'];
 
 make([machine, os, browser], { // optional
   length: 2, // default: 2
-  sorter: sorters.greedy, // default: sorters.sequential
-  sortArgs: {seed: 100}, // default: {}
+  criterion: criteria.simple, // default: criteria.greedy
+  sorter: sorters.random, // default: sorters.hash
   preFilter: (row: any) => !(row[1] === 'android' && row[0] !== 'pixel'), // default: null
   postFilter: (row: any) => !(row[1] === 'ios' && row[2] !== 'Safari'), // default: null
-})
+});
 ```
 
 Output:
 
 ```typescript
 [ // filtered
-  [ 'iphone', 'ios', 'Safari' ],
-  [ 'pixel', 'android', 'Safari' ]
+  [ 'pixel', 'android', 'Safari' ],
+  [ 'iphone', 'ios', 'Safari' ]
 ]
 ```
 
@@ -70,28 +69,26 @@ Output:
 You can specify `factors` as object type:
 
 ```typescript
-import { default as make, sorters } from "covertable"
+import { default as make, sorters, criteria } from "covertable";
 
-const machine = ['iphone', 'pixel']
-const os = ['ios', 'android']
-const browser = ['FireFox', 'Chrome', 'Safari']
+const machine = ['iphone', 'pixel'];
+const os = ['ios', 'android'];
+const browser = ['FireFox', 'Chrome', 'Safari'];
 
 make({machine, os, browser}, { // optional
   length: 2, // default: 2
-  sorter: sorters.greedy, // default: sorters.sequential
-  sortArgs: {seed: 100}, // default: {}
+  seed: 100,
   preFilter: (row: any) => !(row.os === 'android' && row.machine !== 'pixel'), // default: null
   postFilter: (row: any) => !(row.os === 'ios' && row.browser !== 'Safari'), // default: null
-})
+});
 ```
 
 Then the output will change as follows:
 
 ```typescript
 [ // filtered
-  { browser: 'Safari', machine: 'iphone', os: 'ios' },
-  { machine: 'pixel', os: 'ios', browser: 'Safari' },
-  { machine: 'pixel', os: 'android', browser: 'FireFox' }
+  { os: 'ios', browser: 'Safari', machine: 'iphone' },
+  { machine: 'pixel', browser: 'Safari', os: 'android' }
 ]
 ```
 
@@ -113,16 +110,21 @@ Combinations depend on the order of spreading all over the rows.
 
 You can choice a sorter from the following:
 
-- sorters.sequential: It is simplest and fastest sorter. (default)
-- sorters.random: It makes different combinations everytime.
-- sorters.hash: It makes combinations depending on hash of the pair (and seed).
-- sorters.greedy: It attempts to make most efficient combinations, but slowest. (Warning: these combinations are not always shortest compared to the other sorter's one.)
+- sorters.random: It makes different combinations everytime. (fastest)
+- sorters.hash: It makes combinations depending on hash of the pair and seed. (default)
 
-### sortArgs
-`sortArgs` will be passed to sorter function mentioned above.
+  - It receives `seed` and `useCache`.
 
-- `seed`: It is a seed of hash. `sorters.hash` and `sorters.greedy` use this option.
-  When `seed` and factors are not changed, output combinations will not be changed.
+    - `seed` option decides the order of storing from unstored pairs, therefore it outputs the same result every time when number of factors and seed are the same.
+    - `useCache` option decide if using cache of hash or not. (default: `true`)
+      - It is around 30% faster than setting `useCache` **off**.
+
+### criterion
+
+- `criteria.simple`: This criterion extracts any pairs that can be stored into the processing row.
+- `criteria.greedy`: This criterion attempts to make most efficient combinations. (default)
+  - These combinations are not always shorter than `simple` criterion.
+  - It receives [tolerance](https://github.com/walkframe/covertable#tolerance) option.
 
 Not relevant options will be ignored.
 
@@ -172,8 +174,6 @@ $ npm version patch
 $ npm publish
 ```
 
-# History
+# More info
 
-- 1.0.x:
-
-  - First release 🎉
+- [walkframe/covertable - GitHub](https://github.com/walkframe/covertable)

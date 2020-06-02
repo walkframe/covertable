@@ -9,5 +9,4 @@ def random_comparer(_):
 
 
 def sort(incompleted, *args, **kwargs):
-    for pair in sorted(incompleted, key=random_comparer):
-        yield pair
+    return sorted(incompleted, key=random_comparer)

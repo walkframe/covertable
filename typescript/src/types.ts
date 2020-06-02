@@ -7,9 +7,56 @@ export type FactorsType = {
   [index: number]: any[];
 } | any[][]
 
-export type SerialsType = {
+export interface SerialsType {
   [key: string]: number[];
   [index: number]: number[];
-} | any[][]
+}
 
-export type IncompletedType = Map<string, number[]>
+export type FilterType = (row: {
+  [key: string]: any;
+  [index: number]: any;
+}) => boolean;
+
+export type PairType = number[];
+
+export type IncompletedType = Map<string, PairType>
+export type MD5CacheType = Map<string, string>
+export type ParentsType =  Map<number, Scalar>;
+
+export type CandidateType = [Scalar, number][];
+
+export interface RowType {
+  size: number;
+  isArray: Boolean;
+  filled: () => Boolean;
+  values: () => IterableIterator<number>;
+  storable: (candidate: CandidateType) => number | null;
+};
+
+export interface SortArgsType {
+  row: RowType;
+  parents: ParentsType;
+  length: number;
+  seed: Scalar;
+  useCache: Boolean;
+  md5Cache: MD5CacheType;
+};
+
+export interface CriterionArgsType {
+  row: RowType;
+  parents: ParentsType;
+  length: number;
+  incompleted: IncompletedType;
+  tolerance: number;
+};
+
+export interface OptionsType {
+  length?: number;
+  sorter?: (incompleted: IncompletedType, options: SortArgsType) => PairType[];
+  criterion?: (sortedIncompleted: PairType[], options: CriterionArgsType) => IterableIterator<PairType>;
+  seed?: Scalar;
+  useCache?: Boolean;
+  tolerance?: number;
+  preFilter?: FilterType;
+  postFilter?: FilterType;
+};

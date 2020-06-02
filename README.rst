@@ -23,40 +23,163 @@ Now there are 2 implementations:
 
 Go see the detail from these links.
 
-Versioning
-==========
-`covertable` may have a different version each implementation.
+Performance
+===================
 
-**X.Y.Z**
-
-:X: 
-
-  *Major version*
-
-  When is this number increased?:
-
-  This lib has been added a new function to every implementations.
-
-:Y: 
-
-  *Minor version*
-
-  When is this number increased?:
-
-  Bugs (or documents) in all implementations have been fixed.
-
-:Z: 
-
-  *Unique version*
-
-  When is this number increased?:
-
-  A bug (or document) in either implementation has been fixed.
+.. note::
   
-  e.g. An implementation in Python is fixed: `1.0.0` -> `1.0.1`
+  - The following data was measured in Python 3.7.7 and ``3.1 GHz 6 Cores Intel Core i5``.
+  - TypeScript(JavaScript) version is around 2 times slower than Python version.
+
+
+.. list-table:: Number and time of combinations. 
+   :widths: 1 3 3 3 
+   :header-rows: 1
+   :stub-columns: 1
+
+   * - Combination
+     - Default
+     - Minimum case
+     - Fastest case
+   * - 3^4
+     - - num: ``9``
+       - cond: *default*
+       - time: ``0.0006s``
+     - - num: ``9``
+       - cond: *default*
+       - time: ``0.0006s``
+     - - num: ``14``
+       - cond: ``sorter: random, criterion: simple``
+       - time: ``0.0005s``
+   * - 3^13
+     - - num: ``19``
+       - cond: *default*
+       - time: ``0.03s``
+     - - num: ``17``
+       - cond: ``seed: 1084``
+       - time: ``0.03s``
+     - - num: ``21``
+       - cond: ``sorter: random, criterion: simple``
+       - time: ``0.003s``
+   * - 4^15 + 3^17 + 2^29
+     - - num: ``36``
+       - cond: *default*
+       - time: ``7.41s``
+     - - num: ``34``
+       - cond: ``seed: 19``
+       - time: ``7.47s``
+     - - num: ``42``
+       - cond: ``sorter: random, criterion: simple``
+       - time: ``0.40s``
+   * - 4^1 + 3^39 + 2^35
+     - - num: ``27``
+       - cond: *default* 
+       - time: ``15.19s``
+     - - num: ``26``
+       - cond: ``seed: 14``
+       - time: ``14.70s``
+     - - num: ``30``
+       - cond: ``sorter: random, criterion: simple``
+       - time: ``0.51s``
+   * - 2^100
+     - - num: ``14``
+       - cond: *default*
+       - time: ``23.97s``
+     - - num: ``12``
+       - cond: ``seed: 6, criterion: simple``
+       - time: ``0.63s``
+     - - num: ``13``
+       - cond: ``sorter: random, criterion: simple``
+       - time: ``0.48s``
+   * - 10^20
+     - - num: ``198``
+       - cond: *default*
+       - time: ``14.28s``
+     - - num: ``195``
+       - cond: ``seed: 1139``
+       - time: ``14.48s``
+     - - num: ``284``
+       - cond: ``sorter: random, criterion: simple``
+       - time: ``0.53s``
+
+
+Tolerance
+----------------
+
+If you use `greedy` criterion and specify a positive integer to `tolerance` option,
+it can increase the speed at the expense of the number of combinations.
+
+The greater the number, the greater the speed.
+
+.. list-table:: Table for the case when combinations are created from ``10^20`` test cases.
+   :widths: 1 3 3  
+   :header-rows: 1
+   :stub-columns: 1
+
+   * - tolerance
+     - num
+     - time
+   * - 0 (default)
+     - ``195``
+     - ``14.48s``
+   * - 1
+     - ``199``
+     - ``12.45s``
+   * - 2
+     - ``201``
+     - ``9.48s``
+   * - 3
+     - ``201``
+     - ``7.17s``
+   * - 4
+     - ``207``
+     - ``5.70s``
+   * - 5
+     - ``212``
+     - ``4.58s``
+   * - 6
+     - ``212``
+     - ``3.65s``
+   * - 7
+     - ``216``
+     - ``3.07s``
+   * - 8
+     - ``223``
+     - ``2.57s``
+   * - 9
+     - ``226``
+     - ``2.14s``
+   * - 10
+     - ``233``
+     - ``1.84s``
+   * - 11
+     - ``237``
+     - ``1.61s``
+   * - 12
+     - ``243``
+     - ``1.43s``
+   * - 13
+     - ``249``
+     - ``1.28s``
+   * - 14
+     - ``254``
+     - ``1.19s``
+
 
 History
 =======
+:2.0.x:
+
+  - sorter option splitted into sorter and criterion.
+
+    - e.g. greedy -> hash sorter + greedy criterion.
+
+  - `greedy` method is much faster than before.
+  - `greedy` method got an option `tolerance` to balance speed and results.
+
+  - sequenctial sorter was dropped.
+    
+    - The number of combinations would be huge in TypeScript.
 
 :1.1.x:
 
