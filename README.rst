@@ -108,7 +108,7 @@ Tolerance
 If you use `greedy` criterion and specify a positive integer to `tolerance` option,
 it can increase the speed at the expense of the number of combinations.
 
-The greater the number, the greater the speed.
+The greater the `tolerance`, the shorter the speed and bigger the number of combinations.
 
 .. list-table:: Table for the case when combinations are created from ``10^20`` test cases.
    :widths: 1 3 3  
