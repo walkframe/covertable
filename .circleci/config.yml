@@ -37,11 +37,6 @@ jobs:
   python_deploy:
     docker:
       - image: circleci/python:3.7.3
-    filters:
-      branches:
-        only: master
-    requires:
-      - python_test
     steps:
       - checkout
       - restore_cache:
@@ -103,4 +98,9 @@ workflows:
       - node_test
   deploy:
     jobs:
-      - python_deploy
+      - python_deploy:
+          filters:
+            branches:
+              only: master
+          requires:
+            - python_test
