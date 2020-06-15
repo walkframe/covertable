@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  python:
+  python_test:
     docker:
       - image: circleci/python:3.7.3
     steps:
@@ -34,6 +34,11 @@ jobs:
             cd python/
             venv/bin/tox -e py37 -e black-check -e cov -e codecov
 
+  python_deploy:
+    docker:
+      - image: circleci/python:3.7.3
+    steps:
+      - checkout
       - run:
           name: build and push
           command: |
@@ -41,7 +46,7 @@ jobs:
             venv/bin/python ./setup.py sdist bdist_wheel
             venv/bin/twine upload dist/* --non-interactive --skip-existing
 
-  node:
+  node_test:
     docker:
       - image: circleci/node:stretch
     steps:
@@ -72,5 +77,8 @@ workflows:
   version: 2
   build_and_test:
     jobs:
-      - python
-      - node
+      - python_test
+      - node_test
+  deploy:
+    jobs:
+      - python_deploy
