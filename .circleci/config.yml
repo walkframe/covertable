@@ -37,8 +37,30 @@ jobs:
   python_deploy:
     docker:
       - image: circleci/python:3.7.3
+    filters:
+      branches:
+        only: master
+    requires:
+      - python_test
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            - venv-{{ checksum "python/ci_requirements.txt"}}
+
+      - run:
+          name: install dependencies
+          command: |
+            cd python/
+            python -m venv venv || true
+            venv/bin/pip install -U pip
+            venv/bin/pip install -r ci_requirements.txt
+
+      - save_cache:
+          paths:
+            - python/venv
+          key: venv-{{ checksum "python/ci_requirements.txt"}}
+
       - run:
           name: build and push
           command: |
