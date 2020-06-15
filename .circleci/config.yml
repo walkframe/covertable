@@ -103,4 +103,4 @@ workflows:
             branches:
               only: master
           requires:
-            - python_test
+            - test
