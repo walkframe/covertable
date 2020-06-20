@@ -1,3 +1,7 @@
+.. image:: ./covertable.png
+   :alt: covertable logo
+
+
 .. image:: https://circleci.com/gh/walkframe/covertable.svg?style=shield
   :target: https://circleci.com/gh/walkframe/covertable
 
