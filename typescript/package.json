@@ -1,6 +1,6 @@
 {
   "name": "covertable",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "It makes combinations covering pairs for pairwise testing.",
   "homepage": "https://github.com/walkframe/covertable",
   "repository": {
@@ -61,7 +61,7 @@
   "devDependencies": {
     "@types/jest": "^25.2.3",
     "@types/js-md5": "^0.4.2",
-    "codecov": "^3.7.0",
+    "codecov": "^3.7.1",
     "jest": "^26.0.1",
     "nyc": "^15.1.0",
     "ts-jest": "^26.1.0",
