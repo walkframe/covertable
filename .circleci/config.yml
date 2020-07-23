@@ -119,7 +119,7 @@ jobs:
           command: |
             cd typescript/
             npm run build
-            npm publish
+            npm publish || true
 
 workflows:
   version: 2
