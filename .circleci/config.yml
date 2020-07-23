@@ -134,8 +134,8 @@ workflows:
           requires:
             - python_test
       - node_deploy:
-#          filters:
-#            branches:
-#              only: master
+          filters:
+            branches:
+              only: master
           requires:
             - node_test
