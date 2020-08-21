@@ -19,8 +19,7 @@ export type FilterType = (row: {
 
 export type PairType = number[];
 
-export type IncompletedType = Map<string, PairType>
-export type MD5CacheType = Map<string, string>
+export type IncompletedType = Map<string, PairType>;
 export type ParentsType =  Map<number, Scalar>;
 
 export type CandidateType = [Scalar, number][];
@@ -33,29 +32,27 @@ export interface RowType {
   storable: (candidate: CandidateType) => number | null;
 };
 
+export type SorterType = (
+  pairs: PairType[],
+  sortArgs: SortArgsType,
+) => PairType[];
+
 export interface SortArgsType {
-  row: RowType;
-  parents: ParentsType;
-  length: number;
   seed: Scalar;
-  useCache: Boolean;
-  md5Cache: MD5CacheType;
 };
 
 export interface CriterionArgsType {
   row: RowType;
   parents: ParentsType;
   length: number;
-  incompleted: IncompletedType;
   tolerance: number;
 };
 
 export interface OptionsType {
   length?: number;
-  sorter?: (incompleted: IncompletedType, options: SortArgsType) => PairType[];
-  criterion?: (sortedIncompleted: PairType[], options: CriterionArgsType) => IterableIterator<PairType>;
+  sorter?: SorterType;
+  criterion?: (incompleted: IncompletedType, options: CriterionArgsType) => IterableIterator<PairType>;
   seed?: Scalar;
-  useCache?: Boolean;
   tolerance?: number;
   preFilter?: FilterType;
   postFilter?: FilterType;

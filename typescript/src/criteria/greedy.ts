@@ -13,18 +13,17 @@ const getNumRemovablePairs = (indexes: Set<number>, incompleted: IncompletedType
   return num;
 };
 
-
 export default function* (
-  sortedIncompleted: PairType[],
+  incompleted: IncompletedType,
   criterionArgs: CriterionArgsType,
 ): Generator<PairType> {
-  let {row, parents, incompleted, length, tolerance} = criterionArgs;
+  let {row, parents, length, tolerance} = criterionArgs;
 
   while (true) {
     let maxNumPairs: number | null = null;
     let efficientPair: PairType | null = null;
 
-    for (let pair of sortedIncompleted) {
+    for (let pair of incompleted.values()) {
       const rowSize = row.size;
       if (rowSize === 0) {
         yield pair;
