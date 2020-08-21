@@ -8,7 +8,6 @@ import {
   Scalar, 
   Dict, 
   IncompletedType, 
-  MD5CacheType, 
   ParentsType, 
   CandidateType,
   RowType,
@@ -99,12 +98,29 @@ class Row extends Map<Scalar, number> implements RowType {
     return num;
   }
 
+  toMap (): Map<Scalar, number[]> {
+    const result: Map<Scalar, number[]> = new Map();
+    for (let [key, index] of this.entries()) {
+      // @ts-ignore TS7015
+      result.set(key, this.factors[key][index - this.serials[key][0]]);
+    }
+    return result;
+  }
+
   toObject () {
     const obj: Dict = {};
-    for (let [key, value] of this.restore().entries()) {
+    for (let [key, value] of this.toMap().entries()) {
       obj[key] = value;
     }
     return obj;
+  }
+
+  restore() {
+    const map = this.toMap();
+    if (this.isArray) {
+      return getItems(map).sort().map(([_, v]) => v);
+    }
+    return this.toObject();
   }
 
   complement (): Row {
@@ -121,25 +137,15 @@ class Row extends Map<Scalar, number> implements RowType {
     }
     return this;
   }
-
-  restore (): Map<Scalar, number[]> {
-    const result: Map<Scalar, number[]> = new Map();
-    for (let [key, index] of this.entries()) {
-      // @ts-ignore TS7015
-      result.set(key, this.factors[key][index - this.serials[key][0]]);
-    }
-    return result;
-  }
 };
 
-const make = (factors: FactorsType, options: OptionsType = {}) => {
+const makeAsync = function* (factors: FactorsType, options: OptionsType = {}) {
   let {length=2, sorter=sorters.hash, criterion=criteria.greedy, seed='', tolerance=0} = options;
 
   const {preFilter, postFilter} = options;
   const [indexes, parents] = convertFactorsToSerials(factors);
   const incompleted = makeIncompleted(indexes, length, sorter, seed); // {"1,2": [1,2], "3,4": [3,4]}
 
-  const rows: Row[] = [];
   let row: Row = new Row([], factors, indexes, preFilter);
 
   for (let [pairStr, pair] of incompleted.entries()) {
@@ -149,12 +155,13 @@ const make = (factors: FactorsType, options: OptionsType = {}) => {
   }
   while (incompleted.size) {
     if (row.filled()) {
-      rows.push(row);
+      if (!postFilter || postFilter(row.toObject())) {
+        yield row.restore();
+      }
       row = row.New([]);
     }
     let finished = true;
-
-    for (let pair of criterion([... incompleted.values()], {row, parents, length, incompleted, tolerance})) {
+    for (let pair of criterion(incompleted, {row, parents, length, tolerance})) {
       if (row.filled()) {
         finished = false;
         break;
@@ -173,22 +180,19 @@ const make = (factors: FactorsType, options: OptionsType = {}) => {
     }
   }
   if (row.size) {
-    rows.push(row.complement());
-  }
-  const result: any[] = [];
-  for (let row of rows) {
-    const restored = row.restore();
-    const restoredObject = row.toObject();
-    if (postFilter && !postFilter(restoredObject)) {
-      continue;
-    }
-    if (row.isArray) {
-      result.push(getItems(restored).sort().map(([_, v]) => v));
-    } else {
-      result.push(restoredObject);
+    row = row.complement();
+    if (!postFilter || postFilter(row.toObject())) {
+      yield row.restore();
     }
   }
-  return result;
 };
 
-export {make as default, sorters, criteria};
+const make = (factors: FactorsType, options: OptionsType = {}) => {
+  const rows = [];
+  for (const row of makeAsync(factors, options)) {
+    rows.push(row);
+  }
+  return rows;
+}
+
+export {make as default, makeAsync, sorters, criteria};

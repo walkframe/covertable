@@ -27,12 +27,12 @@ Output:
 
 ```javascript
 [
-  [ 'iphone', 'android', 'Safari' ],
-  [ 'iphone', 'ios', 'FireFox' ],
-  [ 'iphone', 'android', 'Chrome' ],
-  [ 'pixel', 'ios', 'Chrome' ],
+  [ 'pixel', 'android', 'Chrome' ],
+  [ 'pixel', 'ios', 'Safari' ],
   [ 'pixel', 'android', 'FireFox' ],
-  [ 'pixel', 'ios', 'Safari' ]
+  [ 'iphone', 'android', 'Safari' ],
+  [ 'iphone', 'ios', 'Chrome' ],
+  [ 'iphone', 'ios', 'FireFox' ]
 ]
 ```
 
@@ -40,12 +40,13 @@ Output:
 ## Advanced demo in TypeScript:
 
 ```typescript
-import { default as make, sorters, criteria } from "covertable";
+import { default as make, makeAsync, sorters, criteria } from "covertable";
 
 const machine = ['iphone', 'pixel'];
 const os = ['ios', 'android'];
 const browser = ['FireFox', 'Chrome', 'Safari'];
 
+// You can use also makeAsync(generator). It returns the row at the time it's made.
 make([machine, os, browser], { // optional
   length: 2, // default: 2
   criterion: criteria.simple, // default: criteria.greedy
@@ -59,8 +60,9 @@ Output:
 
 ```typescript
 [ // filtered
-  [ 'pixel', 'android', 'Safari' ],
-  [ 'iphone', 'ios', 'Safari' ]
+  [ 'iphone', 'ios', 'Safari' ],
+  [ 'pixel', 'android', 'Chrome' ],
+  [ 'pixel', 'ios', 'Safari' ]
 ]
 ```
 
@@ -113,11 +115,8 @@ You can choice a sorter from the following:
 - sorters.random: It makes different combinations everytime. (fastest)
 - sorters.hash: It makes combinations depending on hash of the pair and seed. (default)
 
-  - It receives `seed` and `useCache`.
-
+  - It receives `seed`.
     - `seed` option decides the order of storing from unstored pairs, therefore it outputs the same result every time when number of factors and seed are the same.
-    - `useCache` option decide if using cache of hash or not. (default: `true`)
-      - It is around 30% faster than setting `useCache` **off**.
 
 ### criterion
 

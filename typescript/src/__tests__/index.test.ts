@@ -89,7 +89,7 @@ test('prefilter excludes specified pairs before', () => {
   }
 });
 
-test('prefilter never matching throwing an exception', () => {
+test('never matching prefilter throws an exception', () => {
   const factors = [
     ["a", "b", "c"],
     ["d", "e"],
