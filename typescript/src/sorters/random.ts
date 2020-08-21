@@ -5,8 +5,8 @@ const comparer = (a: any, b: any) => {
 };
 
 export default function (
-  incompleted: Map<string, PairType>,
+  pairs: PairType[],
   sortArgs: SortArgsType,
 ) {
-  return [... incompleted.values()].sort(comparer);
+  return pairs.sort(comparer);
 };

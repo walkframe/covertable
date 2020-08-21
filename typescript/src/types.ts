@@ -33,13 +33,13 @@ export interface RowType {
   storable: (candidate: CandidateType) => number | null;
 };
 
+export type SorterType = (
+  pairs: PairType[],
+  sortArgs: SortArgsType,
+) => PairType[]
+
 export interface SortArgsType {
-  row: RowType;
-  parents: ParentsType;
-  length: number;
   seed: Scalar;
-  useCache: Boolean;
-  md5Cache: MD5CacheType;
 };
 
 export interface CriterionArgsType {
@@ -52,10 +52,9 @@ export interface CriterionArgsType {
 
 export interface OptionsType {
   length?: number;
-  sorter?: (incompleted: IncompletedType, options: SortArgsType) => PairType[];
+  sorter?: SorterType;
   criterion?: (sortedIncompleted: PairType[], options: CriterionArgsType) => IterableIterator<PairType>;
   seed?: Scalar;
-  useCache?: Boolean;
   tolerance?: number;
   preFilter?: FilterType;
   postFilter?: FilterType;

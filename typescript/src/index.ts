@@ -14,6 +14,8 @@ import {
   RowType,
   OptionsType,
   FilterType,
+  PairType,
+  SorterType,
 } from './types';
 
 const convertFactorsToSerials = (factors: FactorsType): [SerialsType, ParentsType] => {
@@ -33,15 +35,19 @@ const convertFactorsToSerials = (factors: FactorsType): [SerialsType, ParentsTyp
   return [serials, parents];
 };
 
-const makeIncompleted = (serials: SerialsType, length: number): IncompletedType => {
-  const incompleted: IncompletedType = new Map();
+const makeIncompleted = (serials: SerialsType, length: number, sorter: SorterType, seed: Scalar): IncompletedType => {
+  const pairs: PairType[] = [];
   const allKeys = getItems(serials).map(([k, _]) => k);
   for (let keys of combinations(allKeys, length)) {
     const comb = range(0, length).map(i => serials[keys[i]]);
     for (let pair of product(... comb)) {
       pair = pair.sort(ascOrder);
-      incompleted.set(pair.toString(), pair);
+      pairs.push(pair);
     }
+  }
+  const incompleted: IncompletedType = new Map();
+  for (let pair of sorter(pairs, {seed})) {
+    incompleted.set(pair.toString(), pair);
   }
   return incompleted;
 };
@@ -127,12 +133,11 @@ class Row extends Map<Scalar, number> implements RowType {
 };
 
 const make = (factors: FactorsType, options: OptionsType = {}) => {
-  let {length=2, sorter=sorters.hash, criterion=criteria.greedy, seed='', tolerance=0, useCache=true} = options;
+  let {length=2, sorter=sorters.hash, criterion=criteria.greedy, seed='', tolerance=0} = options;
 
   const {preFilter, postFilter} = options;
   const [indexes, parents] = convertFactorsToSerials(factors);
-  const incompleted = makeIncompleted(indexes, length); // {"1,2": [1,2], "3,4": [3,4]}
-  const md5Cache: MD5CacheType = new Map();
+  const incompleted = makeIncompleted(indexes, length, sorter, seed); // {"1,2": [1,2], "3,4": [3,4]}
 
   const rows: Row[] = [];
   let row: Row = new Row([], factors, indexes, preFilter);
@@ -149,8 +154,7 @@ const make = (factors: FactorsType, options: OptionsType = {}) => {
     }
     let finished = true;
 
-    const sortedIncompleted = sorter(incompleted, {row, parents, length, seed, md5Cache, useCache});
-    for (let pair of criterion(sortedIncompleted, {row, parents, length, incompleted, tolerance})) {
+    for (let pair of criterion([... incompleted.values()], {row, parents, length, incompleted, tolerance})) {
       if (row.filled()) {
         finished = false;
         break;
