@@ -13,8 +13,8 @@ $ npm install covertable --save
 ## Simple demo in Node.js:
 
 ```javascript
-var module = require('covertable');
-var make = module.default;
+var covertable = require('covertable');
+var make = covertable.default;
 
 var machine = ['iphone', 'pixel'];
 var os = ['ios', 'android'];
@@ -36,7 +36,6 @@ Output:
 ]
 ```
 
-
 ## Advanced demo in TypeScript:
 
 ```typescript
@@ -46,7 +45,6 @@ const machine = ['iphone', 'pixel'];
 const os = ['ios', 'android'];
 const browser = ['FireFox', 'Chrome', 'Safari'];
 
-// You can use also makeAsync(generator). It returns the row at the time it's made.
 make([machine, os, browser], { // optional
   length: 2, // default: 2
   criterion: criteria.simple, // default: criteria.greedy
@@ -66,6 +64,10 @@ Output:
 ]
 ```
 
+You can use also `makeAsync` function (generator).
+- It receives the same arguments with `make` function. 
+- It returns the row at the time it's made.
+
 ## Object input and output
 
 You can specify `factors` as object type:
@@ -78,8 +80,7 @@ const os = ['ios', 'android'];
 const browser = ['FireFox', 'Chrome', 'Safari'];
 
 make({machine, os, browser}, { // optional
-  length: 2, // default: 2
-  seed: 100,
+  length: 2,
   preFilter: (row: any) => !(row.os === 'android' && row.machine !== 'pixel'), // default: null
   postFilter: (row: any) => !(row.os === 'ios' && row.browser !== 'Safari'), // default: null
 });
@@ -89,8 +90,9 @@ Then the output will change as follows:
 
 ```typescript
 [ // filtered
-  { os: 'ios', browser: 'Safari', machine: 'iphone' },
-  { machine: 'pixel', browser: 'Safari', os: 'android' }
+  { machine: 'iphone', browser: 'Safari', os: 'ios' },
+  { machine: 'pixel', browser: 'Chrome', os: 'android' },
+  { machine: 'pixel', browser: 'Safari', os: 'ios' },
 ]
 ```
 

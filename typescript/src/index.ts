@@ -116,8 +116,8 @@ class Row extends Map<Scalar, number> implements RowType {
   }
 
   restore() {
-    const map = this.toMap();
     if (this.isArray) {
+      const map = this.toMap();
       return getItems(map).sort().map(([_, v]) => v);
     }
     return this.toObject();
@@ -188,11 +188,7 @@ const makeAsync = function* (factors: FactorsType, options: OptionsType = {}) {
 };
 
 const make = (factors: FactorsType, options: OptionsType = {}) => {
-  const rows = [];
-  for (const row of makeAsync(factors, options)) {
-    rows.push(row);
-  }
-  return rows;
+  return [... makeAsync(factors, options)];
 }
 
 export {make as default, makeAsync, sorters, criteria};
