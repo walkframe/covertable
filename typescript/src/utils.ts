@@ -24,17 +24,26 @@ export const zip = (... lists: [... any[]]): [... any[]] => {
 }
 
 export const combinations = <T>(list: T[], length: number): T[][] => {
+  const last = length - 1;
   const pairs: T[][] = [];
-  const set = (pair: T[], index: number) => {
-    if (pair.length == length) {
-      pairs.push(pair);
-      return;
+  const indices = range(0, length);
+  while (indices[0] < list.length - last) {
+    pairs.push(indices.map((i) => list[i]));
+    indices[last]++;
+
+    // <- carry-up loop
+    for (let i=last; i>0; i--) {
+      if (indices[i] >= list.length - (last - i)) {
+        indices[i-1]++;
+      }
     }
-    for (let i = index; i < list.length; i++) {
-      set([... pair, list[i]], i + 1);
+    // -> reset loop
+    for (let i=1; i<=last; i++) {
+      if (indices[i] >= list.length - (last - i)) {
+        indices[i] = indices[i-1] + 1;
+      }
     }
   }
-  set([], 0);
   return pairs;
 }
 

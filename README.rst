@@ -32,8 +32,7 @@ Performance
 .. note::
   
   - The following data was measured in Python 3.7.7 and ``3.1 GHz 6 Cores Intel Core i5``.
-  - TypeScript(JavaScript) version is around 2 times slower than Python version.
-
+  - TypeScript(JavaScript) implementation is about 2 times slower than Python implementation because of the builtin functions.
 
 .. list-table:: Number and time of combinations. 
    :widths: 1 3 3 3 
