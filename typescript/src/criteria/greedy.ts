@@ -1,11 +1,11 @@
 import {CriterionArgsType, IncompletedType, PairType} from '../types';
-import {getCandidate, combinations, ascOrder} from '../utils';
+import {getCandidate, combinations, ascOrder, unique} from '../utils';
 
 const getNumRemovablePairs = (indexes: Set<number>, incompleted: IncompletedType, length: number) => {
   let num = 0;
-  const removingKeys = combinations([... indexes].sort(ascOrder), length);
-  for (let vs of removingKeys) {
-    const key = vs.toString();
+  const removingKeys = combinations([... indexes], length);
+  for (let pair of removingKeys) {
+    const key = unique(pair);
     if (incompleted.has(key)) {
       num++;
     }
@@ -23,7 +23,7 @@ export default function* (
     let maxNumPairs: number | null = null;
     let efficientPair: PairType | null = null;
 
-    for (let pair of incompleted.values()) {
+    for (let [pairKey, pair] of incompleted.entries()) {
       const rowSize = row.size;
       if (rowSize === 0) {
         yield pair;
@@ -39,7 +39,7 @@ export default function* (
       }
 
       if (storable === 0) {
-        incompleted.delete(pair.sort(ascOrder).toString());
+        incompleted.delete(pairKey);
         continue;
       }
       

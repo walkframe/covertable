@@ -1,7 +1,7 @@
 
 // @ts-ignore 2307
 export {hex as md5} from 'js-md5';
-import {FactorsType, Scalar, ParentsType, CandidateType} from './types';
+import {FactorsType, Scalar, ParentsType, CandidateType, PairType} from './types';
 
 // https://gist.github.com/righ/71e32be8e33f74bde516c06f80c941e8
 
@@ -91,4 +91,36 @@ export const getCandidate = (pair: number[], parents: ParentsType): CandidateTyp
   return zip(keys, pair);
 }
 
-export const ascOrder = (a:number, b:number) => a > b ? 1 : -1;
+export const ascOrder = (a: number, b: number) => a > b ? 1 : -1;
+
+export const unique = (pair: PairType): Scalar => {
+  const total = pair.reduce((a, b) => a * b);
+  if (Number.isSafeInteger(total)) {
+    return total;
+  }
+  return pair.sort(ascOrder).toString();
+}
+
+const isPrime = (n: number) => {
+  if (n % 2 === 0) {
+    return false;
+  }
+  let dividers = range(3, Math.sqrt(n) + 1, 2);
+  while (dividers.length > 0) {
+    const div = dividers[0];
+    if (n % div === 0) {
+      return false;
+    }
+    dividers = dividers.filter((n) => n % div !== 0);
+  }
+  return true;
+};
+
+export function* primeGenerator(): Generator<number> {
+  yield 2;
+  for (let cand = 3; true; cand += 2) {
+    if (isPrime(cand)) {
+      yield cand;
+    }
+  }
+}

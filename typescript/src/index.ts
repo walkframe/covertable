@@ -1,14 +1,16 @@
 import * as sorters from './sorters/index';
 import * as criteria from './criteria/index';
 import * as exceptions from './exceptions';
-import {range, product, combinations, copy, len, getItems, getCandidate, ascOrder} from './utils';
+import {range, product, combinations, copy, len, getItems, getCandidate, ascOrder, primeGenerator, unique} from './utils';
 import {
+  IndicesType,
   FactorsType, 
   SerialsType, 
+  MappingTypes,
   Scalar, 
   Dict, 
   IncompletedType, 
-  ParentsType, 
+  ParentsType,
   CandidateType,
   RowType,
   OptionsType,
@@ -17,36 +19,47 @@ import {
   SorterType,
 } from './types';
 
-const convertFactorsToSerials = (factors: FactorsType): [SerialsType, ParentsType] => {
+const serialize = (factors: FactorsType): MappingTypes => {
   let origin = 0;
-  const serials: SerialsType = copy(factors);
-  const parents: Map<number, Scalar> = new Map();
+  const serials: SerialsType = new Map();
+  const indices: IndicesType = new Map();
+  const parents: ParentsType = new Map();
+
+  const primer = primeGenerator();
   getItems(factors).map(([subscript, factorList]) => {
     const length = len(factorList);
     const serialList: number[] = [];
-    range(origin, origin + length).map((serial) => {
+    range(origin, origin + length).map((index) => {
+      const serial = primer.next().value;
       serialList.push(serial);
       parents.set(serial, subscript);
+      indices.set(serial, index)
     })
-    serials[subscript] = serialList;
+    serials.set(subscript, serialList);
     origin += length;
   })
-  return [serials, parents];
+  return {serials, parents, indices};
 };
 
-const makeIncompleted = (serials: SerialsType, length: number, sorter: SorterType, seed: Scalar): IncompletedType => {
+const makeIncompleted = (
+  mappings: MappingTypes, 
+  length: number, 
+  sorter: SorterType, 
+  seed: Scalar,
+): IncompletedType => {
+  const {serials, indices} = mappings;
   const pairs: PairType[] = [];
   const allKeys = getItems(serials).map(([k, _]) => k);
   for (let keys of combinations(allKeys, length)) {
-    const comb = range(0, length).map(i => serials[keys[i]]);
+    const comb = range(0, length).map(i => serials.get(keys[i]) as PairType);
     for (let pair of product(... comb)) {
       pair = pair.sort(ascOrder);
       pairs.push(pair);
     }
   }
   const incompleted: IncompletedType = new Map();
-  for (let pair of sorter(pairs, {seed})) {
-    incompleted.set(pair.toString(), pair);
+  for (let pair of sorter(pairs, {seed, indices})) {
+    incompleted.set(unique(pair), pair);
   }
   return incompleted;
 };
@@ -56,9 +69,9 @@ class Row extends Map<Scalar, number> implements RowType {
   private length: number;
   public isArray: Boolean;
   constructor (
-    row: CandidateType, 
+    row: CandidateType,
+    private mappings: MappingTypes,
     private factors: FactorsType,
-    private serials: SerialsType,
     public preFilter?: FilterType,
   ) {
     super();
@@ -74,7 +87,7 @@ class Row extends Map<Scalar, number> implements RowType {
   }
 
   New (row?: CandidateType) {
-    return new Row(row || [], this.factors, this.serials, this.preFilter);
+    return new Row(row || [], this.mappings, this.factors, this.preFilter);
   }
 
   storable (candidate: CandidateType) {
@@ -100,9 +113,13 @@ class Row extends Map<Scalar, number> implements RowType {
 
   toMap (): Map<Scalar, number[]> {
     const result: Map<Scalar, number[]> = new Map();
-    for (let [key, index] of this.entries()) {
+    const {indices, serials} = this.mappings;
+    for (let [key, serial] of this.entries()) {
+      const index = indices.get(serial) as number;
+      const first = indices.get((serials.get(key) as PairType)[0]);
+      //const indices = (serials.get(key) as PairType).map((s) => indices.get(s)) as number[];
       // @ts-ignore TS7015
-      result.set(key, this.factors[key][index - this.serials[key][0]]);
+      result.set(key, this.factors[key][index - first]);
     }
     return result;
   }
@@ -124,7 +141,7 @@ class Row extends Map<Scalar, number> implements RowType {
   }
 
   complement (): Row {
-    getItems(this.serials).map(([k, vs]) => {
+    getItems(this.mappings.serials).map(([k, vs]) => {
       for (let v of vs) {
         if (this.storable([[k, v]])) {
           this.set(k, v);
@@ -143,14 +160,15 @@ const makeAsync = function* (factors: FactorsType, options: OptionsType = {}) {
   let {length=2, sorter=sorters.hash, criterion=criteria.greedy, seed='', tolerance=0} = options;
 
   const {preFilter, postFilter} = options;
-  const [indexes, parents] = convertFactorsToSerials(factors);
-  const incompleted = makeIncompleted(indexes, length, sorter, seed); // {"1,2": [1,2], "3,4": [3,4]}
+  const mappings = serialize(factors);
+  const {parents} = mappings;
+  const incompleted = makeIncompleted(mappings, length, sorter, seed); // {"1,2": [1,2], "3,4": [3,4]}
 
-  let row: Row = new Row([], factors, indexes, preFilter);
+  let row: Row = new Row([], mappings, factors, preFilter);
 
-  for (let [pairStr, pair] of incompleted.entries()) {
+  for (let [pairKey, pair] of incompleted.entries()) {
     if (!row.storable(getCandidate(pair, parents))) {
-      incompleted.delete(pairStr);
+      incompleted.delete(pairKey);
     }
   }
   while (incompleted.size) {
@@ -171,8 +189,8 @@ const makeAsync = function* (factors: FactorsType, options: OptionsType = {}) {
         row.set(key, value);
       }
       
-      for (let vs of combinations([... row.values()].sort(ascOrder), length)) {
-        incompleted.delete(vs.toString());
+      for (let p of combinations([... row.values()], length)) {
+        incompleted.delete(unique(p));
       }
     }
     if (finished && !row.filled()) {
