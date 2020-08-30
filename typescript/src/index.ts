@@ -117,7 +117,6 @@ class Row extends Map<Scalar, number> implements RowType {
     for (let [key, serial] of this.entries()) {
       const index = indices.get(serial) as number;
       const first = indices.get((serials.get(key) as PairType)[0]);
-      //const indices = (serials.get(key) as PairType).map((s) => indices.get(s)) as number[];
       // @ts-ignore TS7015
       result.set(key, this.factors[key][index - first]);
     }
