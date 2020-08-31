@@ -8,10 +8,10 @@ export default function (
   pairs: PairType[],
   sortArgs: SortArgsType,
 ): PairType[] {
-  const {seed} = sortArgs;
+  const {seed, indices} = sortArgs;
   const comparer = (a: PairType, b: PairType) => {
-    const aKey = `${a} ${seed}`;
-    const bKey = `${b} ${seed}`;
+    const aKey = `${a.map((n) => indices.get(n) as number)} ${seed}`;
+    const bKey = `${b.map((n) => indices.get(n) as number)} ${seed}`;
     return md5(aKey) > md5(bKey) ? 1 : -1;
   }
   return pairs.sort(comparer);

@@ -7,9 +7,14 @@ export type FactorsType = {
   [index: number]: any[];
 } | any[][]
 
-export interface SerialsType {
-  [key: string]: number[];
-  [index: number]: number[];
+export type SerialsType = Map<Scalar, PairType>;
+export type ParentsType = Map<number, Scalar>;
+export type IndicesType = Map<number, number>;
+
+export type MappingTypes = {
+  serials: SerialsType;
+  parents: ParentsType;
+  indices: IndicesType;
 }
 
 export type FilterType = (row: {
@@ -19,8 +24,8 @@ export type FilterType = (row: {
 
 export type PairType = number[];
 
-export type IncompletedType = Map<string, PairType>;
-export type ParentsType =  Map<number, Scalar>;
+export type IncompletedType = Map<Scalar, PairType>;
+
 
 export type CandidateType = [Scalar, number][];
 
@@ -39,6 +44,7 @@ export type SorterType = (
 
 export interface SortArgsType {
   seed: Scalar;
+  indices: IndicesType;
 };
 
 export interface CriterionArgsType {
@@ -57,3 +63,4 @@ export interface OptionsType {
   preFilter?: FilterType;
   postFilter?: FilterType;
 };
+
