@@ -134,7 +134,7 @@ class Row extends Map<Scalar, number> implements RowType {
   restore() {
     if (this.isArray) {
       const map = this.toMap();
-      return getItems(map).sort().map(([_, v]) => v);
+      return getItems(map).sort((a, b) => a[0] > b[0] ? 1 : -1).map(([_, v]) => v);
     }
     return this.toObject();
   }
