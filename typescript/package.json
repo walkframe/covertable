@@ -1,7 +1,7 @@
 {
   "name": "covertable",
-  "version": "2.2.2",
-  "description": "It makes combinations covering pairs for pairwise testing.",
+  "version": "2.2.3",
+  "description": "A flexible pairwise tool written in TypeScript",
   "homepage": "https://github.com/walkframe/covertable",
   "repository": {
     "type": "git",

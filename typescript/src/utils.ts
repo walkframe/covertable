@@ -1,12 +1,11 @@
-
 // @ts-ignore 2307
-export {hex as md5} from 'js-md5';
-import {FactorsType, Scalar, ParentsType, CandidateType, PairType} from './types';
+export { hex as md5 } from 'js-md5';
+import { FactorsType, Scalar, ParentsType, CandidateType, PairType } from './types';
 
 // https://gist.github.com/righ/71e32be8e33f74bde516c06f80c941e8
 
-export const range = (start: number, stop: number, step: number=1) => {
-  return Array.from({ length: (stop - start - 1) / step + 1}, (_, i) => start + (i * step));
+export const range = (start: number, stop: number, step: number = 1) => {
+  return Array.from({ length: (stop - start - 1) / step + 1 }, (_, i) => start + (i * step));
 }
 
 export const all = (values: any[]) => {
@@ -18,7 +17,7 @@ export const all = (values: any[]) => {
   return true;
 }
 
-export const zip = (... lists: [... any[]]): [... any[]] => {
+export const zip = (...lists: [... any[]]): [... any[]] => {
   const length = lists[0].length;
   return range(0, length).map(i => lists.map(l => l[i]));
 }
@@ -32,22 +31,22 @@ export const combinations = <T>(list: T[], length: number): T[][] => {
     indices[last]++;
 
     // <- carry-up loop
-    for (let i=last; i>0; i--) {
+    for (let i = last; i > 0; i--) {
       if (indices[i] >= list.length - (last - i)) {
-        indices[i-1]++;
+        indices[i - 1]++;
       }
     }
     // -> reset loop
-    for (let i=1; i<=last; i++) {
+    for (let i = 1; i <= last; i++) {
       if (indices[i] >= list.length - (last - i)) {
-        indices[i] = indices[i-1] + 1;
+        indices[i] = indices[i - 1] + 1;
       }
     }
   }
   return pairs;
 }
 
-export const product = <T>(... list: T[][]): T[][] => {
+export const product = <T extends any>(...list: T[][]): T[][] => {
   const pairs: T[][] = [];
   const set = (pair: T[], index: number) => {
     if (pair.length === list.length) {
@@ -55,7 +54,7 @@ export const product = <T>(... list: T[][]): T[][] => {
       return;
     }
     for (let i of list[index]) {
-      set([... pair, i], index + 1);
+      set([...pair, i], index + 1);
     }
   }
   set([], 0);
@@ -64,9 +63,9 @@ export const product = <T>(... list: T[][]): T[][] => {
 
 export const copy = (obj: any[] | object) => {
   if (Array.isArray(obj)) {
-    return [... obj];
+    return [...obj];
   }
-  return {... obj};
+  return { ...obj };
 }
 
 export const len = (obj: any[] | object): number => {
@@ -81,9 +80,9 @@ export const getItems = (container: FactorsType | Map<Scalar, any[]>): [Scalar, 
     return container.map((v, i) => [i, v]);
   }
   if (container instanceof Map) {
-    return [... container.entries()];
+    return [...container.entries()];
   }
-  return [... Object.entries(container)];
+  return [...Object.entries(container)];
 }
 
 export const getCandidate = (pair: number[], parents: ParentsType): CandidateType => {

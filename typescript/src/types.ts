@@ -1,11 +1,6 @@
-export type Scalar = number | string
-export type Dict = {[s: string]: any}
-export type List = {[index: number]: any[]}
-
-export type FactorsType = {
-  [key: string]: any[];
-  [index: number]: any[];
-} | any[][]
+export type Scalar = number | string;
+export type Dict = { [s: string]: any };
+export type List = { [index: number]: any[] };
 
 export type SerialsType = Map<Scalar, PairType>;
 export type ParentsType = Map<number, Scalar>;
@@ -15,7 +10,7 @@ export type MappingTypes = {
   serials: SerialsType;
   parents: ParentsType;
   indices: IndicesType;
-}
+};
 
 export type FilterType = (row: {
   [key: string]: any;
@@ -64,3 +59,11 @@ export interface OptionsType {
   postFilter?: FilterType;
 };
 
+export type ArrayTuple = any[][];
+export type ArrayObject = { [s: string]: any[] };
+export type FactorsType = ArrayTuple | ArrayObject;
+
+export type SuggestRowType<T extends FactorsType> = T extends ArrayTuple
+  ? T[number][number][]
+  : T extends ArrayObject ? { [K in keyof T]: T[K][number] }
+  : unknown;

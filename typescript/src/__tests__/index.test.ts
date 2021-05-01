@@ -1,14 +1,14 @@
-import {default as make, sorters, criteria} from '../index';
-import {product, combinations, range, len, all, getItems} from '../utils';
-import {FactorsType, Scalar, Dict, PairType} from '../types';
+import { default as make, sorters, criteria } from '../index';
+import { product, combinations, range, len, all, getItems } from '../utils';
+import { FactorsType, Scalar, Dict, PairType } from '../types';
 
-const getPairs = function* (factors: FactorsType, length=2): Generator<PairType> {
+const getPairs = function* (factors: FactorsType, length = 2) {
   const allKeys = getItems(factors).map(([k, _]) => k);
   for (let keys of combinations(allKeys, length)) {
     // @ts-ignore TS7015
     const factorsList = range(0, length).map(i => factors[keys[i]]);
-    for (let pair of product(... factorsList)) {
-      yield <PairType>pair;
+    for (let pair of product(...factorsList)) {
+      yield pair as string[];
     }
   }
 };
@@ -23,7 +23,7 @@ test('2pair', () => {
     ["k", "l", "m", "n"],
   ];
   const length = 2;
-  const rows = make(factors, {length, criterion: criteria.simple});
+  const rows = make(factors, { length, criterion: criteria.simple });
   for (let pair of getPairs(factors, length)) {
     let final = true;
     for (let row of rows) {
@@ -48,7 +48,7 @@ test('3pair', () => {
     ["k", "l", "m", "n"],
   ];
   const length = 3;
-  const rows = make(factors, {length});
+  const rows = make(factors, { length });
   for (let pair of getPairs(factors, length)) {
     let final = true;
     for (let row of rows) {
@@ -78,7 +78,7 @@ test('prefilter excludes specified pairs before', () => {
     }
     return true;
   }
-  const rows = make(factors, {preFilter});
+  const rows = make(factors, { preFilter });
   const unexpectedPairs = [["a", "d"], ["b", "e"]];
   for (let pair of unexpectedPairs) {
     for (let row of rows) {
@@ -102,7 +102,7 @@ test('never matching prefilter throws an exception', () => {
     return true;
   }
   expect(() => {
-    make(factors, {preFilter})
+    make(factors, { preFilter })
   }).toThrow();
 });
 
@@ -117,8 +117,8 @@ test("greedy sorter should make rows less than seed's one with 2", () => {
   let len1 = 0, len2 = 0;
   const length = 2;
   for (let i of range(0, 10)) {
-    const rows1 = make(factors, {length, seed: Math.random(), sorter: sorters.hash, criterion: criteria.greedy});
-    const rows2 = make(factors, {length, seed: Math.random(), sorter: sorters.hash, criterion: criteria.simple});
+    const rows1 = make(factors, { length, seed: Math.random(), sorter: sorters.hash, criterion: criteria.greedy });
+    const rows2 = make(factors, { length, seed: Math.random(), sorter: sorters.hash, criterion: criteria.simple });
     len1 += len(rows1);
     len2 += len(rows2);
   }
@@ -136,8 +136,8 @@ test("greedy sorter should make rows less than seed's one with 3", () => {
   let len1 = 0, len2 = 0;
   const length = 3;
   for (let i of range(0, 10)) {
-    const rows1 = make(factors, {length, seed: Math.random(), sorter: sorters.hash, criterion: criteria.greedy});
-    const rows2 = make(factors, {length, seed: Math.random(), sorter: sorters.hash, criterion: criteria.simple});
+    const rows1 = make(factors, { length, seed: Math.random(), sorter: sorters.hash, criterion: criteria.greedy });
+    const rows2 = make(factors, { length, seed: Math.random(), sorter: sorters.hash, criterion: criteria.simple });
     len1 += len(rows1);
     len2 += len(rows2);
   }
@@ -153,8 +153,8 @@ test('random sorter makes different rows everytime', () => {
     ["m", "n", "o"],
   ];
   for (let _ of range(0, 10)) {
-    const rows1 = make(factors, {sorter: sorters.random});
-    const rows2 = make(factors, {sorter: sorters.random});
+    const rows1 = make(factors, { sorter: sorters.random });
+    const rows2 = make(factors, { sorter: sorters.random });
     expect(JSON.stringify(rows1) === JSON.stringify(rows2)).toBe(false);
   }
 });
