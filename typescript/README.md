@@ -22,7 +22,6 @@ var browser = ['FireFox', 'Chrome', 'Safari'];
 
 make([machine, os, browser]);
 ```
-
 Output:
 
 ```javascript
@@ -35,6 +34,8 @@ Output:
   [ 'iphone', 'ios', 'FireFox' ]
 ]
 ```
+
+Of course, it also works in the browser well.
 
 ## Advanced demo in TypeScript:
 
@@ -121,11 +122,14 @@ You can choice a sorter from the following:
     - `seed` option decides the order of storing from unstored pairs, therefore it outputs the same result every time when number of factors and seed are the same.
 
 ### criterion
+You can choice a criterion from the following:
 
 - `criteria.simple`: This criterion extracts any pairs that can be stored into the processing row.
 - `criteria.greedy`: This criterion attempts to make most efficient combinations. (default)
-  - These combinations are not always shorter than `simple` criterion.
   - It receives [tolerance](https://github.com/walkframe/covertable#tolerance) option.
+
+While `criteria.simple` processes quickly, `criteria.greedy` makes fewer combinations.
+Although the latter is superior to former in terms of fewer combinations generally, it is time-intensive process.
 
 Not relevant options will be ignored.
 

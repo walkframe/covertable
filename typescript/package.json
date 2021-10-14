@@ -1,6 +1,6 @@
 {
   "name": "covertable",
-  "version": "2.2.3",
+  "version": "2.2.4",
   "description": "A flexible pairwise tool written in TypeScript",
   "homepage": "https://github.com/walkframe/covertable",
   "repository": {
