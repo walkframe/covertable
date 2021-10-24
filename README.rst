@@ -5,9 +5,15 @@
 .. image:: https://circleci.com/gh/walkframe/covertable.svg?style=shield
   :target: https://circleci.com/gh/walkframe/covertable
 
-It makes combinations covering pairs for pairwise testing.
+Time is limited.
 
-Now there are 2 implementations:
+It is not realistic to create a test case that satisfies all the multiple factors,
+and above all, it is tedious.
+
+covertable is a flexible pairwise tool to create a two (or more) factor covered combination.
+
+
+Now it has 2 implementations.
 
 :Python:
 
@@ -32,6 +38,7 @@ Performance
 .. note::
   
   - The following data was measured in Python 3.7.7 and ``3.1 GHz 6 Cores Intel Core i5``.
+  - coverage number is `2`.
 
 .. list-table:: Number and time of combinations. 
    :widths: 1 3 3 3 
@@ -103,6 +110,8 @@ Performance
        - cond: ``sorter: random, criterion: simple``
        - time: ``0.53s``
 
+In general, as the number of elements or coverage increases,
+the number of combinations have a tendency to increase significantly.
 
 Tolerance
 ----------------

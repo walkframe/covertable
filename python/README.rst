@@ -81,9 +81,9 @@ All options are omittable.
 
 length
 ~~~~~~~~~~~~~~~~
-It means length of pair to meet. (default: 2)
+Number of factors to be covered. (default: 2)
 
-The more it increases, the more number of combinations increases.
+Obviously the more it increases, the more number of combinations increases.
 
 sorter
 ~~~~~~~~~~~~~~~~
@@ -132,7 +132,7 @@ This means a function to filter beforehand.
 
 It receives an argument `row` as `object` type.
 
-When the function returns `false`, the row combination will not registered.
+When the function returns `False`, the row combination will not be registered.
 
 - If factors type is `Array`, you should specify an index at the subscript like ``row => row[1] < 6``.
 - If factors type is `Object`, you should specify a key at the subscript like ``row => row['month'] < 6``
@@ -142,8 +142,10 @@ post_filter
 
 This means a function to filter later.
 
-Usage is the same as `preFilter`, only the difference is the timing that it is called.
+The usage is the same as `preFilter`, only the difference is the timing of the call.
 It will delete rows not matched this function at the last.
+
+For this reason, the final test cases may not satisfy the factors coverage.
 
 Development
 ===============

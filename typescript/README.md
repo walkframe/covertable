@@ -66,7 +66,7 @@ Output:
 ```
 
 You can use also `makeAsync` function (generator).
-- It receives the same arguments with `make` function. 
+- It receives the same arguments with `make` function.
 - It returns the row at the time it's made.
 
 ## Object input and output
@@ -97,8 +97,8 @@ Then the output will change as follows:
 ]
 ```
 
-Warning: Order of object iteration is not guaranteed in TypeScript(JavaScript).
-So even if factors and seed are not changed, output combination is not necessarily the same.
+Warning: Order of object iteration is not guaranteed in JavaScript.
+Therefore, even if factors and seed are not changed, output combination is not necessarily the same.
 
 ## Options
 `covertable.make` function has options as `object` at 2nd argument.
@@ -106,9 +106,9 @@ So even if factors and seed are not changed, output combination is not necessari
 All options are omittable.
 
 ### length
-It means length of pair to meet. (default: 2)
+Number of factors to be covered. (default: 2)
 
-The more it increases, the more number of combinations increases.
+Obviously the more it increases, the more number of combinations increases.
 
 ### sorter
 Combinations depend on the order of spreading all over the rows.
@@ -119,13 +119,14 @@ You can choice a sorter from the following:
 - sorters.hash: It makes combinations depending on hash of the pair and seed. (default)
 
   - It receives `seed`.
-    - `seed` option decides the order of storing from unstored pairs, therefore it outputs the same result every time when number of factors and seed are the same.
+    - `seed` option decides the order of storing from unstored pairs.
+    - When the combination of factors and seed are the same, covertable reproduces the same collective.
 
 ### criterion
 You can choice a criterion from the following:
 
-- `criteria.simple`: This criterion extracts any pairs that can be stored into the processing row.
-- `criteria.greedy`: This criterion attempts to make most efficient combinations. (default)
+- `criteria.simple`: it extracts any pairs that can be stored into the processing row.
+- `criteria.greedy`: it attempts to make most efficient combinations. (default)
   - It receives [tolerance](https://github.com/walkframe/covertable#tolerance) option.
 
 While `criteria.simple` processes quickly, `criteria.greedy` makes fewer combinations.
@@ -134,19 +135,21 @@ Although the latter is superior to former in terms of fewer combinations general
 Not relevant options will be ignored.
 
 ### preFilter
-This means a function to filter beforehand.
+This is a function to filter beforehand.
 
 It receives an argument `row` as `object` type.
 
-When the function returns `false`, the row combination will not registered.
+When the function returns `false`, the row combination will not be registered.
 - If factors type is `Array`, you should specify an index at the subscript like `row => row[1] < 6`.
 - If factors type is `Object`, you should specify a key at the subscript like `row => row.month < 6` or `row => row['month'] < 6`
 
 ### postFilter
 This means a function to filter later.
 
-Usage is the same as `preFilter`, only the difference is the timing that it is called.
+The usage is the same as `preFilter`, only the difference is the timing of the call.
 It will delete rows not matched this function at the last.
+
+For this reason, the final test cases may not satisfy the factors coverage.
 
 # Requirement
 
