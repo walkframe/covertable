@@ -59,9 +59,9 @@
   "author": "righ",
   "license": "ISC",
   "devDependencies": {
-    "@types/node": "^14.0.9",
     "@types/jest": "^25.2.3",
     "@types/js-md5": "^0.4.2",
+    "@types/node": "^14.0.9",
     "codecov": "^3.7.1",
     "jest": "^26.0.1",
     "nyc": "^15.1.0",
