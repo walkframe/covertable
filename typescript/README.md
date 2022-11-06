@@ -97,9 +97,6 @@ Then the output will change as follows:
 ]
 ```
 
-Warning: Order of object iteration is not guaranteed in JavaScript.
-Therefore, even if factors and seed are not changed, output combination is not necessarily the same.
-
 ## Options
 `covertable.make` function has options as `object` at 2nd argument.
 

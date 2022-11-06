@@ -10,7 +10,7 @@ Time is limited.
 It is not realistic to create a test case that satisfies all the multiple factors,
 and above all, it is tedious.
 
-covertable is a flexible pairwise tool to create a two (or more) factor covered combination.
+Save time with covertable. It is a flexible pairwise tool to create a two (or more) factor covered combination.
 
 
 Now it has 2 implementations.
