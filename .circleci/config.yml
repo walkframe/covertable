@@ -14,9 +14,9 @@ jobs:
           name: install dependencies
           command: |
             cd python/
-            python -m venv venv || true
-            venv/bin/pip install -U pip
-            venv/bin/pip install -r ci_requirements.txt
+            python3 -m venv venv || true
+            python3 -m pip install -U pip
+            python3 -m pip install -r ci_requirements.txt
 
       - save_cache:
           paths:
@@ -32,7 +32,7 @@ jobs:
           name: run python tests
           command: |
             cd python/
-            venv/bin/tox -e py37 -e black-check -e cov -e codecov
+            venv/bin/tox -e py3112 -e black-check -e cov -e codecov
 
   python_deploy:
     docker:
@@ -47,9 +47,9 @@ jobs:
           name: install dependencies
           command: |
             cd python/
-            python -m venv venv || true
-            venv/bin/pip install -U pip
-            venv/bin/pip install -r ci_requirements.txt
+            python3 -m venv venv || true
+            python3 -m pip install -U pip
+            python3 -m pip install -r ci_requirements.txt
 
       - save_cache:
           paths:
