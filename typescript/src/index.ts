@@ -1,7 +1,17 @@
-import * as sorters from './sorters/index';
-import * as criteria from './criteria/index';
-import * as exceptions from './exceptions';
-import { range, product, combinations, len, getItems, getCandidate, ascOrder, primeGenerator, unique } from './utils';
+import * as sorters from "./sorters/index";
+import * as criteria from "./criteria/index";
+import * as exceptions from "./exceptions";
+import {
+  range,
+  product,
+  combinations,
+  len,
+  getItems,
+  getCandidate,
+  ascOrder,
+  primeGenerator,
+  unique,
+} from "./utils";
 import {
   IndicesType,
   FactorsType,
@@ -18,7 +28,7 @@ import {
   PairType,
   SorterType,
   SuggestRowType,
-} from './types';
+} from "./types";
 
 const serialize = (factors: FactorsType): MappingTypes => {
   let origin = 0;
@@ -34,11 +44,11 @@ const serialize = (factors: FactorsType): MappingTypes => {
       const serial = primer.next().value;
       serialList.push(serial);
       parents.set(serial, subscript);
-      indices.set(serial, index)
-    })
+      indices.set(serial, index);
+    });
     serials.set(subscript, serialList);
     origin += length;
-  })
+  });
   return { serials, parents, indices };
 };
 
@@ -46,13 +56,13 @@ const makeIncompleted = (
   mappings: MappingTypes,
   length: number,
   sorter: SorterType,
-  seed: Scalar,
+  seed: Scalar
 ): IncompletedType => {
   const { serials, indices } = mappings;
   const pairs: PairType[] = [];
   const allKeys = getItems(serials).map(([k, _]) => k);
-  for (let keys of combinations(allKeys, length)) {
-    const comb = range(0, length).map(i => serials.get(keys[i]) as PairType);
+  for (const keys of combinations(allKeys, length)) {
+    const comb = range(0, length).map((i) => serials.get(keys[i]) as PairType);
     for (let pair of product(...comb)) {
       pair = pair.sort(ascOrder);
       pairs.push(pair);
@@ -73,10 +83,10 @@ class Row extends Map<Scalar, number> implements RowType {
     row: CandidateType,
     private mappings: MappingTypes,
     private factors: FactorsType,
-    public preFilter?: FilterType,
+    public preFilter?: FilterType
   ) {
     super();
-    for (let [k, v] of row) {
+    for (const [k, v] of row) {
       this.set(k, v);
     }
     this.length = len(factors);
@@ -95,7 +105,7 @@ class Row extends Map<Scalar, number> implements RowType {
     let num = 0;
     for (let [key, el] of candidate) {
       let existing: number | undefined = this.get(key);
-      if (typeof existing === 'undefined') {
+      if (typeof existing === "undefined") {
         num++;
       } else if (existing != el) {
         return null;
@@ -104,7 +114,7 @@ class Row extends Map<Scalar, number> implements RowType {
     if (!this.preFilter) {
       return num;
     }
-    const candidates: CandidateType = [... this.entries()].concat(candidate);
+    const candidates: CandidateType = [...this.entries()].concat(candidate);
     const nxt: Row = this.New(candidates);
     if (!this.preFilter(nxt.toObject())) {
       return null;
@@ -135,7 +145,9 @@ class Row extends Map<Scalar, number> implements RowType {
   restore() {
     if (this.isArray) {
       const map = this.toMap();
-      return getItems(map).sort((a, b) => a[0] > b[0] ? 1 : -1).map(([_, v]) => v);
+      return getItems(map)
+        .sort((a, b) => (a[0] > b[0] ? 1 : -1))
+        .map(([_, v]) => v);
     }
     return this.toObject();
   }
@@ -148,16 +160,25 @@ class Row extends Map<Scalar, number> implements RowType {
           break;
         }
       }
-    })
+    });
     if (!this.filled()) {
       throw new exceptions.InvalidCondition();
     }
     return this;
   }
-};
+}
 
-const makeAsync = function*<T extends FactorsType>(factors: T, options: OptionsType = {}) {
-  let { length = 2, sorter = sorters.hash, criterion = criteria.greedy, seed = '', tolerance = 0 } = options;
+const makeAsync = function* <T extends FactorsType>(
+  factors: T,
+  options: OptionsType = {}
+) {
+  let {
+    length = 2,
+    sorter = sorters.hash,
+    criterion = criteria.greedy,
+    seed = "",
+    tolerance = 0,
+  } = options;
 
   const { preFilter, postFilter } = options;
   const mappings = serialize(factors);
@@ -179,7 +200,12 @@ const makeAsync = function*<T extends FactorsType>(factors: T, options: OptionsT
       row = row.New([]);
     }
     let finished = true;
-    for (let pair of criterion(incompleted, { row, parents, length, tolerance })) {
+    for (let pair of criterion(incompleted, {
+      row,
+      parents,
+      length,
+      tolerance,
+    })) {
       if (row.filled()) {
         finished = false;
         break;
@@ -209,4 +235,4 @@ const make = <T extends FactorsType>(factors: T, options: OptionsType = {}) => {
   return [...makeAsync(factors, options)];
 };
 
-export { make as default, makeAsync, sorters, criteria };
+export { make as default, make, makeAsync, sorters, criteria };
