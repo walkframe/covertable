@@ -60,7 +60,8 @@ jobs:
           name: build and push
           command: |
             cd python/
-            venv/bin/python ./setup.py sdist bdist_wheel
+            source venv/bin/activate
+            python ./setup.py sdist bdist_wheel
             venv/bin/twine upload dist/* --non-interactive --skip-existing
 
   node_test:
