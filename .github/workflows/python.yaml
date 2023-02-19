@@ -52,7 +52,6 @@ jobs:
       - name: build
         run: |
           python ./setup.py sdist bdist_wheel
-          twine upload dist/* --non-interactive --skip-existing
       - name: upload
         run: twine upload dist/* --non-interactive --skip-existing
         env:
