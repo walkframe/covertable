@@ -1,8 +1,8 @@
 .. image:: https://badge.fury.io/py/covertable.svg
   :target: https://badge.fury.io/py/covertable
 
-.. image:: https://circleci.com/gh/walkframe/covertable.svg?style=shield
-  :target: https://circleci.com/gh/walkframe/covertable
+.. image:: https://github.com/walkframe/covertable/actions/workflows/python.yaml/badge.svg
+  :target: https://github.com/walkframe/covertable/actions/workflows/python.yaml
 
 .. image:: https://codecov.io/gh/walkframe/covertable/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/walkframe/covertable

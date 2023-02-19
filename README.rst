@@ -1,10 +1,6 @@
 .. image:: ./covertable.png
    :alt: covertable logo
 
-
-.. image:: https://circleci.com/gh/walkframe/covertable.svg?style=shield
-  :target: https://circleci.com/gh/walkframe/covertable
-
 Time is limited.
 
 It is not realistic to create a test case that satisfies all the multiple factors,
@@ -19,13 +15,18 @@ Now it has 2 implementations.
 
   - .. image:: https://badge.fury.io/py/covertable.svg
       :target: https://badge.fury.io/py/covertable
+  - .. image:: https://github.com/walkframe/covertable/actions/workflows/python.yaml/badge.svg
+      :target: https://github.com/walkframe/covertable/actions/workflows/python.yaml
   - `README <https://github.com/walkframe/covertable/blob/master/python/README.rst>`__
   - `Code <https://github.com/walkframe/covertable/tree/master/python>`__
+
 
 :TypeScript:
 
   - .. image:: https://badge.fury.io/js/covertable.svg
       :target: https://badge.fury.io/js/covertable
+  - .. image:: https://github.com/walkframe/covertable/actions/workflows/typescript.yaml/badge.svg
+      :target: https://github.com/walkframe/covertable/actions/workflows/typescript.yaml
   - `README <https://github.com/walkframe/covertable/blob/master/typescript/README.md>`__
   - `Code <https://github.com/walkframe/covertable/tree/master/typescript>`__
 

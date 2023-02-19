@@ -38,7 +38,7 @@ jobs:
       run:
         working-directory: python
     if: github.ref == 'refs/heads/master'
-    name: npm upload
+    name: pypi upload
     steps:
       - uses: actions/checkout@v3
       - name: setup
