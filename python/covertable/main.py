@@ -111,7 +111,7 @@ def make_async(
     row = Row(None, factors, serials, pre_filter)
     # When pre_filter is specified,
     # it will be applied to incomplete through `row.storable` beforehand.
-    for pair in list(filter(lambda _: pre_filter, incomplete)): #########
+    for pair in list(filter(lambda _: pre_filter, incomplete)):
         if not row.storable([(parents[p], p) for p in pair]):
             incomplete.discard(pair)
 

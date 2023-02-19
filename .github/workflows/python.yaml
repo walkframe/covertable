@@ -58,4 +58,5 @@ jobs:
         with:
           user: __token__
           password: ${{ secrets.PYPI_TOKEN }}
+          package: dist/*
           skip_existing: true
