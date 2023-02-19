@@ -53,20 +53,9 @@ jobs:
       - name: build
         run: |
           python -m build --sdist --wheel --outdir dist/ .
-      - name: Upload
+      - name: upload
         run: |
-          ls -la
-          ls -la dist
-          pwd
           twine upload dist/* --non-interactive --skip-existing
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-
-      - name: upload
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_TOKEN }}
-          package: dist/*
-          skip_existing: true
