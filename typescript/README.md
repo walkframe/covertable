@@ -1,6 +1,5 @@
 [![npm version](https://badge.fury.io/js/covertable.svg)](https://badge.fury.io/js/covertable)
 [![Workflow](https://github.com/walkframe/covertable/actions/workflows/typescript.yaml/badge.svg)](https://github.com/walkframe/covertable/actions/workflows/typescript.yaml)
-[![CircleCI](https://circleci.com/gh/walkframe/covertable.svg?style=shield)](https://circleci.com/gh/walkframe/covertable)
 [![codecov](https://codecov.io/gh/walkframe/covertable/branch/master/graph/badge.svg)](https://codecov.io/gh/walkframe/covertable)
 
 # Installation
