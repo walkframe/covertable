@@ -158,7 +158,7 @@ Development
   (venv) $ pip install -r dev_requirements.txt
 
   # testing
-  (venv) $ tox # -e py37 -e cov -e black
+  (venv) $ pytest
 
 
 Publish
