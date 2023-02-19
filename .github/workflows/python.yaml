@@ -54,7 +54,7 @@ jobs:
         run: |
           python ./setup.py sdist bdist_wheel
       - name: upload
-        run: twine upload dist/* --non-interactive --skip-existing
-        env:
-          TWINE_USERNAME: token
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_TOKEN }}
