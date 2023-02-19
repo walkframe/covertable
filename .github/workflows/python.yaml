@@ -56,5 +56,5 @@ jobs:
       - name: upload
         run: twine upload dist/* --non-interactive --skip-existing
         env:
-          TWINE_USERNAME: righ
+          TWINE_USERNAME: token
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
