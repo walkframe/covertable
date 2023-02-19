@@ -17,7 +17,7 @@ Requirements
 ============
 - Python: 3.3 or later.
 
-  - Tested with 3.7
+  - Tested with 3.7, 3.11
 
 
 Installation
