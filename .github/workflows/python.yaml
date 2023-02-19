@@ -53,6 +53,9 @@ jobs:
       - name: build
         run: |
           python -m build --sdist --wheel --outdir dist/ .
+          ls -la
+          ls -la dist
+          pwd
       - name: upload
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
