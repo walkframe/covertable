@@ -8,5 +8,5 @@ def random_comparer(_):
     return random.random()
 
 
-def sort(incompleted, *args, **kwargs):
-    return sorted(incompleted, key=random_comparer)
+def sort(incomplete, *args, **kwargs):
+    return sorted(incomplete, key=random_comparer)

@@ -19,7 +19,7 @@ export type FilterType = (row: {
 
 export type PairType = number[];
 
-export type IncompletedType = Map<Scalar, PairType>;
+export type IncompleteType = Map<Scalar, PairType>;
 
 
 export type CandidateType = [Scalar, number][];
@@ -52,7 +52,7 @@ export interface CriterionArgsType {
 export interface OptionsType {
   length?: number;
   sorter?: SorterType;
-  criterion?: (incompleted: IncompletedType, options: CriterionArgsType) => IterableIterator<PairType>;
+  criterion?: (incomplete: IncompleteType, options: CriterionArgsType) => IterableIterator<PairType>;
   seed?: Scalar;
   tolerance?: number;
   preFilter?: FilterType;

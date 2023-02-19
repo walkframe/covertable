@@ -19,7 +19,7 @@ import {
   MappingTypes,
   Scalar,
   Dict,
-  IncompletedType,
+  IncompleteType,
   ParentsType,
   CandidateType,
   RowType,
@@ -52,12 +52,12 @@ const serialize = (factors: FactorsType): MappingTypes => {
   return { serials, parents, indices };
 };
 
-const makeIncompleted = (
+const makeIncomplete = (
   mappings: MappingTypes,
   length: number,
   sorter: SorterType,
   seed: Scalar
-): IncompletedType => {
+): IncompleteType => {
   const { serials, indices } = mappings;
   const pairs: PairType[] = [];
   const allKeys = getItems(serials).map(([k, _]) => k);
@@ -68,11 +68,11 @@ const makeIncompleted = (
       pairs.push(pair);
     }
   }
-  const incompleted: IncompletedType = new Map();
+  const incomplete: IncompleteType = new Map();
   for (let pair of sorter(pairs, { seed, indices })) {
-    incompleted.set(unique(pair), pair);
+    incomplete.set(unique(pair), pair);
   }
-  return incompleted;
+  return incomplete;
 };
 
 class Row extends Map<Scalar, number> implements RowType {
@@ -183,16 +183,16 @@ const makeAsync = function* <T extends FactorsType>(
   const { preFilter, postFilter } = options;
   const mappings = serialize(factors);
   const { parents } = mappings;
-  const incompleted = makeIncompleted(mappings, length, sorter, seed); // {"1,2": [1,2], "3,4": [3,4]}
+  const incomplete = makeIncomplete(mappings, length, sorter, seed); // {"1,2": [1,2], "3,4": [3,4]}
 
   let row: Row = new Row([], mappings, factors, preFilter);
 
-  for (let [pairKey, pair] of incompleted.entries()) {
+  for (let [pairKey, pair] of incomplete.entries()) {
     if (!row.storable(getCandidate(pair, parents))) {
-      incompleted.delete(pairKey);
+      incomplete.delete(pairKey);
     }
   }
-  while (incompleted.size) {
+  while (incomplete.size) {
     if (row.filled()) {
       if (!postFilter || postFilter(row.toObject())) {
         yield row.restore() as SuggestRowType<T>;
@@ -200,7 +200,7 @@ const makeAsync = function* <T extends FactorsType>(
       row = row.New([]);
     }
     let finished = true;
-    for (let pair of criterion(incompleted, {
+    for (let pair of criterion(incomplete, {
       row,
       parents,
       length,
@@ -216,7 +216,7 @@ const makeAsync = function* <T extends FactorsType>(
       }
 
       for (let p of combinations([...row.values()], length)) {
-        incompleted.delete(unique(p));
+        incomplete.delete(unique(p));
       }
     }
     if (finished && !row.filled()) {

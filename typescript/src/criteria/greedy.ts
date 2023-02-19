@@ -1,12 +1,12 @@
-import {CriterionArgsType, IncompletedType, PairType} from '../types';
+import {CriterionArgsType, IncompleteType, PairType} from '../types';
 import {getCandidate, combinations, ascOrder, unique} from '../utils';
 
-const getNumRemovablePairs = (indexes: Set<number>, incompleted: IncompletedType, length: number) => {
+const getNumRemovablePairs = (indexes: Set<number>, incomplete: IncompleteType, length: number) => {
   let num = 0;
   const removingKeys = combinations([... indexes], length);
   for (let pair of removingKeys) {
     const key = unique(pair);
-    if (incompleted.has(key)) {
+    if (incomplete.has(key)) {
       num++;
     }
   }
@@ -14,7 +14,7 @@ const getNumRemovablePairs = (indexes: Set<number>, incompleted: IncompletedType
 };
 
 export default function* (
-  incompleted: IncompletedType,
+  incomplete: IncompleteType,
   criterionArgs: CriterionArgsType,
 ): Generator<PairType> {
   let {row, parents, length, tolerance} = criterionArgs;
@@ -23,7 +23,7 @@ export default function* (
     let maxNumPairs: number | null = null;
     let efficientPair: PairType | null = null;
 
-    for (let [pairKey, pair] of incompleted.entries()) {
+    for (let [pairKey, pair] of incomplete.entries()) {
       const rowSize = row.size;
       if (rowSize === 0) {
         yield pair;
@@ -39,12 +39,12 @@ export default function* (
       }
 
       if (storable === 0) {
-        incompleted.delete(pairKey);
+        incomplete.delete(pairKey);
         continue;
       }
       
       const numPairs = getNumRemovablePairs(
-        new Set([... row.values(), ...pair]), incompleted, length
+        new Set([... row.values(), ...pair]), incomplete, length
       );
 
       if (numPairs + tolerance > rowSize * storable) {

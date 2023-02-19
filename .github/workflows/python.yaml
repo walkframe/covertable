@@ -24,11 +24,12 @@ jobs:
           python -m pip install -r ci_requirements.txt
       - name: test
         run: |
-          pytest --cov=covertable
+          pytest --cov=covertable --cov-report=xml
       - name: codecov
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage.xml
           verbose: true
 
   release:

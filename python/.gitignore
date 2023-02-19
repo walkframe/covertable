@@ -3,6 +3,7 @@ __pycache__/
 .tox/
 venv/
 .coverage
+coverage.xml
 .junit.xml
 htmlcov/
 pip-wheel-metadata

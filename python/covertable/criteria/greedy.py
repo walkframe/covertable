@@ -3,19 +3,19 @@ from collections import defaultdict
 from itertools import combinations
 
 
-def get_num_removable_pairs(indexes, incompleted, length):
+def get_num_removable_pairs(indexes, incomplete, length):
     removing_keys = combinations(indexes, length)
-    return len(incompleted.intersection(removing_keys))
+    return len(incomplete.intersection(removing_keys))
 
 
 def extract(
-    sorted_incompleted, row, parents, length, incompleted, tolerance=0, **kwargs
+    sorted_incomplete, row, parents, length, incomplete, tolerance=0, **kwargs
 ):
     while True:
         max_num_pairs = None
         efficient_pair = None
 
-        for pair in sorted_incompleted:
+        for pair in sorted_incomplete:
             if not row:
                 yield pair
                 continue
@@ -31,7 +31,7 @@ def extract(
                 continue
 
             num_pairs = get_num_removable_pairs(
-                sorted({*row.values(), *pair}), incompleted, length
+                sorted({*row.values(), *pair}), incomplete, length
             )
             if num_pairs + tolerance > len(row) * storable:
                 efficient_pair = pair

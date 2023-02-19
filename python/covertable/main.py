@@ -29,12 +29,12 @@ def convert_factors_to_serials(factors):
     return serials, parents
 
 
-def make_incompleted(serials, length):
-    incompleted = set()
+def make_incomplete(serials, length):
+    incomplete = set()
     for keys in combinations([k for k, _ in get_items(serials)], length):
         for pair in product(*[serials[keys[i]] for i in range(length)]):
-            incompleted.add(pair)
-    return incompleted
+            incomplete.add(pair)
+    return incomplete
 
 
 class Row(dict):
@@ -65,7 +65,7 @@ class Row(dict):
         if self.pre_filter is None:
             return num
         nxt = self.new({**self, **dict(candidate)})
-        if not self.pre_filter(nxt.restore()):
+        if not self.pre_filter(nxt.resolve()):
             return None
         return num
 
@@ -79,11 +79,75 @@ class Row(dict):
             raise InvalidCondition(InvalidCondition.message)
         return self
 
-    def restore(self):
+    def resolve(self):
         return self.new(
             [key, self.factors[key][serial - self.serials[key][0]]]
             for key, serial in self.items()
         )
+
+    def restore(self):
+        resolved = self.resolve()
+        if issubclass(self.type, list):
+            return [r for _, r in sorted(resolved.items())]
+        if issubclass(self.type, dict):
+            return dict(resolved)
+
+
+def make_async(
+    factors,
+    length=2,
+    progress=False,
+    sorter=sorters.hash,
+    criterion=criteria.greedy,
+    pre_filter=None,
+    post_filter=None,
+    **params,
+):
+    serials, parents = convert_factors_to_serials(factors)
+    incomplete = make_incomplete(serials, length)
+    len_incomplete = float(len(incomplete))
+    md5_cache = {}
+
+    row = Row(None, factors, serials, pre_filter)
+    # When pre_filter is specified,
+    # it will be applied to incomplete through `row.storable` beforehand.
+    for pair in list(filter(lambda _: pre_filter, incomplete)): #########
+        if not row.storable([(parents[p], p) for p in pair]):
+            incomplete.discard(pair)
+
+    while incomplete:
+        if row.filled():
+            if post_filter is None or post_filter(row.resolve()):
+                yield row.restore()
+            row = row.new()
+
+        common_kwargs = {
+            **params,
+            "row": row,
+            "parents": parents,
+            "length": length,
+            "incomplete": incomplete,
+            "md5_cache": md5_cache,
+        }
+        sorted_incomplete = sorter.sort(**common_kwargs)
+        for pair in criterion.extract(sorted_incomplete, **common_kwargs):
+            if row.filled():
+                break
+            row.update((parents[p], p) for p in pair)
+            for vs in combinations(sorted(row.values()), length):
+                incomplete.discard(vs)
+        else:
+            if not row.filled():
+                row.complement()
+
+        if progress:
+            rate = (len_incomplete - len(incomplete)) / len_incomplete
+            print("{0:.2%}\r".format(rate), end="")
+
+    if row:
+        row.complement()
+        if post_filter is None or post_filter(row.resolve()):
+            yield row.restore()
 
 
 def make(
@@ -96,56 +160,14 @@ def make(
     post_filter=None,
     **params,
 ):
-    serials, parents = convert_factors_to_serials(factors)
-    incompleted = make_incompleted(serials, length)
-    len_incompleted = float(len(incompleted))
-    md5_cache = {}
-
-    rows, row = [], Row(None, factors, serials, pre_filter)
-    # When pre_filter is specified,
-    # it will be applied to incompleted through `row.storable` beforehand.
-    for pair in list(filter(lambda _: pre_filter, incompleted)):
-        if not row.storable([(parents[p], p) for p in pair]):
-            incompleted.discard(pair)
-
-    while incompleted:
-        if row.filled():
-            rows.append(row)
-            row = row.new()
-
-        common_kwargs = {
-            **params,
-            "row": row,
-            "parents": parents,
-            "length": length,
-            "incompleted": incompleted,
-            "md5_cache": md5_cache,
-        }
-        sorted_incompleted = sorter.sort(**common_kwargs)
-        for pair in criterion.extract(sorted_incompleted, **common_kwargs):
-            if row.filled():
-                break
-            row.update((parents[p], p) for p in pair)
-            for vs in combinations(sorted(row.values()), length):
-                incompleted.discard(vs)
-        else:
-            if not row.filled():
-                row.complement()
-
-        if progress:
-            rate = (len_incompleted - len(incompleted)) / len_incompleted
-            print("{0:.2%}\r".format(rate), end="")
-
-    if row:
-        rows.append(row.complement())
-
-    result = []
-    for row in rows:
-        restored = row.restore()
-        if post_filter and not post_filter(restored):
-            continue
-        if issubclass(row.type, list):
-            result.append([r for _, r in sorted(restored.items())])
-        elif issubclass(row.type, dict):
-            result.append(dict(restored))
-    return result
+    gen = make_async(
+        factors,
+        length=length,
+        progress=progress,
+        sorter=sorter,
+        criterion=criterion,
+        pre_filter=pre_filter,
+        post_filter=post_filter,
+        **params,
+    )
+    return list(gen)

@@ -4,7 +4,7 @@
 import hashlib
 
 
-def sort(incompleted, md5_cache, seed="", use_cache=True, *args, **kwargs):
+def sort(incomplete, md5_cache, seed="", use_cache=True, *args, **kwargs):
     def comparer(v):
         if use_cache and v in md5_cache:
             return md5_cache[v]
@@ -15,4 +15,4 @@ def sort(incompleted, md5_cache, seed="", use_cache=True, *args, **kwargs):
             md5_cache[v] = value
         return value
 
-    return sorted(incompleted, key=comparer)
+    return sorted(incomplete, key=comparer)
