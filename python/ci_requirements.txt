@@ -1,4 +1,6 @@
-tox
+pytest
+pytest-cov
 setuptools
 wheel
 twine
+black

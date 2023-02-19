@@ -1,0 +1,63 @@
+name: typescript
+on:
+  push:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: typescript
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: setup
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+      - name: cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules
+          key: ${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+      - name: install
+        run: |
+          npm install
+      - name: test
+        run: |
+          npm test -- --coverage
+          npm run codecov
+      - name: codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          verbose: true
+
+  release:
+    needs: tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: typescript
+
+    if: github.ref == 'refs/heads/master'
+    name: npm upload
+    steps:
+      - uses: actions/checkout@v3
+      - name: setup
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+      - name: cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules
+          key: ${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+      - name: upload
+        run: |
+          npm install
+          npm run build
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
+          npm run publish || true

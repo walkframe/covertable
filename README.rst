@@ -200,7 +200,3 @@ History
 :1.0.x:
 
   - First release 🎉
-
-.. note::
-
-  It moved from `twopairs`.
