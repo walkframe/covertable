@@ -27,11 +27,12 @@ jobs:
       - name: test
         run: |
           npm test -- --coverage
-          npm run codecov
+          # npm run codecov
       - name: codecov
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./python/coverage/lcov.info
           verbose: true
 
   release:
