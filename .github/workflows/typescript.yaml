@@ -60,4 +60,4 @@ jobs:
           npm install
           npm run build
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
-          npm run publish || true
+          npm publish || true
