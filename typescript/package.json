@@ -70,5 +70,8 @@
   },
   "dependencies": {
     "js-md5": "^0.7.3"
+  },
+  "exports": {
+    "./utils/pict": "./dist/utils/pict.js"
   }
 }
