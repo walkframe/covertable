@@ -1,6 +1,6 @@
 {
   "name": "covertable",
-  "version": "2.3.0-alpha.2",
+  "version": "2.3.0",
   "description": "A flexible pairwise tool written in TypeScript",
   "homepage": "https://github.com/walkframe/covertable",
   "repository": {
@@ -69,6 +69,8 @@
     "typescript": "^3.9.3"
   },
   "dependencies": {
-    "js-md5": "^0.7.3"
+    "covertable": "^2.3.0-alpha.2",
+    "js-md5": "^0.7.3",
+    "ts-node": "^10.9.2"
   }
 }
