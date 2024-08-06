@@ -12,10 +12,12 @@ export type MappingTypes = {
   indices: IndicesType;
 };
 
-export type FilterType = (row: {
+export type FilterRowType = {
   [key: string]: any;
   [index: number]: any;
-}) => boolean;
+}
+
+export type FilterType = (row: FilterRowType) => boolean;
 
 export type PairType = number[];
 
