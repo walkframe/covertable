@@ -236,3 +236,5 @@ const make = <T extends FactorsType>(factors: T, options: OptionsType = {}) => {
 };
 
 export { make as default, make, makeAsync, sorters, criteria };
+
+export { PictConstraintsLexer } from "./utils/pict";
