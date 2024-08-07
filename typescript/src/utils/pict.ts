@@ -1,9 +1,5 @@
-type FilterRowType = {
-  [key: string]: any;
-  [index: number]: any;
-}
+import type { FilterRowType, FilterType } from '../types';
 
-type FilterType = (row: FilterRowType) => boolean;
 type Token = {
   type: string;
   value: string;

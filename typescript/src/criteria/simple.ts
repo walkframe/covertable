@@ -1,4 +1,4 @@
-import {CriterionArgsType, IncompleteType, PairType} from '../types';
+import type {CriterionArgsType, IncompleteType, PairType} from '../types';
 import {getCandidate} from '../lib';
 
 export default function* (

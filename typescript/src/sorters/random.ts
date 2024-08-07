@@ -1,4 +1,4 @@
-import {PairType, SortArgsType} from '../types';
+import type {PairType, SortArgsType} from '../types';
 
 const comparer = (a: any, b: any) => {
   return Math.random() > 0.5 ? 1 : -1;
