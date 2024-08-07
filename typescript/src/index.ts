@@ -5,6 +5,8 @@ import random from "./sorters/random";
 import greedy from "./criteria/greedy";
 import simple from "./criteria/simple";
 
+import {PictConstraintsLexer} from "./utils/pict";
+
 import {InvalidCondition} from "./exceptions";
 import {
   range,
@@ -245,10 +247,11 @@ const sorters = { hash, random };
 const criteria = { greedy, simple };
 
 export { 
-  make as default, 
   make, 
   makeAsync, 
   sorters, 
   criteria,
+  PictConstraintsLexer,
 };
 
+export default make;
