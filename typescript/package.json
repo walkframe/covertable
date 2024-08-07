@@ -69,7 +69,6 @@
     "typescript": "^3.9.3"
   },
   "dependencies": {
-    "covertable": "^2.3.0-alpha.2",
     "js-md5": "^0.7.3",
     "ts-node": "^10.9.2"
   }
