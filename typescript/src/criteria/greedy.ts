@@ -1,5 +1,5 @@
 import {CriterionArgsType, IncompleteType, PairType} from '../types';
-import {getCandidate, combinations, ascOrder, unique} from '../utils';
+import {getCandidate, combinations, ascOrder, unique} from '../lib';
 
 const getNumRemovablePairs = (indexes: Set<number>, incomplete: IncompleteType, length: number) => {
   let num = 0;

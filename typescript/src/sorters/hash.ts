@@ -1,4 +1,4 @@
-import {md5} from '../utils';
+import {md5} from '../lib';
 import {
   PairType,
   SortArgsType,

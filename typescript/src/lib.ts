@@ -1,6 +1,8 @@
 // @ts-ignore 2307
 export { hex as md5 } from 'js-md5';
-import { FactorsType, Scalar, ParentsType, CandidateType, PairType } from './types';
+import { 
+  FactorsType, Scalar, ParentsType, CandidateType, PairType,
+} from './types';
 
 // https://gist.github.com/righ/71e32be8e33f74bde516c06f80c941e8
 

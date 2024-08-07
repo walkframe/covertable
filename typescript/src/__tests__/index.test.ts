@@ -1,5 +1,5 @@
 import { default as make, sorters, criteria } from '../index';
-import { product, combinations, range, len, all, getItems } from '../utils';
+import { product, combinations, range, len, all, getItems } from '../lib';
 import { FactorsType, Scalar, Dict, PairType } from '../types';
 
 const getPairs = function* (factors: FactorsType, length = 2) {

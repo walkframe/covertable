@@ -1,6 +1,11 @@
-import * as sorters from "./sorters/index";
-import * as criteria from "./criteria/index";
-import * as exceptions from "./exceptions";
+
+import hash from "./sorters/hash";
+import random from "./sorters/random";
+
+import greedy from "./criteria/greedy";
+import simple from "./criteria/simple";
+
+import {InvalidCondition} from "./exceptions";
 import {
   range,
   product,
@@ -11,7 +16,8 @@ import {
   ascOrder,
   primeGenerator,
   unique,
-} from "./utils";
+} from "./lib";
+
 import {
   IndicesType,
   FactorsType,
@@ -162,7 +168,7 @@ class Row extends Map<Scalar, number> implements RowType {
       }
     });
     if (!this.filled()) {
-      throw new exceptions.InvalidCondition();
+      throw new InvalidCondition();
     }
     return this;
   }
@@ -174,8 +180,8 @@ const makeAsync = function* <T extends FactorsType>(
 ) {
   let {
     length = 2,
-    sorter = sorters.hash,
-    criterion = criteria.greedy,
+    sorter = hash,
+    criterion = greedy,
     seed = "",
     tolerance = 0,
   } = options;
@@ -235,6 +241,14 @@ const make = <T extends FactorsType>(factors: T, options: OptionsType = {}) => {
   return [...makeAsync(factors, options)];
 };
 
-export { make as default, make, makeAsync, sorters, criteria };
+const sorters = { hash, random };
+const criteria = { greedy, simple };
 
-export { PictConstraintsLexer } from "./utils/pict";
+export { 
+  make as default, 
+  make, 
+  makeAsync, 
+  sorters, 
+  criteria,
+};
+

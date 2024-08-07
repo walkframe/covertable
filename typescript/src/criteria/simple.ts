@@ -1,5 +1,5 @@
 import {CriterionArgsType, IncompleteType, PairType} from '../types';
-import {getCandidate} from '../utils';
+import {getCandidate} from '../lib';
 
 export default function* (
   incomplete: IncompleteType,

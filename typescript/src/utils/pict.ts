@@ -1,5 +1,9 @@
-import { FilterType, FilterRowType } from "../types";
+type FilterRowType = {
+  [key: string]: any;
+  [index: number]: any;
+}
 
+type FilterType = (row: FilterRowType) => boolean;
 type Token = {
   type: string;
   value: string;
@@ -317,7 +321,7 @@ export class PictConstraintsLexer {
     return new Function('row', code).bind(this) as FilterType;
   }
 
-  filter(row: FilterRowType, ...additionalFilters: FilterType[]): boolean {
+  filter = (row: FilterRowType, ...additionalFilters: FilterType[]) => {
     for (const f of this.filters) {
       if (f == null) {
         continue;
