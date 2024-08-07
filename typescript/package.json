@@ -1,6 +1,6 @@
 {
   "name": "covertable",
-  "version": "2.3.2-alpha.1",
+  "version": "2.3.2-alpha.2",
   "description": "A flexible pairwise tool written in TypeScript",
   "homepage": "https://github.com/walkframe/covertable",
   "repository": {
@@ -34,6 +34,20 @@
     "pict"
   ],
   "main": "dist/index.js",
+  "exports": {
+    "./dist/utils/pict": {
+      "import": "./dist/utils/pict.js",
+      "types": "./dist/utils/pict.d.ts"
+    },
+    "./utils/pict": {
+      "import": "./dist/utils/pict.js",
+      "types": "./dist/utils/pict.d.ts"
+    },
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "scripts": {
     "test": "jest",
     "build": "$(npm bin)/tsc",
@@ -71,11 +85,5 @@
   "dependencies": {
     "js-md5": "^0.7.3",
     "ts-node": "^10.9.2"
-  },
-  "exports": {
-    "./utils/pict": {
-      "import": "./dist/utils/pict.js",
-      "types": "./dist/utils/pict.d.ts"
-    }
   }
 }
