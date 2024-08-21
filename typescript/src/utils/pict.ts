@@ -174,6 +174,8 @@ export class PictConstraintsLexer {
           return 'false';
         }
         return `(${expr})`;
+      } else if (token && token.type === 'BOOLEAN') {
+        return token.value.toUpperCase() === 'TRUE' ? 'true' : 'false';
       } else {
         tokenIndex--; // Go back one token
         return parseCondition();
@@ -278,19 +280,19 @@ export class PictConstraintsLexer {
           errorMessages.push('Expected THEN');
           break;
         }
-        const action = parseExpression();
-        let elseAction = 'false';
+        const thenAction = parseExpression();
+        
         const elseToken = nextToken();
+        let elseAction = 'true';
         if (elseToken && elseToken.type === 'ELSE') {
           elseAction = parseExpression();
         } else {
           tokenIndex--; // Go back one token if ELSE is not found
         }
-
-        const filterCode = `return (${condition} ? (${action}) : (${elseAction}));`;
+        const filterCode = `return (${condition} ? (${thenAction}) : (${elseAction}));`;
         try {
           if (this.debug) {
-            console.log(`code[${filters.length}]:`, filterCode);
+            console.debug(`code[${filters.length}]:`, filterCode);
           }
           const f = this.makeClosure(filterCode);
           filters.push(f as FilterType);
