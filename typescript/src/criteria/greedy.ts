@@ -1,7 +1,8 @@
-import type {CriterionArgsType, IncompleteType, PairType} from '../types';
-import {getCandidate, combinations, ascOrder, unique} from '../lib';
+import type {FactorsType, PairByKey, PairType} from '../types';
+import { combinations, unique } from '../lib';
+import { Controller } from '../controller';
 
-const getNumRemovablePairs = (indexes: Set<number>, incomplete: IncompleteType, length: number) => {
+const getNumRemovablePairs = (indexes: Set<number>, incomplete: PairByKey, length: number) => {
   let num = 0;
   const removingKeys = combinations([... indexes], length);
   for (let pair of removingKeys) {
@@ -13,41 +14,40 @@ const getNumRemovablePairs = (indexes: Set<number>, incomplete: IncompleteType, 
   return num;
 };
 
-export default function* (
-  incomplete: IncompleteType,
-  criterionArgs: CriterionArgsType,
-): Generator<PairType> {
-  let {row, parents, length, tolerance} = criterionArgs;
-
+export default function*<T extends FactorsType> (ctrl: Controller<T>): Generator<PairType> {
   while (true) {
     let maxNumPairs: number | null = null;
     let efficientPair: PairType | null = null;
 
-    for (let [pairKey, pair] of incomplete.entries()) {
-      const rowSize = row.size;
+    for (const [pairKey, pair] of ctrl.incomplete.entries()) {
+      const rowSize = ctrl.row.size;
       if (rowSize === 0) {
         yield pair;
         continue;
       }
-      if (row.filled()) {
+      if (ctrl.isFilled(ctrl.row)) {
         break;
       }
 
-      const storable = row.storable(getCandidate(pair, parents));
+      const storable = ctrl.storable(ctrl.getCandidate(pair));
       if (storable === null) {
         continue;
       }
 
       if (storable === 0) {
-        incomplete.delete(pairKey);
+        ctrl.consume(pair);
         continue;
       }
+      const storableAbs = Math.abs(storable);
+      const { tolerance = 0 } = ctrl.options!;
       
       const numPairs = getNumRemovablePairs(
-        new Set([... row.values(), ...pair]), incomplete, length
+        new Set([...ctrl.row.values(), ...pair]), 
+        ctrl.incomplete, 
+        ctrl.pairwiseCount,
       );
 
-      if (numPairs + tolerance > rowSize * storable) {
+      if (numPairs + tolerance > rowSize * storableAbs) {
         efficientPair = pair;
         break;
       }

@@ -1,5 +1,10 @@
+import { Scalar } from "./types";
 
-export class InvalidCondition {
-  public name = 'InvalidCondition';
-  public message = 'It will never meet the condition';
+export class NotReady extends Error {
+  constructor(public key: Scalar) {
+    super(`Not yet '${key}' in the object`);
+  }
+}
+
+export class NeverMatch extends Error {
 };

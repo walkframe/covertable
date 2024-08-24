@@ -1,13 +1,11 @@
-import type {CriterionArgsType, IncompleteType, PairType} from '../types';
-import {getCandidate} from '../lib';
+import type {FactorsType, PairType} from '../types';
+import { Controller } from '../controller';
 
-export default function* (
-  incomplete: IncompleteType,
-  criterionArgs: CriterionArgsType,
-): Generator<PairType> {
-  const {row, parents} = criterionArgs;
+export default function*<T extends FactorsType> (ctrl: Controller<T>): Generator<PairType> {
+  const incomplete = ctrl.incomplete;
   for (let pair of incomplete.values()) {
-    const storable = row.storable(getCandidate(pair, parents));
+    const cand = ctrl.getCandidate(pair);
+    const storable = ctrl.storable(cand);
     if (storable === null || storable === 0) {
       continue;
     }

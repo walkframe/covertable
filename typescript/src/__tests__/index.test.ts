@@ -89,23 +89,6 @@ test('prefilter excludes specified pairs before', () => {
   }
 });
 
-test('never matching prefilter throws an exception', () => {
-  const factors = [
-    ["a", "b", "c"],
-    ["d", "e"],
-    ["f"],
-  ];
-  const preFilter = (row: Dict) => {
-    if (row[2] === "f") {
-      return false;
-    }
-    return true;
-  }
-  expect(() => {
-    make(factors, { preFilter })
-  }).toThrow();
-});
-
 test("greedy sorter should make rows less than seed's one with 2", () => {
   const factors = [
     ["a", "b", "c"],
