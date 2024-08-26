@@ -1,7 +1,9 @@
 // @ts-ignore 2307
 export { hex as md5 } from 'js-md5';
+import { NotReady } from './exceptions';
 import type { 
   FactorsType, Scalar, ParentsType, CandidateType, PairType,
+  Dict,
 } from './types';
 
 // https://gist.github.com/righ/71e32be8e33f74bde516c06f80c941e8
@@ -125,3 +127,15 @@ export function* primeGenerator(): Generator<number> {
     }
   }
 }
+
+
+
+export const proxyHandler = {
+  get(obj: Dict, key: string, receiver: any) {
+    if (key in obj) {
+      return obj[key];
+    }
+    throw new NotReady(key);
+  },
+};
+
