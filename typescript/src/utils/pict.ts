@@ -1,7 +1,7 @@
 import type { FilterRowType, FilterType } from '../types';
 
 type Token = {
-  type: string;
+  type: TokenType;
   value: string;
 }
 
@@ -9,15 +9,76 @@ type CacheType = {
   [key: string]: any;
 };
 
+enum TokenType {
+  REF = 'REF',
+  STRING = 'STRING',
+  NUMBER = 'NUMBER',
+  BOOLEAN = 'BOOLEAN',
+  NULL = 'NULL',
+  IF = 'IF',
+  ELSE = 'ELSE',
+  THEN = 'THEN',
+  COMPARER = 'COMPARER',
+  OPERATOR = 'OPERATOR',
+  LPAREN = 'LPAREN',
+  RPAREN = 'RPAREN',
+  LBRACE = 'LBRACE',
+  RBRACE = 'RBRACE',
+  COMMA = 'COMMA',
+  COLON = 'COLON',
+  SEMICOLON = 'SEMICOLON',
+  WHITESPACE = 'WHITESPACE',
+  UNKNOWN = 'UNKNOWN',
+}
+
+function classifyToken(token: string): Token {
+  if (token.startsWith('[') && token.endsWith(']')) {
+    return { type: TokenType.REF, value: token };
+  }
+  if (token.startsWith('"') && token.endsWith('"')) {
+    return { type: TokenType.STRING, value: token };
+  }
+  if (!isNaN(parseFloat(token))) {
+    return { type: TokenType.NUMBER, value: token };
+  }
+  if (['TRUE', 'FALSE'].includes(token.toUpperCase())) {
+    return { type: TokenType.BOOLEAN, value: token.toUpperCase() };
+  }
+  if (token.toUpperCase() === TokenType.NULL) {
+    return { type: TokenType.NULL, value: token.toUpperCase() };
+  }
+  if ([TokenType.IF, TokenType.ELSE, TokenType.THEN].includes(token.toUpperCase() as TokenType)) {
+    return { type: token.toUpperCase() as TokenType, value: token.toUpperCase() };
+  }
+  if (['=', '<>', '>', '<', '>=', '<=', 'IN', 'LIKE'].includes(token.toUpperCase())) {
+    return { type: TokenType.COMPARER, value: token.toUpperCase() };
+  }
+  if (['AND', 'OR', 'NOT'].includes(token.toUpperCase())) {
+    return { type: TokenType.OPERATOR, value: token.toUpperCase() };
+  }
+  switch (token) {
+    case '(': return { type: TokenType.LPAREN, value: token };
+    case ')': return { type: TokenType.RPAREN, value: token };
+    case '{': return { type: TokenType.LBRACE, value: token };
+    case '}': return { type: TokenType.RBRACE, value: token };
+    case ',': return { type: TokenType.COMMA, value: token };
+    case ':': return { type: TokenType.COLON, value: token };
+    case ';': return { type: TokenType.SEMICOLON, value: token };
+    default: return { type: TokenType.UNKNOWN, value: token };
+  }
+}
+
+const isWhiteSpace = (char: string) => {
+  return char === ' ' || char === '\n' || char === '\t';
+};
+
 export class PictConstraintsLexer {
   private tokens: Token[] = [];
   private cache: CacheType = {};
   public filters: (FilterType | null)[] = [];
-  public errors: string[][] = [];
+  public errors: (string | null)[] = [];
 
   constructor(private input: string, private debug=false) {
-    this.input = input;
-    this.debug = debug;
     this.tokenize();
     this.analyze();
   }
@@ -27,8 +88,9 @@ export class PictConstraintsLexer {
     let buffer = '';
     let insideQuotes = false;
     let insideBraces = false;
+    let insideBrackets = false;
 
-    const addToken = (type: string, value: string) => {
+    const addToken = (type: TokenType, value: string) => {
       tokens.push({ type, value });
     };
 
@@ -39,7 +101,7 @@ export class PictConstraintsLexer {
         insideQuotes = !insideQuotes;
         buffer += char;
         if (!insideQuotes) {
-          addToken('STRING', buffer);
+          addToken(TokenType.STRING, buffer);
           buffer = '';
         }
       } else if (insideQuotes) {
@@ -49,10 +111,12 @@ export class PictConstraintsLexer {
           tokens.push(classifyToken(buffer));
           buffer = '';
         }
+        insideBrackets = true;
         buffer += char;
-      } else if (char === ']') {
+      } else if (char === ']' && insideBrackets) {
         buffer += char;
         tokens.push(classifyToken(buffer));
+        insideBrackets = false;
         buffer = '';
       } else if (char === '{') {
         insideBraces = true;
@@ -60,21 +124,21 @@ export class PictConstraintsLexer {
           tokens.push(classifyToken(buffer));
           buffer = '';
         }
-        addToken('LBRACE', char);
+        addToken(TokenType.LBRACE, char);
       } else if (char === '}') {
         insideBraces = false;
         if (buffer.length > 0) {
           tokens.push(classifyToken(buffer));
           buffer = '';
         }
-        addToken('RBRACE', char);
+        addToken(TokenType.RBRACE, char);
       } else if (char === ',' && insideBraces) {
         if (buffer.length > 0) {
           tokens.push(classifyToken(buffer));
           buffer = '';
         }
-        addToken('COMMA', char);
-      } else if ('[]=<>!();:'.includes(char) && !insideBraces) {
+        addToken(TokenType.COMMA, char);
+      } else if ('[]=<>!();:'.includes(char) && !insideBraces && !insideBrackets) {
         if (buffer.length > 0) {
           tokens.push(classifyToken(buffer));
           buffer = '';
@@ -93,7 +157,7 @@ export class PictConstraintsLexer {
         } else {
           tokens.push(classifyToken(char));
         }
-      } else if (isWhiteSpace(char) && !insideBraces) {
+      } else if (isWhiteSpace(char) && !insideBraces && !insideBrackets) {
         if (buffer.length > 0) {
           tokens.push(classifyToken(buffer));
           buffer = '';
@@ -102,13 +166,9 @@ export class PictConstraintsLexer {
         while (i + 1 < constraints.length && isWhiteSpace(constraints[i + 1])) {
           whitespaceBuffer += constraints[++i];
         }
-        addToken('WHITESPACE', whitespaceBuffer);
-      } else if (isWhiteSpace(char) && insideBraces) {
-        if (buffer.length > 0) {
-          tokens.push(classifyToken(buffer));
-          buffer = '';
-        }
-        addToken('WHITESPACE', char);
+        addToken(TokenType.WHITESPACE, whitespaceBuffer);
+      } else if (isWhiteSpace(char) && (insideBraces || insideBrackets)) {
+        buffer += char;
       } else {
         buffer += char;
       }
@@ -125,10 +185,7 @@ export class PictConstraintsLexer {
     let tokenIndex = 0;
     let setIndex = 0;
     let regexIndex = 0;
-    let errorMessages: string[] = [];
-    const errors: string[][] = [];
     const tokens = this.tokens;
-    const filters: (FilterType | null)[] = [];
 
     const nextToken = () =>  {
       while (tokenIndex < tokens.length && tokens[tokenIndex].type === 'WHITESPACE') {
@@ -140,18 +197,25 @@ export class PictConstraintsLexer {
     const parseExpression: () => string = () => {
       let expr = parseTerm();
       let token = nextToken();
+      if (token?.type === TokenType.UNKNOWN) {
+        throw new Error(`Unexpected token: ${token.value}`);
+      }
       while (token && token.type === 'OPERATOR' && token.value === 'OR') {
         const right = parseTerm();
         expr = `(${expr} || ${right})`;
         token = nextToken();
       }
       tokenIndex--; // Go back one token
-      return expr;
+      return expr || 'true';
     }
 
     const parseTerm: () => string = () => {
       let term = parseFactor();
+
       let token = nextToken();
+      if (token?.type === TokenType.UNKNOWN) {
+        throw new Error(`Unexpected token: ${token.value}`);
+      }
       while (token && token.type === 'OPERATOR' && token.value === 'AND') {
         const right = parseFactor();
         term = `(${term} && ${right})`;
@@ -163,38 +227,57 @@ export class PictConstraintsLexer {
 
     const parseFactor: () => string = () => {
       let token = nextToken();
-      if (token && token.type === 'OPERATOR' && token.value === 'NOT') {
-        const factor = parseFactor();
-        return `!(${factor})`;
-      } else if (token && token.type === 'LPAREN') {
-        const expr = parseExpression();
-        token = nextToken();
-        if (!token || token.type !== 'RPAREN') {
-          errorMessages.push('Expected closing parenthesis');
-          return 'false';
+      if (token != null) {
+        if (token.type === 'OPERATOR' && token.value === 'NOT') {
+          const factor = parseFactor();
+          return `!(${factor})`;
         }
-        return `(${expr})`;
-      } else if (token && token.type === 'BOOLEAN') {
-        return token.value.toUpperCase() === 'TRUE' ? 'true' : 'false';
-      } else {
-        tokenIndex--; // Go back one token
-        return parseCondition();
+        if (token.type === TokenType.LPAREN) {
+          const expr = parseExpression();
+          token = nextToken();
+          if (!token || token.type !== TokenType.RPAREN) {
+            throw new Error('Expected closing parenthesis');
+          }
+          return `(${expr})`;
+        }
+        if (token.type === TokenType.BOOLEAN) {
+          return token.value.toUpperCase() === 'TRUE' ? 'true' : 'false';
+        }
+        if (token.type === TokenType.UNKNOWN) {
+          throw new Error(`Unexpected token: ${token.value}`);
+        }
       }
+      tokenIndex--; // Go back one token
+      return parseCondition();
     }
 
     const parseCondition: () => string = () => {
       const left = parseOperand();
-      const comparerToken = nextToken();
-      if (!comparerToken || comparerToken.type !== 'COMPARER') {
-        errorMessages.push('Expected comparer');
-        return 'false';
+      if (left == null) {
+        throw new Error('Expected field or value after "IF", "THEN", "ELSE"');
+
       }
-      const comparer = comparerToken.value;
+      const comparerToken = nextToken();
+      if ([TokenType.NUMBER, TokenType.STRING, TokenType.BOOLEAN, TokenType.NULL].includes(comparerToken?.type!)) {
+        throw new Error(`Expected comparison operator but found value: ${comparerToken?.value}`);
+      }
+      if (comparerToken?.type === TokenType.THEN) {
+        throw new Error('A comparison operator and value are required after the field.');
+      }
+      if (comparerToken?.type === 'OPERATOR') {
+        throw new Error(`Expected comparison operator but found operator: ${comparerToken.value}`);
+      }
+
+      const comparer = comparerToken?.value;
+      
       if (comparer === 'IN') {
         const right = parseSet();
         return `${right}.has(${left})`;
       }
       const right = parseOperand();
+      if (right == null) {
+        throw new Error('Expected field or value');
+      }
       switch (comparer) {
         case '=':
           return `${left} === ${right}`;
@@ -216,26 +299,25 @@ export class PictConstraintsLexer {
           }
           return `this.cache['${regexKey}'].test(${left})`;
         default:
-          errorMessages.push(`Unknown comparer: ${comparer}`);
-          return 'false';
+          throw new Error(`Unknown comparison operator: ${comparer}`);
       }
     }
 
     const parseSet: () => string = () => {
       const elements: string[] = [];
       let token = nextToken();
-      if (token && token.type === 'LBRACE') {
+      if (token && token.type === TokenType.LBRACE) {
         token = nextToken();
-        while (token && token.type !== 'RBRACE') {
-          if (token.type === 'STRING') {
+        while (token && token.type !== TokenType.RBRACE) {
+          if (token.type === TokenType.STRING) {
             elements.push(token.value.slice(1, -1)); // remove quotes
-          } else if (token.type !== 'COMMA' && token.type !== 'WHITESPACE') {
-            errorMessages.push(`Unexpected token: ${token.value}`);
+          } else if (token.type !== TokenType.COMMA && token.type !== TokenType.WHITESPACE) {
+            throw new Error(`Unexpected token in array: ${token.value}`);
           }
           token = nextToken();
         }
       } else {
-        errorMessages.push(`Expected '{' but found ${token ? token.value : 'null'}`);
+        throw new Error(`Expected '{' but found ${token ? token.value : TokenType.NULL}`);
       }
       const setKey = `set_${setIndex++}`;
       if (!this.cache[setKey]) {
@@ -244,75 +326,119 @@ export class PictConstraintsLexer {
       return `this.cache['${setKey}']`;
     }
 
-    const parseOperand: () => string = () => {
+    const parseOperand: () => string | null = () => {
       const token = nextToken();
       if (token == null) {
-        errorMessages.push('Unexpected end of input');
-        return 'false';
+        return null;
       }
-      if (token.type === 'REF') {
+      if (token.type === TokenType.REF) {
         const key = token.value.slice(1, -1); // remove [ and ]
         return `row["${key}"]`;
-      } else if (token.type === 'STRING') {
+      } else if (token.type === TokenType.STRING) {
         const value = token.value; // keep quotes for string literals
         return `${value}`;
-      } else if (token.type === 'NUMBER') {
+      } else if (token.type === TokenType.NUMBER) {
         return token.value;
-      } else if (token.type === 'BOOLEAN') {
+      } else if (token.type === TokenType.BOOLEAN) {
         return token.value === 'TRUE' ? 'true' : 'false';
-      } else if (token.type === 'NULL') {
-        return 'null';
+      } else if (token.type === TokenType.NULL) {
+        return TokenType.NULL;
       } else {
-        errorMessages.push(`Unexpected token: ${token.value}`);
-        return 'false';
+        return null;
       }
     }
 
-    while (tokenIndex < tokens.length) {
+    const abandon = () => {
+      while (tokenIndex < tokens.length && tokens[tokenIndex].type !== TokenType.SEMICOLON) {
+        tokenIndex++;
+      }
+    }
+
+    const close = (code: string | null, error: string | null) => {
+      // Invariably, one of the two will be null.
+      if (code == null) {
+        if (this.debug) {
+          console.error(`Error[${this.errors.length}]:`, error);
+        }
+        this.filters.push(null);
+        this.errors.push(error);
+      } else {
+        if (this.debug) {
+          console.debug(`Code[${this.filters.length}]:`, code);
+        }
+        try {
+          const f = this.makeClosure(code);
+          this.filters.push(f);
+          this.errors.push(null);
+        } catch (e) {
+          console.error(e);
+          this.filters.push(null);
+          // @ts-ignore
+          this.errors.push(`RuntimeError[${this.errors.length}]:`, e.message);
+        }
+
+      }
+    }
+
+    const read = () => {
+      try {
+        const expr = parseExpression();
+        return expr;
+      } catch (e) {
+        // @ts-ignore
+        close(null, e.message);
+      }
+      // If the conditional expression ends with “ELSE”, 
+      //  the current index reaches a semicolon, and the next expression is skipped by the abandon function. 
+      // Therefore, the index is reset to the previous one.
+      tokenIndex--;
+      abandon();
+      return null;
+    };
+
+    while (tokens[tokenIndex] != null) {
       const token = nextToken();
       if (token == null) {
         break;
       }
-      if (token.type === 'IF') {
-        const condition = parseExpression();
-        const thenToken = nextToken();
-        if (!thenToken || thenToken.type !== 'THEN') {
-          errorMessages.push('Expected THEN');
-          break;
+      if (token.type === TokenType.IF) {
+        const action = read();
+        if (action == null) {
+          continue;
         }
-        const thenAction = parseExpression();
+        const thenToken = nextToken();
+        if (!thenToken || thenToken.type !== TokenType.THEN) {
+          abandon()
+          continue;
+        }
+        const thenAction = read();
+        if (thenAction == null) {
+          continue;
+        }
         
         const elseToken = nextToken();
-        let elseAction = 'true';
-        if (elseToken && elseToken.type === 'ELSE') {
-          elseAction = parseExpression();
+        let elseAction: string | null = 'true';
+        if (elseToken && elseToken.type === TokenType.ELSE) {
+          elseAction = read();
+          if (elseAction == null) {
+            continue;
+          }
         } else {
           tokenIndex--; // Go back one token if ELSE is not found
         }
-        const filterCode = `return (${condition} ? (${thenAction}) : (${elseAction}));`;
-        try {
-          if (this.debug) {
-            console.debug(`code[${filters.length}]:`, filterCode);
-          }
-          const f = this.makeClosure(filterCode);
-          filters.push(f as FilterType);
-        } catch (e) {
-          filters.push(null);
-          // @ts-ignore
-          errorMessages.push(e.message);
-        }
-        errors.push(errorMessages);
-        errorMessages = [];
-      } else if (token.type === 'SEMICOLON') {
+        const code = `return (${action} ? (${thenAction}) : (${elseAction}));`;
+        close(code, null);
+      } else if (token.type === TokenType.SEMICOLON) {
         // do nothing
       } else {
-        errorMessages.push(`Unexpected token: ${token.value}`);
-        errors.push(errorMessages);
-        break;
+        if (token.type === TokenType.UNKNOWN) {
+          close(null, `Unknown token: ${token.value}`);
+        } else {
+          close(null, `The leading "IF" is missing, found ${token.value}`);
+        }
+        abandon();
       }
     }
-    this.filters = filters;
-    this.errors = errors;
   }
 
   private makeClosure (code: string) {
@@ -337,44 +463,3 @@ export class PictConstraintsLexer {
   }
 }
 
-function classifyToken(token: string): Token {
-  if (token.startsWith('[') && token.endsWith(']')) {
-    return { type: 'REF', value: token };
-  }
-  if (token.startsWith('"') && token.endsWith('"')) {
-    return { type: 'STRING', value: token };
-  }
-  if (!isNaN(parseFloat(token))) {
-    return { type: 'NUMBER', value: token };
-  }
-  if (['TRUE', 'FALSE'].includes(token.toUpperCase())) {
-    return { type: 'BOOLEAN', value: token.toUpperCase() };
-  }
-  if (token.toUpperCase() === 'NULL') {
-    return { type: 'NULL', value: token.toUpperCase() };
-  }
-  if (['IF', 'ELSE', 'THEN'].includes(token.toUpperCase())) {
-    return { type: token.toUpperCase(), value: token.toUpperCase() };
-  }
-  if (['=', '<>', '>', '<', '>=', '<=', 'IN', 'LIKE'].includes(token.toUpperCase())) {
-    return { type: 'COMPARER', value: token.toUpperCase() };
-  }
-  if (['AND', 'OR', 'NOT'].includes(token.toUpperCase())) {
-    return { type: 'OPERATOR', value: token.toUpperCase() };
-  } else {
-    switch (token) {
-      case '(': return { type: 'LPAREN', value: token };
-      case ')': return { type: 'RPAREN', value: token };
-      case '{': return { type: 'LBRACE', value: token };
-      case '}': return { type: 'RBRACE', value: token };
-      case ',': return { type: 'COMMA', value: token };
-      case ':': return { type: 'COLON', value: token };
-      case ';': return { type: 'SEMICOLON', value: token };
-      default: throw new Error(`Unknown token: ${token}`);
-    }
-  }
-}
-
-const isWhiteSpace = (char: string) => {
-  return char === ' ' || char === '\n' || char === '\t';
-};

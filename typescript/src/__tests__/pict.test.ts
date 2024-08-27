@@ -28,7 +28,7 @@ describe('PictConstraintsLexer with single constraints', () => {
 
   it('should handle NOT conditions correctly', () => {
     const lexer = new PictConstraintsLexer(`
-      IF NOT [PRODUCT] = "Book" THEN [AVAILABLE] = "Yes" ELSE [AVAILABLE] = "No";
+      IF NOT [PRODUCT] = "Book" THEN [AVAILABLE] <> "No" ELSE [AVAILABLE] = "No";
     `, false);
     const row1 = { PRODUCT: 'Pen', AVAILABLE: 'Yes' };
     expect(lexer.filter(row1)).toBe(true);
@@ -47,7 +47,7 @@ describe('PictConstraintsLexer with single constraints', () => {
     const row1 = { CATEGORY: 'Electronics', BRAND: 'Sony', WARRANTY: 'Included' };
     expect(lexer.filter(row1)).toBe(true);
 
-    const row2 = { CATEGORY: 'Electronics', BRAND: 'Samsung', WARRANTY: 'Not Included' };
+    const row2 = { CATEGORY: 'Electronics', BRAND: 'General Electric Company', WARRANTY: 'Not Included' };
     expect(lexer.filter(row2)).toBe(true);
 
     const row3 = { CATEGORY: 'Electronics', BRAND: 'Sony', WARRANTY: 'Not Included' };
@@ -71,17 +71,17 @@ describe('PictConstraintsLexer with single constraints', () => {
     expect(lexer.filter(row4)).toBe(false);
   });
 
-  it('should handle string equality conditions', () => {
+  it('should handle fields containing spaces', () => {
     const lexer = new PictConstraintsLexer(`
-      IF [NAME] = "Bob" THEN [STATUS] = "Inactive" ELSE [STATUS] = "Active";
+      IF [PRODUCT NAME] = "Laptop" THEN [PRICE] > 500 ELSE [PRICE] <= 500;
     `, false);
-    const row1 = { NAME: 'Bob', STATUS: 'Inactive' };
+    const row1 = { 'PRODUCT NAME': 'Laptop', PRICE: 600 };
     expect(lexer.filter(row1)).toBe(true);
 
-    const row2 = { NAME: 'Alice', STATUS: 'Active' };
-    expect(lexer.filter(row2)).toBe(true);
+    const row2 = { 'PRODUCT NAME': 'Laptop', PRICE: 400 };
+    expect(lexer.filter(row2)).toBe(false);
 
-    const row3 = { NAME: 'Bob', STATUS: 'Active' };
+    const row3 = { 'PRODUCT NAME': 'Desktop', PRICE: 600 };
     expect(lexer.filter(row3)).toBe(false);
   });
 
@@ -117,6 +117,40 @@ describe('PictConstraintsLexer with single constraints', () => {
 
     const row5 = { AGE: 25, COUNTRY: 'Canada', STATUS: 'Denied' };
     expect(lexer.filter(row5)).toBe(false);
+  });
+  it('should handle false in ELSE condition', () => {
+    const lexer = new PictConstraintsLexer(`
+      IF [NAME] = "Bob" THEN [STATUS] = "Inactive" ELSE FALSE;
+    `, false);
+    const row1 = { NAME: 'Bob', STATUS: 'Inactive' };
+    expect(lexer.filter(row1)).toBe(true);
+
+    const row2 = { NAME: 'Alice', STATUS: 'Active' };
+    expect(lexer.filter(row2)).toBe(false);
+  });
+
+  it('should handle true in ELSE condition', () => {
+    const lexer = new PictConstraintsLexer(`
+      IF [NAME] = "Bob" THEN [STATUS] = "Inactive" ELSE true;
+    `, false);
+    const row1 = { NAME: 'Bob', STATUS: 'Inactive' };
+    expect(lexer.filter(row1)).toBe(true);
+
+    const row2 = { NAME: 'Alice', STATUS: 'Active' };
+    expect(lexer.filter(row2)).toBe(true);
+  });
+  it('Compare with other fields', () => {
+    const lexer = new PictConstraintsLexer(`
+      IF [NAME] = [ALIAS] THEN [AGE] <= 26;
+    `, false);
+    const row1 = { NAME: 'Bob', ALIAS: 'Bob', AGE: 18 };
+    expect(lexer.filter(row1)).toBe(true);
+
+    const row2 = { NAME: 'Alice', ALIAS: 'Lissie', AGE: 25 };
+    expect(lexer.filter(row2)).toBe(true);
+
+    const row3 = { NAME: 'Shohei', ALIAS: 'Shohei', AGE: 30 };
+    expect(lexer.filter(row3)).toBe(false);
   });
 });
 
@@ -246,5 +280,104 @@ describe('PictConstraintsLexer with multiple constraints', () => {
 
     const row3 = { SEASON: 'Winter', CLOTHING: 'Coat', TEMP: 5, WEATHER: 'Sunny', ACTIVITY: 'Running' };
     expect(lexer.filter(row3)).toBe(true);
+  });
+});
+
+describe('PictConstraintsLexer with invalid constraints', () => {
+  it('Unknown comparer', () => {
+    const lexer = new PictConstraintsLexer(`
+    IF [NAME] @ "Alice" THEN [STATUS] = "Active" ELSE [STATUS] = "Inactive";
+    `, false);
+    expect(lexer.errors.length).toBe(1);
+    expect(lexer.errors[0]).toBe('Unknown comparison operator: @');
+  });
+
+  it('Comparison operator missing, got a value', () => {
+    const lexer = new PictConstraintsLexer(`
+    IF [NAME] "Alice" THEN [STATUS] = "Active" ELSE [STATUS] = "Inactive";
+    `, false);
+    expect(lexer.errors.length).toBe(1);
+    expect(lexer.errors[0]).toBe('Expected comparison operator but found value: "Alice"');
+  });
+  
+  it('Comparison operator missing, got an operator', () => {
+    const lexer = new PictConstraintsLexer(`
+    IF [NAME] AND TRUE THEN [STATUS] = "Active" ELSE [STATUS] = "Inactive";
+    `, false);
+    expect(lexer.errors.length).toBe(1);
+    expect(lexer.errors[0]).toBe('Expected comparison operator but found operator: AND');
+  });
+
+  it('Comparison operator and value missing, got then', () => {
+    const lexer = new PictConstraintsLexer(`
+    IF [NAME] THEN [STATUS] = "Active" ELSE [STATUS] = "Inactive"
+    `, false);
+    expect(lexer.errors.length).toBe(1);
+    expect(lexer.errors[0]).toBe('A comparison operator and value are required after the field.');
+  });
+  it('Nothing after IF', () => {
+    const lexer = new PictConstraintsLexer(`
+    IF THEN [STATUS] = "Active" ELSE [STATUS] = "Inactive"
+    `, false);
+    expect(lexer.errors.length).toBe(1);
+    expect(lexer.errors[0]).toBe('Expected field or value after "IF", "THEN", "ELSE"');
+  });
+
+  it('Nothing after THEN', () => {
+    const lexer = new PictConstraintsLexer(`
+    IF [NAME] = "Summer" THEN ELSE [STATUS] = "Active"
+    `, false);
+    expect(lexer.errors.length).toBe(1);
+    expect(lexer.errors[0]).toBe('Expected field or value after "IF", "THEN", "ELSE"');
+  });
+
+  it('Nothing after ELSE', () => {
+    const lexer = new PictConstraintsLexer(`
+    IF [NAME] = "Summer" THEN [STATUS] = "Active" ELSE
+    `, false);
+    expect(lexer.errors.length).toBe(1);
+    expect(lexer.errors[0]).toBe('Expected field or value after "IF", "THEN", "ELSE"');
+  });
+
+  
+  it('IF is missing, typo', () => {
+    const lexer = new PictConstraintsLexer(`
+    F [NAME] = "Summer" THEN [STATUS] = "Active"
+    `, false);
+    expect(lexer.errors.length).toBe(1);
+    expect(lexer.errors[0]).toBe('Unknown token: F');
+  });
+
+  it('IF is nothing', () => {
+    const lexer = new PictConstraintsLexer(`
+    [NAME] = "Summer" THEN [STATUS] = "Active"
+    `, false);
+    expect(lexer.errors.length).toBe(1);
+    expect(lexer.errors[0]).toBe('The leading "IF" is missing, found [NAME]');
+  });
+  
+
+  it('Multiple invalid expressions', () => {
+    const lexer = new PictConstraintsLexer(`
+    IF [NAME] THEN [STATUS] = "Active";
+    IF [NAME] = "Summer" THEN [STATUS] = "Active";
+    IF [NAME] = "Summer" THEN [STATUS] = "Active" ELSE;
+    IF [NAME] = "Summer" THEN [STATUS] = "Active";
+    IF [NAME] @ "Summer" THEN [STATUS] = "Active" ELSE [STATUS] = "Inactive";
+    `, false);
+
+    expect(lexer.errors.length).toBe(5);
+
+    expect(lexer.errors[0]).toBe('A comparison operator and value are required after the field.' );
+    expect(lexer.errors[1]).toBe(null);
+    expect(lexer.errors[2]).toBe('Expected field or value after "IF", "THEN", "ELSE"' );
+    expect(lexer.errors[3]).toBe(null);
+    expect(lexer.errors[4]).toBe('Unknown comparison operator: @');
+
+    expect(lexer.filters[0]).toBeNull();
+    expect(lexer.filters[1]).not.toBeNull();
+    expect(lexer.filters[2]).toBeNull();
+    expect(lexer.filters[3]).not.toBeNull();
+    expect(lexer.filters[4]).toBeNull();
   });
 });
