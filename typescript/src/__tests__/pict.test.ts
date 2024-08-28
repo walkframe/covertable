@@ -1,6 +1,15 @@
 import { PictConstraintsLexer } from "../utils/pict";
 
 describe('PictConstraintsLexer with single constraints', () => {
+  it('Blank', () => {
+    const lexer = new PictConstraintsLexer(``, true);
+    expect(lexer.filters.length).toBe(0);
+    expect(lexer.errors.length).toBe(0);
+
+    const row1 = { PRICE: 150, DISCOUNT: 'YES' };
+    expect(lexer.filter(row1)).toBe(true);
+  });
+
   it('should filter correctly with LIKE and IN conditions', () => {
     const lexer = new PictConstraintsLexer(`
       IF [NAME] LIKE "Alic?" THEN [STATUS] IN {"Active", "Pending"} ELSE [AGE] > 20 OR [COUNTRY] = "USA";
@@ -355,7 +364,6 @@ describe('PictConstraintsLexer with invalid constraints', () => {
     expect(lexer.errors.length).toBe(1);
     expect(lexer.errors[0]).toBe('The leading "IF" is missing, found [NAME]');
   });
-  
 
   it('Multiple invalid expressions', () => {
     const lexer = new PictConstraintsLexer(`

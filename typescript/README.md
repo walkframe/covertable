@@ -68,7 +68,7 @@ make(factors, { // optional
   length: 2,
   // SuggestRowType<typeof factors> is { machine: string, os: string, browser: string }
   preFilter: (row: SuggestRowType<typeof factors>) => !(row.os === 'Android' && row.machine !== 'Pixel'), // default: null
-  // Or DictType that is { [key: string]: string }
+  // Or DictType that is { [key: string]: any }
   postFilter: (row: DictType) => !(row.os === 'iOS' && row.browser !== 'Safari'), // default: null
 });
 ```
@@ -109,8 +109,8 @@ Obviously the more it increases, the more number of combinations increases.
 ### sorter
 Determines the order of combinations.
 
-- sorters.random: It makes different combinations everytime. (fastest)
-- sorters.hash: It makes combinations depending on hash of the pair and seed. (default)
+- sorters.random: Generates different combinations each time. (fastest)
+- sorters.hash: Uses a hash-based method for reproducibility. (default)
 
   - It receives `seed`.
     - `seed` option decides the order of storing from unstored pairs.
@@ -119,8 +119,8 @@ Determines the order of combinations.
 ### criterion
 Determines the efficiency of combinations.
 
-- `criteria.simple`: it extracts any pairs that can be stored into the processing row.
-- `criteria.greedy`: it attempts to make most efficient combinations. (default)
+- `criteria.simple`: Quickly generates combinations.
+- `criteria.greedy`: Attempts to minimize the number of combinations, but is more time-intensive. (default)
   - It receives [tolerance](https://github.com/walkframe/covertable#tolerance) option.
 
 While `criteria.simple` processes quickly, `criteria.greedy` makes fewer combinations.
