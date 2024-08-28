@@ -1,11 +1,11 @@
 import type { Controller } from "./controller";
 
-export type Scalar = number | string;
-export type Dict = { [s: string]: any };
-export type List = { [index: number]: any[] };
+export type ScalarType = number | string;
+export type DictType = { [s: string]: any };
+export type ListType = { [index: number]: any[] };
 
-export type SerialsType = Map<Scalar, PairType>;
-export type ParentsType = Map<number, Scalar>;
+export type SerialsType = Map<ScalarType, PairType>;
+export type ParentsType = Map<number, ScalarType>;
 export type IndicesType = Map<number, number>;
 
 export type FilterRowType = {
@@ -13,13 +13,13 @@ export type FilterRowType = {
   [index: number]: any;
 }
 
-export type ArrayTuple = any[][];
-export type ArrayObject = { [s: string]: any[] };
-export type FactorsType = ArrayTuple | ArrayObject;
+export type ArrayTupleType = any[][];
+export type ArrayObjectType = { [s: string]: any[] };
+export type FactorsType = ArrayTupleType | ArrayObjectType;
 
-export type SuggestRowType<T extends FactorsType> = T extends ArrayTuple
+export type SuggestRowType<T extends FactorsType> = T extends ArrayTupleType
   ? T[number][number][]
-  : T extends ArrayObject ? { [K in keyof T]: T[K][number] }
+  : T extends ArrayObjectType ? { [K in keyof T]: T[K][number] }
   : unknown;
 
 export type FilterType = (row: FilterRowType) => boolean;
@@ -27,12 +27,12 @@ export type SuggestFilterType<T extends FactorsType> = (row: SuggestRowType<T>) 
 
 export type PairType = number[];
 
-export type PairByKey = Map<Scalar, PairType>;
+export type PairByKeyType = Map<ScalarType, PairType>;
 
-export type CandidateType = [Scalar, number][];
+export type CandidateType = [ScalarType, number][];
 
 export interface RowType {
-  consumed: PairByKey;
+  consumed: PairByKeyType;
 };
 
 export type SorterType = (
@@ -41,7 +41,7 @@ export type SorterType = (
 ) => PairType[];
 
 export interface SortArgsType {
-  seed: Scalar;
+  seed: ScalarType;
   indices: IndicesType;
 };
 
@@ -56,7 +56,7 @@ export interface OptionsType<T extends FactorsType> {
   length?: number;
   sorter?: SorterType;
   criterion?: (ctrl: Controller<T>) => IterableIterator<PairType>;
-  seed?: Scalar;
+  seed?: ScalarType;
   tolerance?: number;
   preFilter?: FilterType | SuggestFilterType<T>;
   postFilter?: FilterType | SuggestFilterType<T>;

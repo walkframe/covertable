@@ -2,6 +2,9 @@
 [![Workflow](https://github.com/walkframe/covertable/actions/workflows/typescript.yaml/badge.svg)](https://github.com/walkframe/covertable/actions/workflows/typescript.yaml)
 [![codecov](https://codecov.io/gh/walkframe/covertable/branch/master/graph/badge.svg)](https://codecov.io/gh/walkframe/covertable)
 
+# What is covertable?
+covertable is a powerful tool for generating pairwise combinations of input factors, designed for both Node.js and browser environments. It's easy to use, flexible, and supports advanced filtering options, making it perfect for testing scenarios and generating comprehensive datasets.
+
 # Installation
 
 ```sh
@@ -10,15 +13,15 @@ $ npm install covertable --save
 
 # Usage
 
-## Simple demo in Node.js:
+## Simple usage in Node.js:
 
 ```javascript
 var covertable = require('covertable');
-var make = covertable.default;
+var make = covertable.make;
 
-var machine = ['iphone', 'pixel'];
-var os = ['ios', 'android'];
-var browser = ['FireFox', 'Chrome', 'Safari'];
+var machine = ["iPhone", "Pixel", "XPERIA", "ZenFone", "Galaxy"];
+var os = ["iOS", "Android"];
+var browser = ["FireFox", "Chrome", "Safari"];
 
 make([machine, os, browser]);
 ```
@@ -26,64 +29,47 @@ Output:
 
 ```javascript
 [
-  [ 'pixel', 'android', 'Chrome' ],
-  [ 'pixel', 'ios', 'Safari' ],
-  [ 'pixel', 'android', 'FireFox' ],
-  [ 'iphone', 'android', 'Safari' ],
-  [ 'iphone', 'ios', 'Chrome' ],
-  [ 'iphone', 'ios', 'FireFox' ]
+  [ 'Pixel', 'iOS', 'Chrome' ],
+  [ 'ZenFone', 'iOS', 'FireFox' ],
+  [ 'Pixel', 'Android', 'Safari' ],
+  [ 'Galaxy', 'Android', 'Chrome' ],
+  [ 'XPERIA', 'Android', 'FireFox' ],
+  [ 'Pixel', 'iOS', 'FireFox' ],
+  [ 'iPhone', 'iOS', 'Safari' ],
+  [ 'Galaxy', 'iOS', 'Safari' ],
+  [ 'XPERIA', 'iOS', 'Chrome' ],
+  [ 'ZenFone', 'Android', 'Chrome' ],
+  [ 'Galaxy', 'iOS', 'FireFox' ],
+  [ 'iPhone', 'Android', 'Chrome' ],
+  [ 'iPhone', 'iOS', 'FireFox' ],
+  [ 'ZenFone', 'iOS', 'Safari' ],
+  [ 'XPERIA', 'iOS', 'Safari' ]
 ]
 ```
 
 Of course, it also works in the browser well.
 
-## Advanced demo in TypeScript:
+## Advanced usage in TypeScript:
+
+As previously mentioned, when elements are specified as an array, the results will also be in array form. However, if the elements are specified as an object, the results will be in object form. 
+
+The following example uses preFilter and postFilter to apply constraints to the output results. In this case, `SuggestRowType` can also be used to infer the type of row parameters that the filter function receives.
 
 ```typescript
-import { default as make, makeAsync, sorters, criteria } from "covertable";
+import { make, sorters, criteria, SuggestRowType, DictType } from "covertable";
 
-const machine = ['iphone', 'pixel'];
-const os = ['ios', 'android'];
-const browser = ['FireFox', 'Chrome', 'Safari'];
+const machine = ["iPhone", "Pixel", "XPERIA", "ZenFone", "Galaxy"];
+const os = ["iOS", "Android"];
+const browser = ["FireFox", "Chrome", "Safari"];
 
-make([machine, os, browser], { // optional
-  length: 2, // default: 2
-  criterion: criteria.simple, // default: criteria.greedy
-  sorter: sorters.random, // default: sorters.hash
-  preFilter: (row: any) => !(row[1] === 'android' && row[0] !== 'pixel'), // default: null
-  postFilter: (row: any) => !(row[1] === 'ios' && row[2] !== 'Safari'), // default: null
-});
-```
+const factors = {machine, os, browser};
 
-Output:
-
-```typescript
-[ // filtered
-  [ 'iphone', 'ios', 'Safari' ],
-  [ 'pixel', 'android', 'Chrome' ],
-  [ 'pixel', 'ios', 'Safari' ]
-]
-```
-
-You can use also `makeAsync` function (generator).
-- It receives the same arguments with `make` function.
-- It returns the row at the time it's made.
-
-## Object input and output
-
-You can specify `factors` as object type:
-
-```typescript
-import { default as make, sorters, criteria } from "covertable";
-
-const machine = ['iphone', 'pixel'];
-const os = ['ios', 'android'];
-const browser = ['FireFox', 'Chrome', 'Safari'];
-
-make({machine, os, browser}, { // optional
+make(factors, { // optional
   length: 2,
-  preFilter: (row: any) => !(row.os === 'android' && row.machine !== 'pixel'), // default: null
-  postFilter: (row: any) => !(row.os === 'ios' && row.browser !== 'Safari'), // default: null
+  // SuggestRowType<typeof factors> is { machine: string, os: string, browser: string }
+  preFilter: (row: SuggestRowType<typeof factors>) => !(row.os === 'Android' && row.machine !== 'Pixel'), // default: null
+  // Or DictType that is { [key: string]: string }
+  postFilter: (row: DictType) => !(row.os === 'iOS' && row.browser !== 'Safari'), // default: null
 });
 ```
 
@@ -91,16 +77,29 @@ Then the output will change as follows:
 
 ```typescript
 [ // filtered
-  { machine: 'iphone', browser: 'Safari', os: 'ios' },
-  { machine: 'pixel', browser: 'Chrome', os: 'android' },
-  { machine: 'pixel', browser: 'Safari', os: 'ios' },
+  { machine: 'Pixel', os: 'Android', browser: 'FireFox' },
+  { machine: 'iPhone', os: 'iOS', browser: 'Safari' },
+  { machine: 'Galaxy', browser: 'Safari', os: 'iOS' },
+  { machine: 'Pixel', browser: 'Safari', os: 'iOS' },
+  { machine: 'ZenFone', browser: 'Safari', os: 'iOS' },
+  { machine: 'XPERIA', browser: 'Safari', os: 'iOS' }
 ]
 ```
 
-## Options
-`covertable.make` function has options as `object` at 2nd argument.
+You can use also `makeAsync` function (generator).
+- It receives the same arguments with `make` function.
+- It returns the row at the time it's made.
 
-All options are omittable.
+```js
+import { makeAsync } from "covertable";
+
+for await (const row of makeAsync([machine, os, browser])) {
+  console.log(row);
+}
+```
+
+## Options
+The `covertable.make` function accepts an options object as its second argument. Here are the available options:
 
 ### length
 Number of factors to be covered. (default: 2)
@@ -108,9 +107,7 @@ Number of factors to be covered. (default: 2)
 Obviously the more it increases, the more number of combinations increases.
 
 ### sorter
-Combinations depend on the order of spreading all over the rows.
-
-You can choice a sorter from the following:
+Determines the order of combinations.
 
 - sorters.random: It makes different combinations everytime. (fastest)
 - sorters.hash: It makes combinations depending on hash of the pair and seed. (default)
@@ -120,7 +117,7 @@ You can choice a sorter from the following:
     - When the combination of factors and seed are the same, covertable reproduces the same collective.
 
 ### criterion
-You can choice a criterion from the following:
+Determines the efficiency of combinations.
 
 - `criteria.simple`: it extracts any pairs that can be stored into the processing row.
 - `criteria.greedy`: it attempts to make most efficient combinations. (default)
@@ -132,23 +129,69 @@ Although the latter is superior to former in terms of fewer combinations general
 Not relevant options will be ignored.
 
 ### preFilter
-This is a function to filter beforehand.
-
-It receives an argument `row` as `object` type.
+Function to filter combinations before they are registered.
 
 When the function returns `false`, the row combination will not be registered.
 - If factors type is `Array`, you should specify an index at the subscript like `row => row[1] < 6`.
 - If factors type is `Object`, you should specify a key at the subscript like `row => row.month < 6` or `row => row['month'] < 6`
 
 ### postFilter
-This means a function to filter later.
+Function to filter combinations after they are generated.
 
 The usage is the same as `preFilter`, only the difference is the timing of the call.
 It will delete rows not matched this function at the last.
 
 For this reason, the final test cases may not satisfy the factors coverage.
 
-# Requirement
+### PictConstraintsLexer
+
+Filter functions can also be generated using PictConstraintsLexer. Use as follows
+This function is supported only in the typescript version.
+
+```js
+import { make, PictConstraintsLexer } from "covertable";
+
+const machine = ["iPhone", "Pixel", "XPERIA", "ZenFone", "Galaxy"];
+const os = ["iOS", "Android"];
+const browser = ["FireFox", "Chrome", "Safari"];
+
+const lexer = new PictConstraintsLexer(
+  `
+  IF [machine] = "iPhone" THEN [os] = "iOS";
+  IF [os] = "iOS" THEN [machine] = "iPhone";
+  `, true
+);
+
+make({machine, os, browser}, { // optional
+  preFilter: lexer.filter,
+});
+```
+
+```js
+[
+  { machine: 'ZenFone', browser: 'FireFox', os: 'Android' },
+  { os: 'Android', browser: 'Safari', machine: 'Pixel' },
+  { machine: 'Galaxy', browser: 'Chrome', os: 'Android' },
+  { machine: 'XPERIA', os: 'Android', browser: 'FireFox' },
+  { machine: 'Pixel', browser: 'Chrome', os: 'Android' },
+  { os: 'iOS', browser: 'FireFox', machine: 'iPhone' },
+  { machine: 'Pixel', browser: 'FireFox', os: 'Android' },
+  { os: 'iOS', browser: 'Chrome', machine: 'iPhone' },
+  { machine: 'Galaxy', browser: 'Safari', os: 'Android' },
+  { machine: 'ZenFone', browser: 'Chrome', os: 'Android' },
+  { os: 'iOS', browser: 'Safari', machine: 'iPhone' },
+  { machine: 'Galaxy', browser: 'FireFox', os: 'Android' },
+  { machine: 'XPERIA', browser: 'Chrome', os: 'Android' },
+  { machine: 'ZenFone', browser: 'Safari', os: 'Android' },
+  { machine: 'XPERIA', browser: 'Safari', os: 'Android' }
+]
+```
+
+This feature acts as a conversion tool that enables the implementation of PICT constraint conditions within CoverTable, 
+allowing users to seamlessly apply complex constraints to their test data generation.
+
+
+# Requirements
 
 ES2015 or later
 
@@ -179,6 +222,6 @@ $ npm version patch
 $ npm publish
 ```
 
-# More info
+# More information
 
 - [walkframe/covertable - GitHub](https://github.com/walkframe/covertable)

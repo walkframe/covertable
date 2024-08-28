@@ -17,9 +17,9 @@ import {
   IndicesType,
   FactorsType,
   SerialsType,
-  Scalar,
-  Dict,
-  PairByKey,
+  ScalarType,
+  DictType,
+  PairByKeyType,
   ParentsType,
   CandidateType,
   RowType,
@@ -29,9 +29,9 @@ import {
 } from "./types";
 import { NeverMatch, NotReady } from "./exceptions";
 
-export class Row extends Map<Scalar, number> implements RowType {
+export class Row extends Map<ScalarType, number> implements RowType {
   // index: number
-  public consumed: PairByKey = new Map();
+  public consumed: PairByKeyType = new Map();
 
   constructor(row: CandidateType) {
     super();
@@ -57,9 +57,9 @@ export class Controller<T extends FactorsType> {
   private serials: SerialsType = new Map();
   private parents: ParentsType = new Map();
   private indices: IndicesType = new Map();
-  public incomplete: PairByKey = new Map();
+  public incomplete: PairByKeyType = new Map();
   
-  private rejected: Set<Scalar> = new Set();
+  private rejected: Set<ScalarType> = new Set();
   public row: Row;
 
   constructor(public factors: FactorsType, public options: OptionsType<T>) {
@@ -169,8 +169,8 @@ export class Controller<T extends FactorsType> {
     return row.size === this.factorLength;
   }
 
-  toMap(row: Row): Map<Scalar, number[]> {
-    const result: Map<Scalar, number[]> = new Map();
+  toMap(row: Row): Map<ScalarType, number[]> {
+    const result: Map<ScalarType, number[]> = new Map();
     for (let [key, serial] of row.entries()) {
       const index = this.indices.get(serial) as number;
       const first = this.indices.get((this.serials.get(key) as PairType)[0]);
@@ -181,7 +181,7 @@ export class Controller<T extends FactorsType> {
   }
 
   toProxy(row: Row) {
-    const obj: Dict = {};
+    const obj: DictType = {};
     for (let [key, value] of this.toMap(row).entries()) {
       obj[key] = value;
     }
@@ -189,7 +189,7 @@ export class Controller<T extends FactorsType> {
   }
 
   toObject(row: Row) {
-    const obj: Dict = {};
+    const obj: DictType = {};
     for (let [key, value] of this.toMap(row).entries()) {
       obj[key] = value;
     }

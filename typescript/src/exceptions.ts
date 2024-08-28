@@ -1,7 +1,7 @@
-import { Scalar } from "./types";
+import { ScalarType } from "./types";
 
 export class NotReady extends Error {
-  constructor(public key: Scalar) {
+  constructor(public key: ScalarType) {
     super(`Not yet '${key}' in the object`);
   }
 }

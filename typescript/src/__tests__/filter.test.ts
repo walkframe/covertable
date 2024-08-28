@@ -1,5 +1,4 @@
-import { Dict, SuggestRowType } from "../types";
-import { make, makeAsync, sorters, criteria } from "../index";
+import { make, DictType, SuggestRowType } from "../";
   
 const machine = ["iPhone", "Pixel", "XPERIA", "ZenFone", "Galaxy"];
 const os = ["iOS", "Android"];
@@ -7,7 +6,7 @@ const browser = ["FireFox", "Chrome", "Safari"];
 
 test('exclude impossible combinations', () => {
   const factors = {machine, os, browser};
-  const preFilter = (row: Dict) => {
+  const preFilter = (row: DictType) => {
     return !(
       (row.machine === 'iPhone' && row.os !== 'iOS') || 
       (row.machine !== 'iPhone' && row.os === 'iOS')
@@ -49,14 +48,14 @@ test('Limited to iphone and iOS combinations only.', () => {
 
 test('Use a constant-false function for preFilter', () => {
   const factors = {machine, os, browser};
-  const preFilter = (row: Dict) => false;
+  const preFilter = (row: DictType) => false;
   const rows = make(factors, { preFilter });
   expect(rows).toEqual([]);
 });
 
 test('Use the wrong conditional function for preFilter', () => {
   const factors = {machine, os, browser};
-  const preFilter = (row: Dict) => row.machine === 'WindowsPhone';
+  const preFilter = (row: DictType) => row.machine === 'WindowsPhone';
   const rows = make(factors, { preFilter });
   expect(rows).toEqual([]);
 });

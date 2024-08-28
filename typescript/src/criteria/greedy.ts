@@ -1,8 +1,8 @@
-import type {FactorsType, PairByKey, PairType} from '../types';
+import type {FactorsType, PairByKeyType, PairType} from '../types';
 import { combinations, unique } from '../lib';
 import { Controller } from '../controller';
 
-const getNumRemovablePairs = (indexes: Set<number>, incomplete: PairByKey, length: number) => {
+const getNumRemovablePairs = (indexes: Set<number>, incomplete: PairByKeyType, length: number) => {
   let num = 0;
   const removingKeys = combinations([... indexes], length);
   for (let pair of removingKeys) {

@@ -2,8 +2,8 @@
 export { hex as md5 } from 'js-md5';
 import { NotReady } from './exceptions';
 import type { 
-  FactorsType, Scalar, ParentsType, CandidateType, PairType,
-  Dict,
+  FactorsType, ScalarType, ParentsType, CandidateType, PairType,
+  DictType,
 } from './types';
 
 // https://gist.github.com/righ/71e32be8e33f74bde516c06f80c941e8
@@ -79,7 +79,7 @@ export const len = (obj: any[] | object): number => {
   return Object.keys(obj).length;
 }
 
-export const getItems = (container: FactorsType | Map<Scalar, any[]>): [Scalar, any[]][] => {
+export const getItems = (container: FactorsType | Map<ScalarType, any[]>): [ScalarType, any[]][] => {
   if (Array.isArray(container)) {
     return container.map((v, i) => [i, v]);
   }
@@ -90,13 +90,13 @@ export const getItems = (container: FactorsType | Map<Scalar, any[]>): [Scalar, 
 }
 
 export const getCandidate = (pair: number[], parents: ParentsType): CandidateType => {
-  const keys: Scalar[] = pair.map(p => parents.get(p) || 0);
+  const keys: ScalarType[] = pair.map(p => parents.get(p) || 0);
   return zip(keys, pair);
 }
 
 export const ascOrder = (a: number, b: number) => a > b ? 1 : -1;
 
-export const unique = (pair: PairType): Scalar => {
+export const unique = (pair: PairType): ScalarType => {
   const total = pair.reduce((a, b) => a * b);
   if (Number.isSafeInteger(total)) {
     return total;
@@ -131,7 +131,7 @@ export function* primeGenerator(): Generator<number> {
 
 
 export const proxyHandler = {
-  get(obj: Dict, key: string, receiver: any) {
+  get(obj: DictType, key: string, receiver: any) {
     if (key in obj) {
       return obj[key];
     }

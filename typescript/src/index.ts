@@ -6,7 +6,7 @@ import greedy from "./criteria/greedy";
 import simple from "./criteria/simple";
 
 import {PictConstraintsLexer} from "./utils/pict";
-import { FactorsType, OptionsType, SuggestRowType } from "./types";
+import { FactorsType, OptionsType, SuggestRowType, DictType, ListType } from "./types";
 import { Controller } from "./controller";
 import { NeverMatch } from "./exceptions";
 
@@ -59,5 +59,12 @@ export {
   criteria,
   PictConstraintsLexer,
 };
+
+export type {
+  OptionsType, 
+  SuggestRowType,
+  DictType,
+  ListType,
+}
 
 export default make;
