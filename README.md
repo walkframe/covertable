@@ -1,4 +1,4 @@
-# Covertable
+# CoverTable
 
 ![covertable logo](./covertable.png)
 
@@ -6,11 +6,11 @@ Time is limited.
 
 Creating a test case that satisfies all possible factors is often unrealistic and, more importantly, tedious.
 
-Save time with Covertable, a flexible pairwise tool that generates combinations covering two (or more) factors.
+Save time with CoverTable, a flexible pairwise tool that generates combinations covering two (or more) factors.
 
 ## Implementations
 
-Covertable is available in two implementations, with TypeScript as the primary focus and Python offered as a secondary option.
+CoverTable is available in two implementations, with TypeScript as the primary focus and Python offered as a secondary option.
 
 ### TypeScript
 
