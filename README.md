@@ -16,7 +16,7 @@ CoverTable is available in two implementations, with TypeScript as the primary f
 
 [![NPM Version](https://badge.fury.io/js/covertable.svg)](https://badge.fury.io/js/covertable) [![Build Status](https://github.com/walkframe/covertable/actions/workflows/typescript.yaml/badge.svg)](https://github.com/walkframe/covertable/actions/workflows/typescript.yaml)
 
-- [README](https://github.com/walkframe/covertable/blob/master/typescript)
+- [README](https://github.com/walkframe/covertable/blob/master/typescript/README.md)
 - [History](https://github.com/walkframe/covertable/blob/master/typescript/history.md)
 
 ### Python (Legacy Support)
