@@ -2,7 +2,7 @@
   "name": "covertable",
   "version": "2.4.0",
   "description": "A flexible pairwise tool written in TypeScript",
-  "homepage": "https://github.com/walkframe/covertable",
+  "homepage": "https://docs.walkframe.com/covertable",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/walkframe/covertable.git"
