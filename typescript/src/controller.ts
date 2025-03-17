@@ -278,6 +278,9 @@ export class Controller<T extends FactorsType> {
   }
 
   get progress() {
+    if (this.numAllChunks === 0) {
+      return 0;
+    }
     return 1 - this.incomplete.size / this.numAllChunks;
   }
 
