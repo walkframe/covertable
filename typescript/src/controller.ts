@@ -1,4 +1,4 @@
-
+import greedy from "./criteria/greedy";
 import hash from "./sorters/hash";
 import {
   range,
@@ -58,13 +58,15 @@ export class Controller<T extends FactorsType> {
   private parents: ParentsType = new Map();
   private indices: IndicesType = new Map();
   public incomplete: PairByKeyType = new Map();
+  private numAllChunks: number = 0;
   
   private rejected: Set<ScalarType> = new Set();
   public row: Row;
 
-  constructor(public factors: FactorsType, public options: OptionsType<T>) {
+  constructor(public factors: FactorsType, public options: OptionsType<T> = {}) {
     this.serialize(factors);
     this.setIncomplete();
+    this.numAllChunks = this.incomplete.size;
     this.row = new Row([]);
     this.factorLength = len(factors);
     this.factorIsArray = factors instanceof Array;
@@ -112,7 +114,7 @@ export class Controller<T extends FactorsType> {
     }
   }
 
-  setPair(pair: PairType) {
+  private setPair(pair: PairType) {
     for (let [key, value] of this.getCandidate(pair)) {
       this.row.set(key, value);
     }
@@ -122,7 +124,7 @@ export class Controller<T extends FactorsType> {
     }
   }
 
-  consume(pair: PairType) {
+  public consume(pair: PairType) {
     const pairKey = unique(pair);
     const deleted = this.incomplete.delete(pairKey);
     if (deleted) {
@@ -130,12 +132,12 @@ export class Controller<T extends FactorsType> {
     }
   }
 
-  getCandidate(pair: PairType) {
+  public getCandidate(pair: PairType) {
     return getCandidate(pair, this.parents);
   }
 
   // Returns a negative value if it is unknown if it can be stored.
-  storable(candidate: CandidateType) {
+  public storable(candidate: CandidateType) {
     let num = 0;
     for (let [key, el] of candidate) {
       let existing: number | undefined = this.row.get(key);
@@ -165,11 +167,11 @@ export class Controller<T extends FactorsType> {
     return num;
   }
 
-  isFilled(row: Row): boolean {
+  public isFilled(row: Row): boolean {
     return row.size === this.factorLength;
   }
 
-  toMap(row: Row): Map<ScalarType, number[]> {
+  private toMap(row: Row): Map<ScalarType, number[]> {
     const result: Map<ScalarType, number[]> = new Map();
     for (let [key, serial] of row.entries()) {
       const index = this.indices.get(serial) as number;
@@ -180,7 +182,7 @@ export class Controller<T extends FactorsType> {
     return result;
   }
 
-  toProxy(row: Row) {
+  private toProxy(row: Row) {
     const obj: DictType = {};
     for (let [key, value] of this.toMap(row).entries()) {
       obj[key] = value;
@@ -188,7 +190,7 @@ export class Controller<T extends FactorsType> {
     return new Proxy(obj, proxyHandler) as SuggestRowType<T>;
   }
 
-  toObject(row: Row) {
+  private toObject(row: Row) {
     const obj: DictType = {};
     for (let [key, value] of this.toMap(row).entries()) {
       obj[key] = value;
@@ -196,19 +198,19 @@ export class Controller<T extends FactorsType> {
     return obj as SuggestRowType<T>;
   }
 
-  reset() {
+  private reset() {
     this.row.consumed.forEach((pair, pairKey) => {
       this.incomplete.set(pairKey, pair);
     });
     this.row = new Row([]);
   }
 
-  discard() {
+  private discard() {
     this.rejected.add(this.row.getPairKey());
     this.row = new Row([]);
   }
 
-  restore() {
+  private restore() {
     const row = this.row;
     this.row = new Row([]);
     if (this.factorIsArray) {
@@ -220,7 +222,7 @@ export class Controller<T extends FactorsType> {
     return this.toObject(row);
   }
 
-  close() {
+  private close() {
     const trier = new Row([...this.row.entries()]);
     const kvs = getItems(this.serials);
     for (let [k, vs] of kvs) {
@@ -273,5 +275,36 @@ export class Controller<T extends FactorsType> {
       }
       throw e;
     }
+  }
+
+  get progress() {
+    return 1 - this.incomplete.size / this.numAllChunks;
+  }
+
+  public *makeAsync<T extends FactorsType>(): Generator<SuggestRowType<T>, void, unknown> {
+    const {criterion = greedy, postFilter} = this.options;
+    do {
+      for (let pair of criterion(this)) {
+        if (this.isFilled(this.row)) {
+          break;
+        }
+        this.setPair(pair);
+      }
+      try {
+        const complete = this.close();
+        if (complete) {
+          if (!postFilter || postFilter(this.toObject(this.row))) {
+            yield this.restore() as SuggestRowType<T>;
+          } else {
+            this.discard();
+          }
+        }
+      } catch (e) {
+        if (e instanceof NeverMatch) {
+          break;
+        }
+        throw e;
+      }
+    } while (this.incomplete.size);
   }
 }

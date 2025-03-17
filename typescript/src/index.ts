@@ -8,41 +8,13 @@ import simple from "./criteria/simple";
 import {PictConstraintsLexer} from "./utils/pict";
 import { FactorsType, OptionsType, SuggestRowType, DictType, ListType } from "./types";
 import { Controller } from "./controller";
-import { NeverMatch } from "./exceptions";
 
 const makeAsync = function* <T extends FactorsType>(
   factors: T,
   options: OptionsType<T> = {}
-) {
-  const {
-    criterion = greedy,
-    postFilter,
-  } = options;
-
+): Generator<SuggestRowType<T>, void, unknown> {
   const ctrl = new Controller(factors, options);
-  do {
-    for (let pair of criterion(ctrl)) {
-      if (ctrl.isFilled(ctrl.row)) {
-        break;
-      }
-      ctrl.setPair(pair);
-    }
-    try {
-      const complete = ctrl.close();
-      if (complete) {
-        if (!postFilter || postFilter(ctrl.toObject(ctrl.row))) {
-          yield ctrl.restore() as SuggestRowType<T>;
-        } else {
-          ctrl.discard();
-        }
-      }
-    } catch (e) {
-      if (e instanceof NeverMatch) {
-        break;
-      }
-      throw e;
-    }
-  } while (ctrl.incomplete.size);
+  yield* ctrl.makeAsync();
 };
 
 const make = <T extends FactorsType>(factors: T, options: OptionsType<T> = {}) => {
@@ -53,15 +25,16 @@ const sorters = { hash, random };
 const criteria = { greedy, simple };
 
 export { 
-  make, 
-  makeAsync, 
-  sorters, 
+  make,
+  makeAsync,
+  sorters,
   criteria,
   PictConstraintsLexer,
+  Controller,
 };
 
 export type {
-  OptionsType, 
+  OptionsType,
   SuggestRowType,
   DictType,
   ListType,
