@@ -131,6 +131,11 @@ export class Controller<T extends FactorsType> {
       this.row.consumed.set(pairKey, pair);
     }
   }
+  public consumeRow(row: Row) {
+    for (let pair of combinations([...row.values()], this.pairwiseCount)) {
+      this.consume(pair);
+    }
+  }
 
   public getCandidate(pair: PairType) {
     return getCandidate(pair, this.parents);
@@ -156,6 +161,7 @@ export class Controller<T extends FactorsType> {
     try {
       const ok = this.options.preFilter(proxy);
       if (!ok) {
+        this.consumeRow(nxt);
         return null;
       }
     } catch (e) {
@@ -206,7 +212,8 @@ export class Controller<T extends FactorsType> {
   }
 
   private discard() {
-    this.rejected.add(this.row.getPairKey());
+    const pairKey = this.row.getPairKey();
+    this.rejected.add(pairKey);
     this.row = new Row([]);
   }
 
@@ -268,7 +275,7 @@ export class Controller<T extends FactorsType> {
     }
     const proxy = this.toProxy(this.row);
     try {
-      return this.options.preFilter ? this.options.preFilter(proxy) : true;
+      return this.options.preFilter?.(proxy) ?? true;
     } catch (e) {
       if (e instanceof NotReady) {
         return false;
@@ -284,7 +291,7 @@ export class Controller<T extends FactorsType> {
     return 1 - this.incomplete.size / this.numAllChunks;
   }
 
-  public *makeAsync<T extends FactorsType>(): Generator<SuggestRowType<T>, void, unknown> {
+  public *makeAsync<T extends FactorsType>() {
     const {criterion = greedy, postFilter} = this.options;
     do {
       for (let pair of criterion(this)) {
@@ -309,5 +316,6 @@ export class Controller<T extends FactorsType> {
         throw e;
       }
     } while (this.incomplete.size);
+    this.incomplete.clear();
   }
 }
