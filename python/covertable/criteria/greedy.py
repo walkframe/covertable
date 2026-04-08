@@ -1,46 +1,52 @@
-import hashlib
-from collections import defaultdict
 from itertools import combinations
+from ..lib import unique
 
 
 def get_num_removable_pairs(indexes, incomplete, length):
-    removing_keys = combinations(indexes, length)
-    return len(incomplete.intersection(removing_keys))
+    num = 0
+    for pair in combinations(sorted(indexes), length):
+        key = unique(pair)
+        if key in incomplete:
+            num += 1
+    return num
 
 
-def extract(
-    sorted_incomplete, row, parents, length, incomplete, tolerance=0, **kwargs
-):
+def extract(ctrl):
     while True:
         max_num_pairs = None
         efficient_pair = None
 
-        for pair in sorted_incomplete:
-            if not row:
+        for pair_key, pair in list(ctrl.incomplete.items()):
+            row_size = len(ctrl.row)
+            if row_size == 0:
                 yield pair
                 continue
 
-            if row.filled():
+            if ctrl.is_filled():
                 break
 
-            storable = row.storable([(parents[p], p) for p in pair])
+            storable = ctrl.storable(ctrl.get_candidate(pair))
             if storable is None:
                 continue
 
             if storable == 0:
+                ctrl.consume(pair)
                 continue
 
+            storable_abs = abs(storable)
             num_pairs = get_num_removable_pairs(
-                sorted({*row.values(), *pair}), incomplete, length
+                set(list(ctrl.row.values()) + list(pair)),
+                ctrl.incomplete,
+                ctrl.length,
             )
-            if num_pairs + tolerance > len(row) * storable:
+
+            if num_pairs + ctrl.tolerance > row_size * storable_abs:
                 efficient_pair = pair
                 break
             if max_num_pairs is None or max_num_pairs < num_pairs:
                 max_num_pairs = num_pairs
                 efficient_pair = pair
 
-        if not efficient_pair:
+        if efficient_pair is None:
             break
-
         yield efficient_pair

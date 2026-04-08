@@ -8,6 +8,23 @@ Creating a test case that satisfies all possible factors is often unrealistic an
 
 Save time with CoverTable, a flexible pairwise tool that generates combinations covering two (or more) factors.
 
+## Algorithm
+
+CoverTable uses a **one-test-at-a-time greedy algorithm** to generate covering arrays.
+
+1. Assigns a unique prime number ID to each factor value, then enumerates all n-way combinations to be covered.
+2. For each test row, the **criterion** selects the most efficient uncovered combination to include next by evaluating how many other uncovered combinations it would simultaneously satisfy.
+3. Repeats until all combinations are covered.
+
+Two criteria are available:
+
+- **Greedy** (default): Evaluates coverage efficiency for candidate pairs and selects the one that maximizes coverage. The `tolerance` parameter allows trading quality for speed.
+- **Simple**: Picks the first feasible pair without efficiency evaluation. Faster, but produces more test cases.
+
+Additionally, **sorters** (Hash / Random) control the initial ordering of combinations, which influences the quality and reproducibility of the output.
+
+See also: [Pairwise Testing Tool Comparison](https://www.pairwise.org/efficiency.html)
+
 ## Implementations
 
 CoverTable is available in two implementations, with TypeScript as the primary focus and Python offered as a secondary option.
@@ -15,6 +32,8 @@ CoverTable is available in two implementations, with TypeScript as the primary f
 ### TypeScript
 
 [![NPM Version](https://badge.fury.io/js/covertable.svg)](https://badge.fury.io/js/covertable) [![Build Status](https://github.com/walkframe/covertable/actions/workflows/typescript.yaml/badge.svg)](https://github.com/walkframe/covertable/actions/workflows/typescript.yaml)
+
+Works in both **Node.js** and **browsers** (UMD build).
 
 - [README](https://github.com/walkframe/covertable/blob/master/typescript/README.md)
 - [History](https://github.com/walkframe/covertable/blob/master/typescript/history.md)

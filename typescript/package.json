@@ -60,7 +60,6 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@types/jest": "^25.2.3",
-    "@types/js-md5": "^0.4.2",
     "@types/node": "^14.0.9",
     "codecov": "^3.7.1",
     "jest": "^26.0.1",
@@ -72,7 +71,5 @@
     "webpack": "^5.93.0",
     "webpack-cli": "^5.1.4"
   },
-  "dependencies": {
-    "js-md5": "^0.7.3"
-  }
+  "dependencies": {}
 }

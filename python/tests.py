@@ -71,7 +71,7 @@ class Test_covertable:
             for row in rows:
                 assert not all(p in row for p in pair), f"{pair} is in a row: {row}"
 
-    def test_pre_filter_never_matching_raises_an_exception(self):
+    def test_pre_filter_never_matching_makes_no_rows(self):
         factors = [["a", "b", "c"], ["d", "e"], ["f"]]
 
         def pre_filter(row):
@@ -79,10 +79,8 @@ class Test_covertable:
                 return False
             return True
 
-        from covertable.exceptions import InvalidCondition
-
-        with pytest.raises(InvalidCondition):
-            call(factors, length=2, pre_filter=pre_filter)
+        rows = call(factors, length=2, pre_filter=pre_filter)
+        assert not rows
 
     def test_post_filter_never_matching_makes_no_rows(self):
         factors = [["a", "b", "c"], ["d", "e"], ["f"]]
