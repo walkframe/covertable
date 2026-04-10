@@ -1,0 +1,164 @@
+---
+sidebar_position: 2
+title: Options Detail
+---
+
+# Options Detail
+
+## `strength`
+
+Number of factors to be covered. Default is `2` (pairwise).
+
+:::caution
+The more `strength` increases, the more the number of combinations increases exponentially. Use values greater than 2 only when truly needed.
+:::
+
+:::info[Renamed from `length`]
+In versions prior to 3.0, this option was called `length`. The semantics are unchanged.
+:::
+
+## `subModels`
+
+`subModels` lets you apply a different N-wise strength to a specific group of factors, while the rest of the factors stay at the default `strength`. This is the same concept as PICT's [sub-models](https://github.com/microsoft/pict/blob/main/doc/pict.md#sub-models).
+
+```typescript
+import { make } from "covertable";
+
+const factors = {
+  PLATFORM: ["Win", "Mac", "Linux"],
+  CPUS:     ["1", "2", "4"],
+  RAM:      ["512", "1024"],
+  HDD:      ["SATA", "SSD"],
+};
+
+make(factors, {
+  strength: 2,
+  subModels: [
+    { keys: ["PLATFORM", "CPUS", "RAM"], strength: 3 },
+  ],
+});
+```
+
+In this example:
+- All combinations of `PLATFORM`, `CPUS`, and `RAM` are covered at strength 3.
+- Pairs that span the sub-model and other factors (e.g. `PLATFORM x HDD`) are still covered at the default strength of 2.
+
+## `weights`
+
+`weights` biases the **completion phase** — the moment covertable picks a value to fill in a column once all required pairs have been satisfied. Higher-weighted values are tried first, so they tend to appear in more rows.
+
+```typescript
+import { make } from "covertable";
+
+const factors = {
+  OS:      ["Windows", "Linux", "Mac"],
+  Browser: ["Chrome", "Firefox", "Safari"],
+};
+
+make(factors, {
+  weights: {
+    Browser: { 0: 10 }, // index 0 = "Chrome" gets weight 10 (default is 1)
+  },
+});
+```
+
+The keys of the inner object are **indices into the factor's value array**. To express weights by value instead, use the [`weightsByValue`](./pict#weightsbyvalue) helper from `covertable/pict`.
+
+:::info[How weights interact with coverage]
+Weights only affect the **completion phase**. The pairwise (or N-wise) coverage requirement is always satisfied first; weights only influence which values are picked when the algorithm has free choice. Setting a weight does not change the minimum number of generated rows.
+:::
+
+## `presets`
+
+`presets` lets you specify rows that **must appear in the output**. covertable processes them before normal generation, so the pairs they cover are subtracted from the work that the generator has to do — often reducing the total number of generated rows.
+
+```typescript
+import { make } from "covertable";
+
+const factors = {
+  OS:      ["iOS", "Android"],
+  Browser: ["Safari", "Chrome", "Firefox"],
+  Locale:  ["en", "ja", "fr"],
+};
+
+make(factors, {
+  presets: [
+    { OS: "iOS", Browser: "Safari", Locale: "en" },
+    { OS: "Android", Browser: "Chrome" },
+    { Browser: "Firefox" },
+  ],
+});
+```
+
+**Behavior:**
+
+| Case | Result |
+|------|--------|
+| Full row, satisfies constraints | Output as-is, covered pairs are consumed |
+| Partial row, can be completed within constraints | Completed via the normal fill-in logic, then output |
+| Row violates constraints (or contains an unknown value) | Silently dropped |
+| Row cannot be completed (e.g. constraints leave no valid filler) | Silently dropped |
+
+:::info[Equivalent to PICT's seeding (`/e:file`)]
+PICT calls this feature **seeding** and reads the seed rows from a tab-separated file via the `/e:file.txt` CLI option. covertable's `presets` is the same concept, expressed as plain JavaScript objects so you can compose them programmatically.
+:::
+
+## `constraints`
+
+Declarative constraints evaluated under Kleene three-valued logic. See [Constraint Logic](/constraint-logic) for full documentation.
+
+```typescript
+make(factors, {
+  constraints: [
+    // IF machine = iPhone THEN os = iOS
+    { operator: 'or', conditions: [
+      { operator: 'ne', field: 'machine', value: 'iPhone' },
+      { operator: 'eq', field: 'os', value: 'iOS' },
+    ]},
+  ],
+});
+```
+
+## `sorter`
+
+Determines the order in which combinations are generated.
+
+| Sorter | Description |
+|--------|-------------|
+| `sorters.hash` | Uses a hash-based method for **reproducible** results. Accepts a `salt` option. **(default)** |
+| `sorters.random` | Generates **different** combinations each time. Fastest option. |
+
+```typescript
+import { make, sorters } from "covertable";
+
+make(factors, { sorter: sorters.hash, salt: 42 });
+make(factors, { sorter: sorters.random });
+```
+
+:::tip[Salt for Reproducibility]
+When using `sorters.hash`, the `salt` option controls the ordering of unstored pairs. When the combination of factors and salt are the same, covertable **reproduces the same result set**. Changing the salt is the easiest way to explore alternative orderings without changing the input factors.
+:::
+
+:::info[Renamed from `seed`]
+In versions prior to 3.0, this option was called `seed`. It was renamed to `salt` to avoid confusion with the PICT-style _seeding_ feature (rows that must be included in the output).
+:::
+
+## `criterion`
+
+Determines the efficiency of the covering algorithm.
+
+| Criterion | Description |
+|-----------|-------------|
+| `criteria.greedy` | Attempts to **minimize** the number of combinations, but is more time-intensive. **(default)** |
+| `criteria.simple` | **Quickly** generates combinations, but may produce more rows. |
+
+```typescript
+import { make, criteria } from "covertable";
+
+make(factors, { criterion: criteria.greedy });
+make(factors, { criterion: criteria.simple });
+```
+
+:::info[Greedy Tolerance]
+The `criteria.greedy` criterion accepts a `tolerance` option to balance speed and result quality. Higher tolerance trades optimality for faster execution.
+:::

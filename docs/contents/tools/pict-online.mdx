@@ -1,0 +1,92 @@
+---
+sidebar_position: 1
+slug: /tools/pict
+title: "Compatible PICT"
+---
+
+import PictDemo from './pict';
+
+# Compatible PICT Online
+
+A browser-based pairwise test case generator fully compatible with [Microsoft PICT](https://github.com/microsoft/pict) model format.
+Write your model, click Generate, and get optimized test combinations instantly — no installation required.
+
+:::info[Privacy]
+All processing runs entirely in your browser. No data is sent to any server.
+:::
+
+<PictDemo />
+
+---
+
+## How it works
+
+`PictModel` parses a PICT-format model into parameters, sub-models, and constraint filters, and lets you generate rows directly from it:
+
+```typescript
+import { PictModel } from "covertable/pict";
+
+const model = new PictModel(`
+machine: iPhone, Pixel, XPERIA, ZenFone, Galaxy
+os:      iOS, Android
+browser: FireFox, Chrome, Safari
+
+IF [machine] = "iPhone" THEN [os] = "iOS";
+IF [os] = "iOS" THEN [machine] = "iPhone";
+`);
+
+const rows = model.make();
+```
+
+If you only want to apply constraints to factors you already have in code, you can pass `model.filter` directly to `make` as a `preFilter`:
+
+```typescript
+import { make } from "covertable";
+import { PictModel } from "covertable/pict";
+
+const machine = ["iPhone", "Pixel", "XPERIA", "ZenFone", "Galaxy"];
+const os = ["iOS", "Android"];
+const browser = ["FireFox", "Chrome", "Safari"];
+
+const model = new PictModel(`
+machine: iPhone, Pixel, XPERIA, ZenFone, Galaxy
+os:      iOS, Android
+browser: FireFox, Chrome, Safari
+
+IF [machine] = "iPhone" THEN [os] = "iOS";
+IF [os] = "iOS" THEN [machine] = "iPhone";
+`);
+
+make({ machine, os, browser }, {
+  preFilter: model.filter,
+});
+```
+
+## Supported Syntax
+
+`PictModel` supports the full PICT model file format. See the [PictModel reference](/advanced/pict) for the complete table.
+
+### Constraints
+
+| Syntax | Example | Description |
+|--------|---------|-------------|
+| `IF ... THEN ...` | `IF [os] = "iOS" THEN [machine] = "iPhone"` | Conditional constraint |
+| `IF ... THEN ... ELSE ...` | `IF [os] = "iOS" THEN [machine] = "iPhone" ELSE [machine] <> "iPhone"` | With else branch |
+| **Unconditional** | `[machine] <> [os];` | Always-applied invariant (no `IF`) |
+| `=` / `<>` | `[os] = "iOS"` / `[os] <> "Android"` | Equality / Inequality |
+| `>` / `<` / `>=` / `<=` | `[price] > 100` | Numeric comparisons |
+| `AND` / `OR` / `NOT` | `[os] = "iOS" AND [browser] = "Safari"` | Logical operators with parentheses |
+| `LIKE` | `[machine] LIKE "i*"` | Pattern matching with `*` and `?` |
+| `IN` | `[os] IN {"iOS", "Android"}` | Set membership |
+
+### Parameters
+
+| Syntax | Example | Description |
+|--------|---------|-------------|
+| **Basic** | `Type: A, B, C` | Standard parameter declaration |
+| **Quoted** | `Msg: "hello, world"` | Required for values with commas |
+| **Aliases** | `OS: Windows \| Win, Linux` | Multiple names for the same value |
+| **Invalid (`~`)** | `Type: A, ~Bad` | Negative-test value (at most one per row) |
+| **Weight** | `Browser: Chrome (10), Firefox` | Bias value selection during completion |
+| **Reference** | `B: <A>, extra` | Inherit values from another parameter |
+| **Sub-model** | `{ A, B, C } @ 3` | Apply different N-wise strength to a group |

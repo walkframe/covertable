@@ -10,12 +10,12 @@ def fnv1a32(s):
     return format(h, '08x')
 
 
-def sort(pairs, seed="", indices=None, **kwargs):
+def sort(pairs, salt="", indices=None, **kwargs):
     def comparer(pair):
         if indices:
-            key = "{} {}".format(",".join(str(indices[n]) for n in pair), seed)
+            key = "{} {}".format(",".join(str(indices[n]) for n in pair), salt)
         else:
-            key = "{} {}".format(",".join(str(n) for n in pair), seed)
+            key = "{} {}".format(",".join(str(n) for n in pair), salt)
         return fnv1a32(key)
 
     return sorted(pairs, key=comparer)

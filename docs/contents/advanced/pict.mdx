@@ -1,0 +1,156 @@
+---
+sidebar_position: 3
+title: PictModel
+---
+
+# PictModel
+
+`PictModel` parses a complete PICT-format model — parameters, sub-models, and constraints — into a single object that can directly generate rows. It is exported from a separate entry point so it does not bloat the bundle of consumers who only need `make`.
+
+```typescript
+import { PictModel } from "covertable/pict";
+
+const model = new PictModel(`
+Type:          Single, Span, Stripe, Mirror, RAID-5
+Size:          10, 100, 500, 1000, 5000, 10000, 40000
+Format method: Quick, Slow
+File system:   FAT, FAT32, NTFS
+Cluster size:  512, 1024, 2048, 4096, 8192, 16384, 32768, 65536
+Compression:   On, Off
+
+IF [File system] = "FAT"   THEN [Size] <= 4096;
+IF [File system] = "FAT32" THEN [Size] <= 32000;
+`);
+
+const rows = model.make();
+```
+
+## Constructor
+
+```typescript
+new PictModel(input: string, options?: PictModelOptions)
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `caseInsensitive` | `boolean` | `true` | When `true` (default, matching PICT), constraint comparisons and alias lookups ignore case. |
+| `strict` | `boolean` | `false` | When `true`, the constructor throws `PictModelError` if any error-severity issue is collected. |
+
+The input string is split into three sections:
+1. **Parameters** — `Name: value1, value2, ...`
+2. **Sub-models** — `{ A, B, C } @ N`
+3. **Constraints** — `IF [P] = "x" THEN [Q] = "y";` or unconditional `[P] <> [Q];`
+
+## Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `parameters` | `Record<string, (string \| number)[]>` | Parsed parameter values (canonical form, with aliases removed). |
+| `subModels` | `SubModelType[]` | Parsed sub-model definitions. |
+| `constraints` | `(FilterType \| null)[]` | Parsed constraint filters. `null` entries indicate parse failure. |
+| `negatives` | `Map<string, Set<string \| number>>` | Values prefixed with `~` (invalid / negative-test values) per parameter. |
+| `weights` | `Record<string, Record<number, number>>` | Weights extracted from `(N)` syntax. |
+| `issues` | `PictModelIssue[]` | All issues collected during parsing. |
+| `progress` | `number` | Coverage progress (0 to 1) during generation. |
+| `stats` | `ControllerStats \| null` | Generation statistics (available after `make`/`makeAsync`). |
+
+## Issues
+
+```typescript
+interface PictModelIssue {
+  severity: "error" | "warning";
+  source: "factor" | "subModel" | "constraint";
+  index: number; // 0-based index within the source
+  line: number;  // 1-based line number in the original input
+  message: string;
+}
+```
+
+```typescript
+const model = new PictModel(`
+A: 1, 2
+Empty:
+`);
+model.issues;
+// [{ severity: "error", source: "factor", index: 1, line: 3,
+//    message: 'No values for parameter "Empty"' }]
+```
+
+## Methods
+
+| Method | Description |
+|--------|-------------|
+| `filter(row)` | Returns `true` if the row satisfies all constraints **and** has at most one invalid value. |
+| `make(options?)` | Generates rows with the model's parameters, constraints, sub-models, and weights. Accepts the same options as the top-level `make`. |
+| `makeAsync(options?)` | Generator version of `make`. |
+
+## Supported PICT Syntax
+
+| Feature | Example | Notes |
+|---------|---------|-------|
+| **Parameter** | `Type: Single, Span, Stripe` | Basic parameter declaration. |
+| **Comment** | `# this is a comment` | Lines starting with `#` are skipped. |
+| **Quoted strings** | `Msg: "hello, world"` | Required for values containing commas. |
+| **Parameter reference** | `B: <A>, extra` | Expands to all of parameter `A`'s values. |
+| **Aliases** | `OS: Windows \| Win, Linux` | First value is canonical. Aliases work in constraints. |
+| **Invalid values** | `Type: Valid, ~Invalid` | Negative-test value. At most one per row. Output includes `~` prefix. |
+| **Weights** | `Browser: Chrome (10), Firefox` | Biases value selection during completion. |
+| **Sub-models** | `{ A, B, C } @ 3` | Different N-wise strength for listed parameters. |
+| **Conditional** | `IF [A] = 1 THEN [B] = 2;` | Standard PICT-style conditional constraints. |
+| **Unconditional** | `[A] <> [B];` | Always-applied invariants. |
+| **Comparisons** | `=`, `<>`, `>`, `<`, `>=`, `<=`, `IN`, `LIKE` | All standard PICT operators. |
+| **Logical** | `AND`, `OR`, `NOT` | With parentheses for grouping. |
+
+## Invalid Values (`~`)
+
+When a value is prefixed with `~`, it is treated as a value that should appear in tests **only one at a time**. PictModel automatically rejects rows containing two or more invalid values. The `~` prefix is preserved in output rows.
+
+```typescript
+const model = new PictModel(`
+Age:     20, 30, ~-1, ~999
+Country: Japan, USA, ~"Mars"
+`);
+
+const rows = model.make();
+// { Age: 20, Country: "Japan" }     — both valid
+// { Age: "~-1", Country: "Japan" }  — Age is invalid, Country is valid
+// { Age: 20, Country: "~Mars" }     — Age is valid, Country is invalid
+// { Age: "~-1", Country: "~Mars" }  — REJECTED (two invalid values)
+```
+
+## Aliases
+
+Aliases provide alternative names for the same value. The first name is canonical (appears in output), while alternates are accepted in constraints.
+
+```typescript
+const model = new PictModel(`
+OS: "Windows 10" | Win10, "Mac OS" | Mac, Linux
+Result: pass, fail
+
+IF [OS] IN {"Win10", "Mac"} THEN [Result] = "pass";
+`);
+```
+
+## `weightsByValue`
+
+A helper that converts a value-keyed weight map into the index-keyed form expected by `weights`.
+
+```typescript
+import { make } from "covertable";
+import { weightsByValue } from "covertable/pict";
+
+const factors = {
+  Browser: ["Chrome", "Firefox", "Safari"],
+};
+
+make(factors, {
+  weights: weightsByValue(factors, {
+    Browser: { Chrome: 10, Safari: 5 },
+  }),
+  // equivalent to: weights: { Browser: { 0: 10, 2: 5 } }
+});
+```
+
+:::tip[Try it interactively]
+Try the [**Compatible PICT**](/tools/pict) tool to experiment with the constraint syntax in your browser.
+:::

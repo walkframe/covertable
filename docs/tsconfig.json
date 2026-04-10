@@ -1,0 +1,16 @@
+// This file is not used by "docusaurus start/build" commands.
+// It is here to improve your IDE experience (type-checking, autocompletion...),
+// and can also run the package.json "typecheck" script manually.
+{
+  "extends": "@docusaurus/tsconfig",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
+    "strict": true,
+    "paths": {
+      "covertable": ["../typescript/src/index.ts"],
+      "covertable/pict": ["../typescript/src/pict/index.ts"]
+    }
+  },
+  "exclude": [".docusaurus", "build"]
+}
