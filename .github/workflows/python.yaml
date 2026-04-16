@@ -47,9 +47,6 @@ jobs:
         working-directory: python
     if: github.ref == 'refs/heads/master'
     name: pypi upload
-    environment:
-      name: pypi
-      url: https://pypi.org/p/covertable
     steps:
       - uses: actions/checkout@v6
       - name: setup
@@ -64,6 +61,8 @@ jobs:
         run: |
           python -m build --sdist --wheel --outdir dist/ .
       - name: upload
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages-dir: python/dist/
+        run: |
+          twine upload dist/* --non-interactive --skip-existing
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
