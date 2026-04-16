@@ -1,0 +1,41 @@
+---
+sidebar_position: 1
+title: TypeScript
+---
+
+# TypeScript Development
+
+The TypeScript implementation lives in `typescript/`. It uses [pnpm](https://pnpm.io/) as the package manager and [Vite](https://vitejs.dev/) (library mode) for building.
+
+## Setup
+
+```bash
+cd typescript
+pnpm install
+```
+
+## Testing
+
+```bash
+pnpm test
+```
+
+## Build
+
+```bash
+pnpm build
+```
+
+This produces dual ESM and CJS outputs in `dist/`, along with rolled-up TypeScript declaration files. Two entry points are emitted:
+
+- `covertable` — the core `make` / `makeAsync` API.
+- `covertable/pict` — the `PictModel` class and `weightsByValue` helper, in a separate chunk so consumers who do not need PICT support do not pay for it.
+
+## Publish
+
+```bash
+# pnpm login
+pnpm build
+pnpm version patch
+pnpm publish
+```

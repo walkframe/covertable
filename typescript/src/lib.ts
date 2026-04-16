@@ -1,5 +1,3 @@
-// @ts-ignore 2307
-export { hex as md5 } from 'js-md5';
 import { NotReady } from './exceptions';
 import type { 
   FactorsType, ScalarType, ParentsType, CandidateType, PairType,
@@ -139,3 +137,11 @@ export const proxyHandler = {
   },
 };
 
+export const fnv1a32 = (str: string): string => {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    hash ^= str.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+};

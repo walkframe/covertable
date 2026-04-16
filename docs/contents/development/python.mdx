@@ -1,0 +1,29 @@
+---
+sidebar_position: 2
+title: Python
+---
+
+# Python Development
+
+The Python implementation lives in `python/`. It provides the same pairwise generation algorithm as the TypeScript version.
+
+## Setup
+
+```bash
+cd python
+pip install -e .
+pip install -r dev_requirements.txt
+```
+
+## Testing
+
+```bash
+pytest
+```
+
+## Build & Publish
+
+```bash
+python -m build
+twine upload dist/*
+```

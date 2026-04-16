@@ -1,0 +1,152 @@
+---
+slug: /
+sidebar_position: 1
+title: Getting Started
+---
+
+# covertable
+
+<div className="badges">
+  <a href="https://badge.fury.io/js/covertable"><img src="https://badge.fury.io/js/covertable.svg" alt="npm version" /></a>
+  <a href="https://github.com/walkframe/covertable/actions/workflows/typescript.yaml"><img src="https://github.com/walkframe/covertable/actions/workflows/typescript.yaml/badge.svg" alt="CI" /></a>
+  <a href="https://codecov.io/gh/walkframe/covertable"><img src="https://codecov.io/gh/walkframe/covertable/branch/master/graph/badge.svg" alt="codecov" /></a>
+  <a href="https://github.com/walkframe/covertable"><img src="https://img.shields.io/github/stars/walkframe/covertable" alt="GitHub stars" /></a>
+</div>
+
+**covertable** is a powerful tool for generating pairwise (and N-wise) combinations of input factors, designed for both **Node.js** and **browser** environments. It makes it easy to create comprehensive test cases that cover all factor interactions while keeping the number of test cases minimal.
+
+:::tip[What is Pairwise Testing?]
+Pairwise testing is a combinatorial testing technique that generates test cases covering all possible pairs of input parameters. Instead of testing every combination (which can be enormous), pairwise testing ensures that every pair of factor values appears in at least one test case, dramatically reducing the number of required tests while maintaining high defect detection rates.
+:::
+
+## Installation
+
+```bash
+npm install covertable --save
+```
+
+## Quick Start
+
+### Array format
+
+Pass an array of factor arrays to get results as arrays:
+
+```typescript
+import { make } from "covertable";
+
+const machine = ["iPhone", "Pixel", "XPERIA", "ZenFone", "Galaxy"];
+const os = ["iOS", "Android"];
+const browser = ["FireFox", "Chrome", "Safari"];
+
+const rows = make([machine, os, browser]);
+console.log(rows);
+```
+
+**Output:**
+```javascript
+[
+  [ 'Pixel',   'iOS',     'Chrome'  ],
+  [ 'ZenFone', 'iOS',     'FireFox' ],
+  [ 'Pixel',   'Android', 'Safari'  ],
+  [ 'Galaxy',  'Android', 'Chrome'  ],
+  [ 'XPERIA',  'Android', 'FireFox' ],
+  [ 'Pixel',   'iOS',     'FireFox' ],
+  [ 'iPhone',  'iOS',     'Safari'  ],
+  [ 'Galaxy',  'iOS',     'Safari'  ],
+  [ 'XPERIA',  'iOS',     'Chrome'  ],
+  [ 'ZenFone', 'Android', 'Chrome'  ],
+  [ 'Galaxy',  'iOS',     'FireFox' ],
+  [ 'iPhone',  'Android', 'Chrome'  ],
+  [ 'iPhone',  'iOS',     'FireFox' ],
+  [ 'ZenFone', 'iOS',     'Safari'  ],
+  [ 'XPERIA',  'iOS',     'Safari'  ]
+]
+```
+
+### Object format
+
+Pass an object of named factors to get results as objects:
+
+```typescript
+import { make } from "covertable";
+
+const rows = make({
+  machine: ["iPhone", "Pixel", "XPERIA", "ZenFone", "Galaxy"],
+  os: ["iOS", "Android"],
+  browser: ["FireFox", "Chrome", "Safari"],
+});
+
+console.log(rows);
+// [
+//   { machine: 'Pixel', os: 'iOS', browser: 'Chrome' },
+//   { machine: 'ZenFone', os: 'iOS', browser: 'FireFox' },
+//   ...
+// ]
+```
+
+:::info
+When factors are given as an **object**, each result row will also be an object with the same keys.
+:::
+
+## Controller and Statistics
+
+The `make` function is a convenient shortcut. For access to generation statistics, use `Controller` directly:
+
+```typescript
+import { Controller } from "covertable";
+
+const factors = { machine, os, browser };
+const ctrl = new Controller(factors, { constraints: [...] });
+const rows = ctrl.make();
+
+console.log(ctrl.stats);
+// {
+//   totalPairs: 30,     // all pairs before pruning
+//   prunedPairs: 4,     // removed by constraint propagation
+//   coveredPairs: 26,   // pairs covered in output rows
+//   progress: 1,        // coverage ratio (1 = 100%)
+//   rowCount: 8,        // number of generated rows
+//   uncoveredPairs: [],  // pairs that couldn't be covered
+//   completions: { ... } // values filled by backtracking
+// }
+```
+
+See [Constraint Logic](/constraint-logic#statistics) for full details on each field.
+
+## Async Generation
+
+Use `makeAsync` to generate rows one at a time via a generator:
+
+```typescript
+import { makeAsync } from "covertable";
+
+const machine = ["iPhone", "Pixel", "XPERIA", "ZenFone", "Galaxy"];
+const os = ["iOS", "Android"];
+const browser = ["FireFox", "Chrome", "Safari"];
+
+for (const row of makeAsync([machine, os, browser])) {
+  console.log(row);
+}
+```
+
+## Requirements
+
+ES2015 or later. The following features are used:
+
+- [Generator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Iterators_and_Generators)
+- [for...of](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for...of)
+- [Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map)
+- [Set](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set)
+- [Object.keys](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys)
+- [Object.entries](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/entries)
+
+## Next Steps
+
+- Learn about [**Advanced Usage**](./advanced) including constraints, sorters, criteria, sub-models, and weights
+- Use the [**PictModel**](./advanced/pict) to parse and run full PICT-format models (parameters + constraints + sub-models + invalid values + weights)
+- Try the [**Compatible PICT**](/tools/pict) tool
+- Check the [**History**](./history/) for release notes and [**Migration Guide**](./history/migration)
+
+:::caution[Migrating from v2]
+v3 introduces breaking changes including renamed options, declarative constraints replacing `preFilter`/`postFilter`, and a new `PictModel` class. See the [**Migration Guide**](./history/migration) for full details.
+:::

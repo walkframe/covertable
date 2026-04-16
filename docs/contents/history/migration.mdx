@@ -1,0 +1,148 @@
+---
+sidebar_position: 5
+title: Migration Guide
+---
+
+# Migration Guide
+
+## v2 → v3
+
+### Renamed options
+
+| v2 | v3 | Notes |
+|----|------|-------|
+| `length` | `strength` | Semantics unchanged |
+| `seed` | `salt` | Freed `seed` for PICT-style seeding (now `presets`) |
+
+```typescript
+// v2
+make(factors, { length: 3, seed: 42 });
+
+// v3
+make(factors, { strength: 3, salt: 42 });
+```
+
+### Default export removed
+
+```typescript
+// v2
+import make from "covertable";
+
+// v3
+import { make } from "covertable";
+```
+
+### `preFilter` / `postFilter` → `constraints`
+
+`preFilter` and `postFilter` accepted opaque functions. v3 replaces them with declarative `constraints` that the engine can analyze for three-valued logic and forward checking.
+
+```typescript
+// v2 — opaque function
+make(factors, {
+  preFilter: (row) => !(row.machine === "iPhone" && row.os !== "iOS"),
+});
+
+// v3 — declarative constraint (IF machine=iPhone THEN os=iOS)
+make(factors, {
+  constraints: [
+    { operator: 'or', conditions: [
+      { operator: 'ne', field: 'machine', value: 'iPhone' },
+      { operator: 'eq', field: 'os', value: 'iOS' },
+    ]},
+  ],
+});
+```
+
+:::info[Why declarative?]
+Declarative constraints allow the engine to:
+- Evaluate under three-valued (Kleene) logic — `null` when a field is not yet set
+- Prune infeasible pairs before generation (initial pruning)
+- Propagate constraint chains via forward checking
+- Detect unsolvable combinations early instead of silently dropping rows
+
+See [Constraint Logic](/constraint-logic) for details.
+:::
+
+### Replacing `postFilter`
+
+`postFilter` removed rows **after** generation, which meant coverage was not guaranteed. In v3 there is no direct equivalent — use `constraints` instead whenever possible, as they maintain coverage.
+
+If you still need to drop rows after generation (accepting the coverage loss), simply filter the result:
+
+```typescript
+// v2
+make(factors, {
+  postFilter: (row) => !(row.os === "iOS" && row.browser !== "Safari"),
+});
+
+// v3 — filter after generation
+const ctrl = new Controller(factors);
+const rows = ctrl.make().filter(
+  (row) => !(row.os === "iOS" && row.browser !== "Safari")
+);
+
+// Note: ctrl.stats still reflects the pre-filter state.
+// The filtered rows may no longer satisfy full pairwise coverage.
+```
+
+:::warning
+Post-filtering removes rows without compensating for lost pair coverage. Prefer declarative `constraints` which guide generation to avoid those rows in the first place.
+:::
+
+### `PictConstraintsLexer` → `PictModel`
+
+```typescript
+// v2
+import { PictConstraintsLexer } from "covertable";
+
+// v3
+import { PictModel } from "covertable/pict";
+const model = new PictModel(pictText);
+const rows = model.make();
+```
+
+`PictModel` handles the full PICT model format: parameters, sub-models, constraints, weights, aliases, and invalid values.
+
+### `PictModel.errors` → `PictModel.issues`
+
+```typescript
+// v2
+model.errors; // string[]
+
+// v3
+model.issues; // PictModelIssue[]
+// Each issue has: severity, source, index, line, message
+```
+
+### New: `Controller.stats`
+
+v3 exposes generation statistics via `Controller`:
+
+```typescript
+import { Controller } from "covertable";
+
+const ctrl = new Controller(factors, options);
+const rows = ctrl.make();
+console.log(ctrl.stats.progress);      // 1 = 100% coverage
+console.log(ctrl.stats.prunedPairs);   // pairs removed by constraints
+console.log(ctrl.stats.uncoveredPairs); // [] when fully covered
+```
+
+The `make()` convenience function throws `NeverMatch` if coverage is incomplete. Use `Controller.make()` directly to handle this without exceptions.
+
+## v1 → v2
+
+### `sorter` split into `sorter` + `criterion`
+
+```typescript
+// v1
+make(factors, { sorter: "greedy" });
+
+// v2
+import { sorters, criteria } from "covertable";
+make(factors, { sorter: sorters.hash, criterion: criteria.greedy });
+```
+
+### Sequential sorter removed
+
+The sequential sorter was dropped in v2 due to the potential for huge numbers of combinations. Use `sorters.hash` or `sorters.random` instead.

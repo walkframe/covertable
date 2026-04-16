@@ -1,0 +1,43 @@
+---
+sidebar_position: 2
+title: v3.x
+---
+
+# v3.x
+
+Major release with breaking changes, declarative constraints, and full PICT-format model support.
+
+## Breaking Changes
+
+- The `length` option has been renamed to `strength`.
+- The `seed` option (used by `sorters.hash`) has been renamed to `salt`.
+- The default export has been removed. Use `import { make } from "covertable"` instead of `import make from "covertable"`.
+- `PictConstraintsLexer` is no longer exported. Use the new [`PictModel`](/advanced/pict) class instead.
+- `PictModel.errors` (`string[]`) has been replaced with `PictModel.issues` (`PictModelIssue[]`). Each issue carries `severity`, `source`, `index`, `line`, and `message`.
+- `preFilter` and `postFilter` have been replaced by declarative `constraints`. See [Constraint Logic](/constraint-logic) and [Migration Guide](./migration).
+
+## New Features
+
+- **Declarative constraints** — The new `constraints` option accepts `Condition[]` objects evaluated under Kleene three-valued logic. Replaces opaque `preFilter` functions with structured, analyzable constraint trees.
+- **Forward checking** — Constraint propagation prunes infeasible pairs before and during generation. Detects constraint chain conflicts (e.g. `Language=de` → `Region=EU` → `Currency IN {EUR,GBP}`).
+- **Peer propagation** — Extends forward checking to handle multi-value domain bottlenecks.
+- **Controller.stats** — Generation statistics including `totalPairs`, `prunedPairs`, `coveredPairs`, `progress`, `rowCount`, `uncoveredPairs`, and `completions`.
+- **`PictModel`** — Parses a complete PICT-format model (parameters, sub-models, constraints, invalid values, weights) and generates rows directly. Exported from `covertable/pict`.
+- **Sub-models** — The `subModels` option (and PICT `{ A, B } @ N` syntax) lets you apply a different N-wise strength to a specific group of factors.
+- **Weights** — The `weights` option (and PICT `value (N)` syntax) biases value selection during the row-completion phase.
+- **Presets** — The `presets` option lets you specify rows that must appear in the output. Equivalent to PICT's `/e:file` seeding feature.
+- **Invalid values** — PICT's `~value` syntax marks values as negative-test inputs. At most one invalid value per row. Output includes `~` prefix.
+- **Aliases** — PICT's `value | alias` syntax lets you refer to a value by multiple names in constraints.
+- **Unconditional constraints** — PICT-style invariants without an `IF` clause (e.g. `[A] <> [B];`).
+- **`caseInsensitive` option** — `PictModel` matches PICT's default case-insensitive behavior.
+- **`weightsByValue` helper** — Convert value-keyed weights into index-keyed form.
+- **Custom comparer** — Override comparison operators for constraint evaluation.
+- **Rescue phase** — Remaining uncovered pairs are retried individually after greedy + close.
+- **NeverMatch with diagnostics** — When `make()` can't cover all pairs, it throws `NeverMatch` with `uncoveredPairs` detailing which pairs failed and which constraints are involved.
+
+## Tooling
+
+- Build system migrated from webpack to Vite (library mode, dual ESM/CJS output).
+- Package manager switched to pnpm.
+- TypeScript upgraded to 5.x.
+- Interactive [Compatible PICT](/tools/pict) online tool with Web Worker support.

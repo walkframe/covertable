@@ -1,18 +1,21 @@
 """Hash sorter
 """
 
-import hashlib
+
+def fnv1a32(s):
+    h = 0x811C9DC5
+    for c in s.encode("utf-8"):
+        h ^= c
+        h = (h * 0x01000193) & 0xFFFFFFFF
+    return format(h, '08x')
 
 
-def sort(incomplete, md5_cache, seed="", use_cache=True, *args, **kwargs):
-    def comparer(v):
-        if use_cache and v in md5_cache:
-            return md5_cache[v]
+def sort(pairs, salt="", indices=None, **kwargs):
+    def comparer(pair):
+        if indices:
+            key = "{} {}".format(",".join(str(indices[n]) for n in pair), salt)
+        else:
+            key = "{} {}".format(",".join(str(n) for n in pair), salt)
+        return fnv1a32(key)
 
-        s = "{} {}".format(",".join(map(str, v)), seed)
-        value = hashlib.md5(s.encode("utf-8")).hexdigest()
-        if use_cache:
-            md5_cache[v] = value
-        return value
-
-    return sorted(incomplete, key=comparer)
+    return sorted(pairs, key=comparer)

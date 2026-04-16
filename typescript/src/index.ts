@@ -5,9 +5,9 @@ import random from "./sorters/random";
 import greedy from "./criteria/greedy";
 import simple from "./criteria/simple";
 
-import {PictConstraintsLexer} from "./utils/pict";
-import { FactorsType, OptionsType, SuggestRowType, DictType, ListType } from "./types";
-import { Controller } from "./controller";
+import { FactorsType, OptionsType, SuggestRowType, DictType, ListType, Condition, ComparisonCondition, LogicalCondition, CustomCondition, Comparer } from "./types";
+import { Controller, ControllerStats } from "./controller";
+import { NeverMatch, UncoveredPair } from "./exceptions";
 
 const makeAsync = function* <T extends FactorsType>(
   factors: T,
@@ -18,19 +18,27 @@ const makeAsync = function* <T extends FactorsType>(
 };
 
 const make = <T extends FactorsType>(factors: T, options: OptionsType<T> = {}) => {
-  return [...makeAsync(factors, options)];
+  const ctrl = new Controller(factors, options);
+  const rows = ctrl.make<T>();
+  if (ctrl.stats.uncoveredPairs.length > 0) {
+    throw new NeverMatch(
+      `Unable to cover ${ctrl.stats.uncoveredPairs.length} remaining pair(s) without violating constraints`,
+      ctrl.stats.uncoveredPairs,
+    );
+  }
+  return rows;
 };
 
 const sorters = { hash, random };
 const criteria = { greedy, simple };
 
-export { 
+export {
   make,
   makeAsync,
   sorters,
   criteria,
-  PictConstraintsLexer,
   Controller,
+  NeverMatch,
 };
 
 export type {
@@ -38,6 +46,12 @@ export type {
   SuggestRowType,
   DictType,
   ListType,
+  Condition,
+  ComparisonCondition,
+  LogicalCondition,
+  CustomCondition,
+  Comparer,
+  UncoveredPair,
+  ControllerStats,
 }
 
-export default make;
