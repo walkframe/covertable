@@ -1,0 +1,92 @@
+Region: JP, US, EU, APAC
+Language: ja, en, fr, de, zh
+Currency: JPY, USD, EUR, GBP
+Device: Desktop, MobileWeb, iOSApp, AndroidApp, Tablet
+Browser: Chrome, Safari, Firefox, Edge
+UserType: Guest, Member, Premium, Corporate
+Payment: CreditCard, DebitCard, PayPal, ApplePay, GooglePay, BankTransfer, Invoice
+Shipping: Standard, Express, SameDay, PickupPoint, StorePickup
+Coupon: None, Welcome10, VIP15, FREESHIP, BULK20
+CartSize: Single, Small, Medium, Large, Bulk
+ItemCategory: Electronics, Fashion, Grocery, Furniture, Digital, Subscription
+InventoryStatus: InStock, LowStock, BackOrder, PreOrder
+FraudCheck: Pass, Review, Reject
+TaxMode: Inclusive, Exclusive
+AddressType: Home, Office, Hotel, POBox
+DeliveryWindow: None, Morning, Afternoon, Evening, Night
+GiftOption: None, Wrap, Message, WrapAndMessage
+LoyaltyUse: None, Partial, Full
+SupportPlan: None, Basic, Plus
+AccountAge: New, Recent, Established, Old
+EmailVerified: Yes, No
+PhoneVerified: Yes, No
+
+# ----- constraints -----
+
+IF [Region] = "JP" THEN [Currency] IN {"JPY"};
+IF [Region] = "US" THEN [Currency] IN {"USD"};
+IF [Region] = "EU" THEN [Currency] IN {"EUR", "GBP"};
+IF [Region] = "APAC" THEN [Currency] IN {"JPY", "USD"};
+
+IF [Language] = "ja" THEN [Region] IN {"JP", "APAC"};
+IF [Language] = "fr" THEN [Region] = "EU";
+IF [Language] = "de" THEN [Region] = "EU";
+
+IF [Device] = "iOSApp" THEN [Browser] = "Safari";
+IF [Device] = "AndroidApp" THEN [Browser] = "Chrome";
+IF [Device] = "Desktop" THEN [Browser] IN {"Chrome", "Safari", "Firefox", "Edge"};
+IF [Device] = "MobileWeb" THEN [Browser] IN {"Chrome", "Safari", "Firefox"};
+IF [Device] = "Tablet" THEN [Browser] IN {"Chrome", "Safari", "Edge"};
+
+IF [Payment] = "ApplePay" THEN [Device] IN {"iOSApp", "MobileWeb", "Tablet"};
+IF [Payment] = "GooglePay" THEN [Device] IN {"AndroidApp", "MobileWeb"};
+IF [Payment] = "PayPal" THEN [UserType] IN {"Guest", "Member", "Premium"};
+IF [Payment] = "Invoice" THEN [UserType] IN {"Corporate"};
+IF [Payment] = "BankTransfer" THEN [UserType] IN {"Member", "Premium", "Corporate"};
+
+IF [Shipping] = "SameDay" THEN [Region] IN {"JP", "US"};
+IF [Shipping] = "StorePickup" THEN [Region] = "JP";
+IF [Shipping] = "PickupPoint" THEN [Region] IN {"EU", "US"};
+IF [AddressType] = "POBox" THEN NOT ([Shipping] IN {"SameDay", "StorePickup"});
+
+IF [ItemCategory] = "Digital" THEN [Shipping] = "Standard";
+IF [ItemCategory] = "Digital" THEN [GiftOption] = "None";
+IF [ItemCategory] = "Digital" THEN [AddressType] = "Home";
+IF [ItemCategory] = "Subscription" THEN [Shipping] = "Standard";
+IF [ItemCategory] = "Furniture" THEN NOT ([Shipping] IN {"SameDay", "StorePickup", "PickupPoint"});
+IF [ItemCategory] = "Grocery" THEN NOT ([Shipping] IN {"PickupPoint", "StorePickup"});
+
+IF [InventoryStatus] = "BackOrder" THEN NOT ([Shipping] IN {"SameDay"});
+IF [InventoryStatus] = "PreOrder" THEN [Shipping] IN {"Standard", "Express"};
+IF [InventoryStatus] = "PreOrder" THEN NOT ([Coupon] IN {"FREESHIP"});
+
+IF [Coupon] = "VIP15" THEN [UserType] = "Premium";
+IF [Coupon] = "Welcome10" THEN [AccountAge] = "New";
+IF [Coupon] = "BULK20" THEN [CartSize] = "Bulk";
+IF [Coupon] = "FREESHIP" THEN NOT ([Shipping] IN {"StorePickup"});
+
+IF [CartSize] = "Bulk" THEN NOT ([UserType] IN {"Guest"});
+IF [CartSize] = "Bulk" THEN NOT ([Payment] IN {"ApplePay", "GooglePay"});
+IF [CartSize] = "Single" THEN NOT ([Coupon] IN {"BULK20"});
+
+IF [FraudCheck] = "Reject" THEN NOT ([Payment] IN {"BankTransfer", "Invoice"});
+IF [FraudCheck] = "Reject" THEN [Coupon] = "None";
+IF [FraudCheck] = "Reject" THEN [LoyaltyUse] = "None";
+
+IF NOT ([LoyaltyUse] IN {"None"}) THEN NOT ([UserType] IN {"Guest"});
+IF [LoyaltyUse] = "Full" THEN [UserType] IN {"Premium"};
+IF [LoyaltyUse] = "Full" THEN [Coupon] = "None";
+
+IF [SupportPlan] = "Plus" THEN [UserType] IN {"Premium", "Corporate"};
+IF [SupportPlan] = "Basic" THEN NOT ([UserType] IN {"Guest"});
+
+IF [UserType] = "Guest" THEN [EmailVerified] = "No";
+IF [Payment] IN {"BankTransfer", "Invoice"} THEN [EmailVerified] = "Yes";
+IF [Shipping] IN {"Express", "SameDay"} THEN [PhoneVerified] = "Yes";
+
+IF [GiftOption] = "WrapAndMessage" THEN NOT ([ItemCategory] IN {"Digital", "Subscription", "Furniture"});
+IF [GiftOption] = "Wrap" THEN NOT ([ItemCategory] IN {"Digital", "Subscription"});
+IF [GiftOption] = "Message" THEN NOT ([ItemCategory] IN {"Digital"});
+
+IF [Region] IN {"JP", "EU"} THEN [TaxMode] = "Inclusive";
+IF [Region] = "US" THEN [TaxMode] = "Exclusive";
