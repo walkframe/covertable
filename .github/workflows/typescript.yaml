@@ -33,6 +33,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: ./typescript/coverage/lcov.info
+          flags: typescript
           verbose: true
 
   release:

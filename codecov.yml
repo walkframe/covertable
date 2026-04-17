@@ -1,0 +1,32 @@
+coverage:
+  status:
+    project:
+      typescript:
+        target: auto
+        threshold: 5%
+        flags:
+          - typescript
+      python:
+        target: auto
+        threshold: 5%
+        flags:
+          - python
+    patch:
+      default:
+        target: 70%
+
+flags:
+  typescript:
+    paths:
+      - typescript/src/
+    carryforward: true
+  python:
+    paths:
+      - python/covertable/
+    carryforward: true
+
+ignore:
+  - "typescript/src/__tests__/**"
+  - "typescript/src/_bench.ts"
+  - "typescript/tmp/**"
+  - "docs/**"
