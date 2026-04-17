@@ -1,7 +1,7 @@
 {
   "name": "covertable",
-  "version": "3.0.0-rc.0",
-  "description": "A flexible pairwise tool written in TypeScript",
+  "version": "3.0.0-rc.1",
+  "description": "Efficient TypeScript library for pairwise testing, generating minimal covering arrays with constraint support.",
   "homepage": "https://covertable.walkframe.com",
   "repository": {
     "type": "git",
