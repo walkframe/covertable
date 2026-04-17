@@ -10,8 +10,7 @@ def call(
     sorter="hash",
     criterion="greedy",
     options={},
-    pre_filter=None,
-    post_filter=None,
+    constraints=None,
 ):
     from covertable import make, sorters, criteria
 
@@ -22,14 +21,13 @@ def call(
         criterion=getattr(criteria, criterion),
         options=options,
         progress=True,
-        pre_filter=pre_filter,
-        post_filter=post_filter,
+        constraints=constraints,
     )
 
 
 class Test_covertable:
     def _get_pairs(self, factors, strength=2):
-        from covertable.main import get_items
+        from covertable.lib import get_items
 
         all_keys = [k for k, _ in get_items(factors)]
         for keys in combinations(all_keys, strength):
@@ -55,42 +53,35 @@ class Test_covertable:
             else:
                 assert False, f"{pair} is not in any rows."
 
-    def test_pre_filter_excludes_specified_pairs_before(self):
+    def test_constraints_exclude_specified_pairs(self):
         factors = [["a", "b", "c"], ["d", "e"], ["f"]]
 
-        def pre_filter(row):
-            if row[0] == "a" and row[1] == "d":
-                return False
-            if row[0] == "b" and row[1] == "e":
-                return False
-            return True
-
-        rows = call(factors, strength=2, pre_filter=pre_filter)
+        rows = call(
+            factors,
+            strength=2,
+            constraints=[
+                {"operator": "custom", "keys": [0, 1], "evaluate":
+                    lambda row: not (row[0] == "a" and row[1] == "d")},
+                {"operator": "custom", "keys": [0, 1], "evaluate":
+                    lambda row: not (row[0] == "b" and row[1] == "e")},
+            ],
+        )
         unexpected_pairs = [("a", "d"), ("b", "e")]
         for pair in unexpected_pairs:
             for row in rows:
                 assert not all(p in row for p in pair), f"{pair} is in a row: {row}"
 
-    def test_pre_filter_never_matching_makes_no_rows(self):
+    def test_constraints_never_matching_makes_no_rows(self):
         factors = [["a", "b", "c"], ["d", "e"], ["f"]]
 
-        def pre_filter(row):
-            if row[2] == "f":
-                return False
-            return True
-
-        rows = call(factors, strength=2, pre_filter=pre_filter)
-        assert not rows
-
-    def test_post_filter_never_matching_makes_no_rows(self):
-        factors = [["a", "b", "c"], ["d", "e"], ["f"]]
-
-        def post_filter(row):
-            if row[2] == "f":
-                return False
-            return True
-
-        rows = call(factors, strength=2, post_filter=post_filter)
+        rows = call(
+            factors,
+            strength=2,
+            constraints=[
+                {"operator": "custom", "keys": [2], "evaluate":
+                    lambda row: row[2] != "f"},
+            ],
+        )
         assert not rows
 
     def test_greedy_sorter_should_make_rows_less_than_hashs_one_with2(self):
@@ -168,16 +159,16 @@ class Test_covertable:
         assert rows[0]["A"] == "a1"
         assert "B" in rows[0]
 
-    def test_presets_violating_pre_filter_are_dropped(self):
+    def test_presets_violating_constraint_are_dropped(self):
         from covertable import make
         factors = {"OS": ["iOS", "Android"], "Browser": ["Safari", "Chrome"]}
 
-        def pre_filter(row):
-            return not (row["OS"] == "iOS" and row["Browser"] == "Chrome")
-
         rows = make(
             factors,
-            pre_filter=pre_filter,
+            constraints=[
+                {"operator": "custom", "keys": ["OS", "Browser"], "evaluate":
+                    lambda row: not (row["OS"] == "iOS" and row["Browser"] == "Chrome")},
+            ],
             presets=[
                 {"OS": "iOS", "Browser": "Chrome"},  # rejected
                 {"OS": "Android", "Browser": "Safari"},  # accepted

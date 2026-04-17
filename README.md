@@ -2,17 +2,17 @@
 
 ![covertable logo](./covertable.png)
 
-Time is limited.
+CoverTable is a **pairwise (N-wise) test case generation library** based on the AETG algorithm, available for both TypeScript and Python.
 
-Creating a test case that satisfies all possible factors is often unrealistic and, more importantly, tedious.
+It is **PICT-compatible**: you can use PICT-format model files — including parameters, sub-models, constraints, invalid values, weights, and aliases — directly with CoverTable.
 
-Save time with CoverTable, a flexible pairwise tool that generates combinations covering two (or more) factors.
+Try the online demo: **[Compatible PICT](https://covertable.walkframe.com/tools/pict)** — an interactive tool that parses PICT models and generates covering arrays in your browser.
 
 ## Algorithm
 
 CoverTable uses a **one-test-at-a-time greedy algorithm** to generate covering arrays.
 
-1. Assigns a unique prime number ID to each factor value, then enumerates all n-way combinations to be covered.
+1. Assigns a unique serial ID to each factor value, then enumerates all n-way combinations to be covered.
 2. For each test row, the **criterion** selects the most efficient uncovered combination to include next by evaluating how many other uncovered combinations it would simultaneously satisfy.
 3. Repeats until all combinations are covered.
 
@@ -33,12 +33,12 @@ CoverTable is available in two implementations, with TypeScript as the primary f
 
 [![NPM Version](https://badge.fury.io/js/covertable.svg)](https://badge.fury.io/js/covertable) [![Build Status](https://github.com/walkframe/covertable/actions/workflows/typescript.yaml/badge.svg)](https://github.com/walkframe/covertable/actions/workflows/typescript.yaml)
 
-Works in both **Node.js** and **browsers** (UMD build).
+Works in both **Node.js** and **browsers** (ESM/CJS dual build).
 
 - [README](https://github.com/walkframe/covertable/blob/master/typescript/README.md)
 - [History](https://github.com/walkframe/covertable/blob/master/typescript/history.md)
 
-### Python (Legacy Support)
+### Python
 
 [![PyPI Version](https://badge.fury.io/py/covertable.svg)](https://badge.fury.io/py/covertable) [![Build Status](https://github.com/walkframe/covertable/actions/workflows/python.yaml/badge.svg)](https://github.com/walkframe/covertable/actions/workflows/python.yaml)
 
@@ -46,7 +46,10 @@ Works in both **Node.js** and **browsers** (UMD build).
 - [History](https://github.com/walkframe/covertable/blob/master/python/history.md)
 
 
-For more details, please refer to the links above.
+## Documentation
+
+- **Latest (v3)**: https://covertable.walkframe.com
+- **v2 and earlier**: https://docs.walkframe.com/covertable/advanced
 
 ## Performance
 

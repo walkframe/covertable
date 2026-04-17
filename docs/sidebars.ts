@@ -11,7 +11,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Advanced',
-      items: ['advanced/index', 'advanced/options', 'advanced/pict', 'constraint-logic'],
+      items: ['advanced/index', 'advanced/options', 'advanced/pict', 'advanced/constraint-logic'],
     },
     {
       type: 'category',

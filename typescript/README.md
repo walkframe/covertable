@@ -37,4 +37,4 @@ make([machine, os, browser]);
 ```
 
 # Advanced usage
-Advanced usage is [here](https://docs.walkframe.com/covertable/advanced)
+Advanced usage is [here](https://covertable.walkframe.com)

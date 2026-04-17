@@ -2,17 +2,9 @@ from itertools import product, combinations
 
 from . import sorters
 from . import criteria
-from .exceptions import NotReady, NeverMatch
+from .exceptions import NeverMatch
 from .evaluate import evaluate as eval_condition, extract_keys
 from .lib import get_items
-
-
-class ProxyRow(dict):
-    """Dict-like object that raises NotReady for missing keys."""
-    def __getitem__(self, key):
-        if key not in self:
-            raise NotReady(key)
-        return super().__getitem__(key)
 
 
 class Row(dict):
@@ -30,7 +22,7 @@ class Row(dict):
 
 class Controller:
     def __init__(self, factors, strength=2, sorter=None, criterion=None,
-                 salt="", tolerance=0, pre_filter=None, post_filter=None,
+                 salt="", tolerance=0,
                  sub_models=None, presets=None, weights=None,
                  constraints=None, comparer=None):
         self.factors = factors
@@ -42,8 +34,6 @@ class Controller:
         self.criterion = criterion or criteria.greedy
         self.salt = salt
         self.tolerance = tolerance
-        self.pre_filter = pre_filter
-        self.post_filter = post_filter
 
         self.serials = {}
         self.parents = {}
@@ -120,7 +110,6 @@ class Controller:
         def is_within_sub_model(keys):
             return any(all(k in ks for k in keys) for ks in sub_model_key_sets)
 
-        # Default strength pairs, excluding combinations fully within a sub-model
         for keys in combinations(all_keys, self.strength):
             if is_within_sub_model(keys):
                 continue
@@ -128,7 +117,6 @@ class Controller:
             for pair in product(*comb):
                 pairs.append(tuple(sorted(pair)))
 
-        # Sub-model pairs at their own strength
         for sm in self.sub_models:
             for keys in combinations(sm["keys"], sm["strength"]):
                 comb = [self.serials[keys[i]] for i in range(sm["strength"])]
@@ -144,41 +132,25 @@ class Controller:
     def _storable_check(self, candidate, row=None):
         """Check constraints on (row + candidate).
 
-        Returns True (OK), False (violated), or None (deferred).
-        Falls back to pre_filter when no declarative constraints exist.
+        Returns True (OK) or False (violated).
         """
         if row is None:
             row = self.row
 
-        if self._constraints:
-            nxt_obj = None
-            for i, rc in enumerate(self._constraints):
-                if i in self._passed_indexes:
-                    continue
-                if nxt_obj is None:
-                    nxt = dict(row)
-                    nxt.update(candidate)
-                    nxt_obj = self._to_map_from_dict(nxt)
-                result = eval_condition(rc["condition"], nxt_obj, self.comparer)
-                if result is False:
-                    return False
+        if not self._constraints:
             return True
 
-        # Legacy pre_filter path
-        if self.pre_filter is None:
-            return True
-        nxt = dict(row)
-        nxt.update(candidate)
-        nxt_row = Row(nxt)
-        proxy = self._to_proxy(nxt_row)
-        try:
-            ok = self.pre_filter(proxy)
-            if not ok:
+        nxt_obj = None
+        for i, rc in enumerate(self._constraints):
+            if i in self._passed_indexes:
+                continue
+            if nxt_obj is None:
+                nxt = dict(row)
+                nxt.update(candidate)
+                nxt_obj = self._to_map_from_dict(nxt)
+            result = eval_condition(rc["condition"], nxt_obj, self.comparer)
+            if result is False:
                 return False
-        except NotReady:
-            return None
-        except Exception:
-            raise
         return True
 
     def _mark_passed_constraints(self, row):
@@ -197,14 +169,6 @@ class Controller:
             elif result is False:
                 return False
         return True
-
-    def _set_pair(self, pair):
-        """Legacy: directly set pair into row (used when no constraints)."""
-        for key, value in self.get_candidate(pair):
-            self.row[key] = value
-        for s in self.all_strengths:
-            for p in combinations(sorted(self.row.values()), s):
-                self.consume(p)
 
     def set_pair(self, pair):
         """Snapshot-based pair addition with constraint checking.
@@ -311,7 +275,6 @@ class Controller:
                         peer_constraints = self._constraints_by_key.get(peer_key)
                         if not peer_constraints:
                             continue
-                        # Check if peer shares constraints with this factor
                         if not (peer_constraints & key_constraints):
                             continue
 
@@ -362,11 +325,6 @@ class Controller:
                 p = tuple(pair)
                 self.incomplete.pop(p, None)
 
-    def consume_row(self, row):
-        for s in self.all_strengths:
-            for pair in combinations(sorted(row.values()), s):
-                self.consume(pair)
-
     @property
     def all_strengths(self):
         strengths = {self.strength}
@@ -402,12 +360,6 @@ class Controller:
 
         check = self._storable_check(candidate, row)
         if check is False:
-            # Consume violated pairs when using legacy pre_filter
-            if not self._constraints and self.pre_filter is not None:
-                nxt = dict(row)
-                nxt.update(candidate)
-                nxt_row = Row(nxt)
-                self.consume_row(nxt_row)
             return None
         return num
 
@@ -433,21 +385,12 @@ class Controller:
             result[key] = self.factors[key][index - first]
         return result
 
-    def _to_proxy(self, row):
-        return ProxyRow(self._to_map(row))
-
     def _to_object(self, row):
         return self._to_map(row)
 
     def _reset(self):
         for pair_key, pair in self.row.consumed.items():
             self.incomplete[pair_key] = pair
-        self.row = Row()
-        self._passed_indexes.clear()
-
-    def _discard(self):
-        pair_key = self.row.get_pair_key()
-        self.rejected.add(pair_key)
         self.row = Row()
         self._passed_indexes.clear()
 
@@ -586,23 +529,17 @@ class Controller:
     def is_complete(self):
         if not self.is_filled():
             return False
-        if self._constraints:
-            obj = self._to_object(self.row)
-            for i, rc in enumerate(self._constraints):
-                if i in self._passed_indexes:
-                    continue
-                result = eval_condition(rc["condition"], obj, self.comparer)
-                # null (None) = referenced key doesn't exist — treat as satisfied
-                if result is False:
-                    return False
+        if not self._constraints:
             return True
-        if self.pre_filter is None:
-            return True
-        proxy = self._to_proxy(self.row)
-        try:
-            return bool(self.pre_filter(proxy))
-        except NotReady:
-            return True  # null tolerance: treat unknown as satisfied
+        obj = self._to_object(self.row)
+        for i, rc in enumerate(self._constraints):
+            if i in self._passed_indexes:
+                continue
+            result = eval_condition(rc["condition"], obj, self.comparer)
+            # null (None) = referenced key doesn't exist — treat as satisfied
+            if result is False:
+                return False
+        return True
 
     @property
     def stats(self):
@@ -651,8 +588,6 @@ class Controller:
         return True
 
     def make_async(self):
-        has_constraints = bool(self._constraints)
-
         # Process presets
         for preset in self.presets:
             if not self._apply_preset(preset):
@@ -664,10 +599,7 @@ class Controller:
                     self._record_completions(self.row, preset_keys)
                     self.consume_pairs(self.row)
                     self._row_count += 1
-                    if self.post_filter is None or self.post_filter(self._to_object(self.row)):
-                        yield self._restore()
-                    else:
-                        self._discard()
+                    yield self._restore()
                 else:
                     self._reset()
             except NeverMatch:
@@ -677,20 +609,14 @@ class Controller:
         consecutive_failures = 0
         while self.incomplete:
             # Phase 1: greedy selects pairs, setPair validates via snapshot
-            if has_constraints:
-                for pair in self.criterion.extract(self):
-                    if self.is_filled():
-                        break
-                    pk = pair
-                    if pk in self.row.invalid_pairs:
-                        continue
-                    if not self.set_pair(pair):
-                        self.row.invalid_pairs.add(pk)
-            else:
-                for pair in self.criterion.extract(self):
-                    if self.is_filled():
-                        break
-                    self._set_pair(pair)
+            for pair in self.criterion.extract(self):
+                if self.is_filled():
+                    break
+                pk = pair
+                if pk in self.row.invalid_pairs:
+                    continue
+                if not self.set_pair(pair):
+                    self.row.invalid_pairs.add(pk)
 
             greedy_keys = set(self.row.keys())
 
@@ -701,16 +627,12 @@ class Controller:
                     self._record_completions(self.row, greedy_keys)
                     self.consume_pairs(self.row)
                     self._row_count += 1
-                    if self.post_filter is None or self.post_filter(self._to_object(self.row)):
-                        yield self._restore()
-                    else:
-                        self._discard()
+                    yield self._restore()
                     consecutive_failures = 0
                 else:
                     consecutive_failures += 1
                     if consecutive_failures > len(self.incomplete):
                         break
-                    # Carry invalidPairs into next attempt
                     failed_pairs = set(self.row.invalid_pairs)
                     for s in self.all_strengths:
                         for p in combinations(sorted(self.row.values()), s):
@@ -719,32 +641,24 @@ class Controller:
                     self.rejected.clear()
                     self.row.invalid_pairs.update(failed_pairs)
             except NeverMatch:
-                if has_constraints:
-                    self._reset()
-                    self.rejected.clear()
-                    continue
-                break
+                self._reset()
+                self.rejected.clear()
+                continue
             if not self.incomplete:
                 break
 
         # Phase 3 (rescue): try remaining pairs individually
         for pair in list(self.incomplete.values()):
             self._reset()
-            if has_constraints:
-                if not self.set_pair(pair):
-                    continue
-            else:
-                self._set_pair(pair)
+            if not self.set_pair(pair):
+                continue
             rescue_keys = set(self.row.keys())
             result = self._close()
             if result is True:
                 self._record_completions(self.row, rescue_keys)
                 self.consume_pairs(self.row)
                 self._row_count += 1
-                if self.post_filter is None or self.post_filter(self._to_object(self.row)):
-                    yield self._restore()
-                else:
-                    self._discard()
+                yield self._restore()
             else:
                 self._reset()
 
@@ -760,8 +674,6 @@ def make_async(
     progress=False,
     sorter=sorters.hash,
     criterion=criteria.greedy,
-    pre_filter=None,
-    post_filter=None,
     salt="",
     tolerance=0,
     sub_models=None,
@@ -771,7 +683,6 @@ def make_async(
     comparer=None,
     **params,
 ):
-    # backwards compat: extract salt/tolerance from options dict
     options = params.pop("options", {})
     if isinstance(options, dict):
         salt = options.get("salt", salt)
@@ -784,8 +695,6 @@ def make_async(
         criterion=criterion,
         salt=salt,
         tolerance=tolerance,
-        pre_filter=pre_filter,
-        post_filter=post_filter,
         sub_models=sub_models,
         presets=presets,
         weights=weights,
@@ -804,8 +713,6 @@ def make(
     progress=False,
     sorter=sorters.hash,
     criterion=criteria.greedy,
-    pre_filter=None,
-    post_filter=None,
     salt="",
     tolerance=0,
     sub_models=None,
@@ -821,8 +728,6 @@ def make(
         progress=progress,
         sorter=sorter,
         criterion=criterion,
-        pre_filter=pre_filter,
-        post_filter=post_filter,
         salt=salt,
         tolerance=tolerance,
         sub_models=sub_models,

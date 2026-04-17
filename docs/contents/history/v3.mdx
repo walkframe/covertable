@@ -14,7 +14,28 @@ Major release with breaking changes, declarative constraints, and full PICT-form
 - The default export has been removed. Use `import { make } from "covertable"` instead of `import make from "covertable"`.
 - `PictConstraintsLexer` is no longer exported. Use the new [`PictModel`](/advanced/pict) class instead.
 - `PictModel.errors` (`string[]`) has been replaced with `PictModel.issues` (`PictModelIssue[]`). Each issue carries `severity`, `source`, `index`, `line`, and `message`.
-- `preFilter` and `postFilter` have been replaced by declarative `constraints`. See [Constraint Logic](/constraint-logic) and [Migration Guide](./migration).
+- `preFilter` and `postFilter` have been replaced by declarative `constraints`. See [Constraint Logic](/advanced/constraint-logic) and [Migration Guide](./migration).
+
+## Why replace `preFilter` with `constraints`?
+
+`preFilter` was a simple, flexible callback — you could write any JavaScript/Python function to accept or reject a row. So why give up that freedom?
+
+The problem is that `preFilter` is a **black box**. The engine can only call it and observe `true` or `false`. It cannot reason about *why* a row was rejected, *which fields* the filter depends on, or *whether a partial row could ever satisfy it*. This leads to:
+
+- **Blind trial and error** — The engine must try every candidate and discard failures. With many constraints and factors, this becomes extremely slow.
+- **No early pruning** — Even when a pair like `(Region=US, Currency=EUR)` is obviously impossible, the engine cannot detect this until the row is fully filled.
+- **No constraint propagation** — Chain constraints (e.g. `Language=ja → Region∈{JP,APAC}` → `Currency∈{JPY,USD}`) cannot be followed ahead of time, leading to dead-end rows that waste computation.
+
+Declarative `constraints` solve this by giving the engine **visibility into the constraint structure**:
+
+- **Three-valued logic** — When a referenced field is not yet set, the result is `null` (unknown) rather than `false`. The engine can defer judgment instead of rejecting prematurely.
+- **`extractKeys()`** — Each constraint declares its dependencies, so the engine only re-evaluates constraints when relevant fields change.
+- **Forward checking** — Before committing a pair, the engine prunes the domains of unfilled factors. If any domain becomes empty, the pair is rejected without filling the entire row.
+- **Initial pruning** — Infeasible pairs are detected and removed before generation even starts, reducing the search space.
+
+The result: a 22-factor, 53-constraint model (`heavy.pict`) that would churn for minutes with `preFilter` now completes in seconds with 100% pairwise coverage.
+
+`preFilter` / `postFilter` still work for backward compatibility, but `constraints` is the recommended approach for v3.
 
 ## New Features
 

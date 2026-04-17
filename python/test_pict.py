@@ -383,11 +383,13 @@ class TestOptions:
         rows = list(model.make_async())
         assert len(rows) > 0
 
-    def test_user_pre_filter_combines_with_model_filter(self):
+    def test_user_constraints_combine_with_model_constraints(self):
         model = PictModel("""
 OS: iOS, Android
 Browser: Chrome, Safari
 """)
-        rows = model.make(pre_filter=lambda row: row["OS"] != "iOS")
+        rows = model.make(constraints=[
+            {"operator": "ne", "field": "OS", "value": "iOS"},
+        ])
         for row in rows:
             assert row["OS"] != "iOS"

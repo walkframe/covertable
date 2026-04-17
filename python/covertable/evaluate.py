@@ -32,10 +32,13 @@ DEFAULT_COMPARER = {
 
 
 def resolve(row, field):
-    """Resolve a dot-separated field path against a row dict.
+    """Resolve a field path against a row dict.
 
+    String fields support dot notation for nested access.
     Returns ``_SENTINEL`` if any segment is missing.
     """
+    if not isinstance(field, str):
+        return row.get(field, _SENTINEL)
     parts = field.split(".")
     current = row
     for part in parts:

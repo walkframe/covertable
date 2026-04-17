@@ -189,7 +189,6 @@ class PictModel:
     def _build_kwargs(self, kwargs):
         kwargs = dict(kwargs)
         user_constraints = kwargs.pop("constraints", None)
-        user_filter = kwargs.pop("pre_filter", None)
         user_sub_models = kwargs.pop("sub_models", None)
         user_weights = kwargs.pop("weights", None)
 
@@ -197,13 +196,6 @@ class PictModel:
         constraints = list(self._model_constraints())
         if user_constraints:
             constraints.extend(user_constraints)
-        if user_filter:
-            # Wrap legacy pre_filter as a custom constraint
-            constraints.append({
-                "operator": "custom",
-                "keys": list(self._parameters.keys()),
-                "evaluate": user_filter,
-            })
         kwargs["constraints"] = constraints
 
         if user_sub_models is not None:
