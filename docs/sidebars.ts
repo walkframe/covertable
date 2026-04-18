@@ -25,7 +25,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Development',
-      items: ['development/typescript', 'development/python', 'development/constraint-logic'],
+      items: ['development/algorithm', 'development/constraint-logic', 'development/typescript', 'development/python'],
     },
     {
       type: 'category',
