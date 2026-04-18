@@ -231,7 +231,7 @@ const pictHighlightTheme = EditorView.baseTheme({
   ".cm-pict-negative": { color: "#f44747", textDecoration: "underline" },
   ".cm-pict-weight": { color: "#b5cea8" },
   ".cm-pict-param-name": { color: "#4ec9b0", fontWeight: "bold" },
-  ".cm-pict-param-value": { color: "#9cdcfe" },
+  ".cm-pict-param-value": { color: "#79c0d6" },
   ".cm-pict-operator": { color: "#d4d4d4" },
   ".cm-pict-arithmetic": { color: "#569cd6", fontWeight: "bold" },
   ".cm-pict-sub-model": { color: "#dcdcaa" },
