@@ -94,7 +94,7 @@ const DEFAULT_COMPARER: Required<Comparer> = {
   lt: (a, b) => a < b,
   gte: (a, b) => a >= b,
   lte: (a, b) => a <= b,
-  in: (value, values) => values.includes(value),
+  in: (value, values) => values.has(value),
 };
 
 /**
@@ -151,7 +151,7 @@ export function evaluate(
     case 'in': {
       const v = resolveOperand(row, c.left);
       if (v === undefined) return null;
-      return (comparer.in ?? DEFAULT_COMPARER.in)(v, c.values);
+      return (comparer.in ?? DEFAULT_COMPARER.in)(v, c.values as unknown as Set<any>);
     }
 
     // -- comparison --

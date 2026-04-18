@@ -76,13 +76,26 @@ class Controller:
         self._pruned_pairs = self._total_pairs - len(self.incomplete)
         self._num_all_chunks = len(self.incomplete)
 
+    @staticmethod
+    def _normalize_condition(cond):
+        """Convert ``values`` lists to sets for O(1) lookup in ``in`` conditions."""
+        op = cond.get("operator")
+        if op == "in" and isinstance(cond.get("values"), list):
+            return {**cond, "values": set(cond["values"])}
+        if op in ("and", "or"):
+            return {**cond, "conditions": [Controller._normalize_condition(c) for c in cond["conditions"]]}
+        if op == "not":
+            return {**cond, "condition": Controller._normalize_condition(cond["condition"])}
+        return cond
+
     def _resolve_constraints(self, constraints):
         """Build resolved constraints and per-key index."""
         if not constraints:
             return
         for i, cond in enumerate(constraints):
-            keys = extract_keys(cond)
-            self._constraints.append({"condition": cond, "keys": keys})
+            normalized = self._normalize_condition(cond)
+            keys = extract_keys(normalized)
+            self._constraints.append({"condition": normalized, "keys": keys})
             for k in keys:
                 if k not in self._constraints_by_key:
                     self._constraints_by_key[k] = set()

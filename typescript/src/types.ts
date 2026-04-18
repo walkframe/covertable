@@ -133,7 +133,7 @@ export interface Comparer {
   lt?: (a: any, b: any) => boolean;
   gte?: (a: any, b: any) => boolean;
   lte?: (a: any, b: any) => boolean;
-  in?: (value: any, values: any[]) => boolean;
+  in?: (value: any, values: Set<any>) => boolean;
 }
 
 // ---------------------------------------------------------------------------

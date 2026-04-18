@@ -233,7 +233,7 @@ const pictHighlightTheme = EditorView.baseTheme({
   ".cm-pict-param-name": { color: "#4ec9b0", fontWeight: "bold" },
   ".cm-pict-param-value": { color: "#9cdcfe" },
   ".cm-pict-operator": { color: "#d4d4d4" },
-  ".cm-pict-arithmetic": { color: "#d4d4d4", fontWeight: "bold" },
+  ".cm-pict-arithmetic": { color: "#569cd6", fontWeight: "bold" },
   ".cm-pict-sub-model": { color: "#dcdcaa" },
 });
 
@@ -750,7 +750,7 @@ function PictDemoInner() {
                   <tbody>
                     {model.subModels.map((sm, i) => (
                       <tr key={i}>
-                        <td>{sm.keys.join(", ")}</td>
+                        <td>{sm.fields.join(", ")}</td>
                         <td>{sm.strength}</td>
                       </tr>
                     ))}

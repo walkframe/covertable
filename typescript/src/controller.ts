@@ -144,11 +144,26 @@ export class Controller<T extends FactorsType> {
 
   }
 
+  /** Normalize `in` conditions: convert `values` arrays to Sets for O(1) lookup. */
+  private static normalizeCondition(c: Expression): Expression {
+    if (c.operator === 'in' && Array.isArray((c as any).values)) {
+      return { ...c, values: new Set((c as any).values) } as any;
+    }
+    if (c.operator === 'and' || c.operator === 'or') {
+      return { ...c, conditions: c.conditions.map(Controller.normalizeCondition) } as any;
+    }
+    if (c.operator === 'not') {
+      return { ...c, condition: Controller.normalizeCondition(c.condition) } as any;
+    }
+    return c;
+  }
+
   private resolveConstraints() {
     const constraints = this.options.constraints ?? [];
     for (let i = 0; i < constraints.length; i++) {
-      const keys = extractKeys(constraints[i]);
-      this.constraints.push({ condition: constraints[i], keys });
+      const normalized = Controller.normalizeCondition(constraints[i]);
+      const keys = extractKeys(normalized);
+      this.constraints.push({ condition: normalized, keys });
       for (const k of keys) {
         let set = this.constraintsByKey.get(k);
         if (!set) {

@@ -119,6 +119,21 @@ make(factors, {
 });
 ```
 
+:::tip
+Writing constraint objects by hand can be verbose. The [`Constraint` shortcut class](/shortcuts/constraint) provides a concise builder API:
+
+```typescript
+import { Constraint } from "covertable/shortcuts";
+const c = new Constraint<typeof factors>();
+
+make(factors, {
+  constraints: [
+    c.or(c.ne("$machine", "iPhone"), c.eq("$os", "iOS")),
+  ],
+});
+```
+:::
+
 ## `sorter`
 
 Determines the order in which combinations are generated.
