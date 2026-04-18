@@ -51,7 +51,26 @@ make(factors, {
     ]},
   ],
 });
+
+// v3 — same thing with Constraint shortcuts
+import { Constraint } from "covertable/shortcuts";
+const c = new Constraint<typeof factors>();
+
+make(factors, {
+  constraints: [
+    c.or(c.ne("$machine", "iPhone"), c.eq("$os", "iOS")),
+  ],
+});
+
+// v3 — or wrap the original function with c.fn()
+make(factors, {
+  constraints: [
+    c.fn(["machine", "os"], (row) => !(row.machine === "iPhone" && row.os !== "iOS")),
+  ],
+});
 ```
+
+`c.fn()` is the quickest migration path — wrap the existing `preFilter` function as-is, just add the list of fields it depends on (`requires`). The engine will defer evaluation until those fields are set.
 
 :::info[Why declarative?]
 Declarative constraints allow the engine to:
@@ -60,7 +79,7 @@ Declarative constraints allow the engine to:
 - Propagate constraint chains via forward checking
 - Detect unsolvable combinations early instead of silently dropping rows
 
-See [Constraint Logic](/advanced/constraint-logic) for details.
+See [Constraint Logic](/development/constraint-logic) for details.
 :::
 
 ### Replacing `postFilter`

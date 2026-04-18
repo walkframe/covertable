@@ -7,7 +7,7 @@ title: PictModel
 
 `PictModel` parses a complete PICT-format model — parameters, sub-models, and constraints — into a single object that can directly generate rows. It is exported from a separate entry point so it does not bloat the bundle of consumers who only need `make`.
 
-:::caution PICT superset
+:::warning[PICT superset]
 
 CoverTable's model format is a **superset of Microsoft PICT**. It extends the original syntax with features such as arithmetic expressions (`[A] * [B] > 100`, `([A] + 1) * [B] <= 500`), comment lines (`#`) in the constraint section, and the `~` negative-value prefix in output.
 
@@ -165,11 +165,11 @@ Try the [**Compatible PICT**](/tools/pict) tool to experiment with the constrain
 
 ## Differences from the Original PICT
 
-covertable's `PictModel` accepts PICT-format input, but the underlying engine works differently from the original PICT tool developed by Microsoft.
+CoverTable's `PictModel` accepts PICT-format input, but the underlying engine works differently from the original PICT tool developed by Microsoft.
 
 ### Generation Algorithm
 
-| | Original PICT | covertable |
+| | Original PICT | CoverTable |
 |---|---|---|
 | **Greedy strategy** | Picks the combination with the most uncovered (OPEN) slots in a bitvector, then selects a value that maximizes globally covered pairs | Scores each uncovered pair by how many other uncovered pairs it would cover when added to the current row |
 | **Value selection** | `PickValue()` maximizes `complete` (fully-bound combinations) then `totalZeros` (global coverage) | Greedy selects full pairs; remaining factors are filled by `close()` using depth-first backtracking |
@@ -177,7 +177,7 @@ covertable's `PictModel` accepts PICT-format input, but the underlying engine wo
 
 ### Constraint Processing
 
-| | Original PICT | covertable |
+| | Original PICT | CoverTable |
 |---|---|---|
 | **Approach** | Pre-compiles constraints into explicit exclusion sets before generation | Evaluates constraints at runtime using three-valued (Kleene) logic |
 | **Internal form** | `IF [A]="x" THEN [B]<>"y"` → exclusion `{A:"x", B:"y"}` | Constraints remain as expressions and are evaluated per candidate |
@@ -188,7 +188,7 @@ covertable's `PictModel` accepts PICT-format input, but the underlying engine wo
 
 ### Seeding / Presets
 
-| | Original PICT | covertable |
+| | Original PICT | CoverTable |
 |---|---|---|
 | **API** | `PictAddSeed()` / CLI `-e seedfile` | `presets` option (list of partial-row dicts/objects) |
 | **Format** | Array of `(parameter, value_index)` tuples | Value dictionaries — e.g. `{ OS: "Win", Browser: "Chrome" }` |
@@ -196,7 +196,7 @@ covertable's `PictModel` accepts PICT-format input, but the underlying engine wo
 
 ### Sub-models
 
-| | Original PICT | covertable |
+| | Original PICT | CoverTable |
 |---|---|---|
 | **Structure** | Fully hierarchical — sub-models are independent `Model` instances combined via pseudo-parameters | Flat key-set partitioning with per-set strength |
 | **Nesting** | Sub-models can be nested arbitrarily | Single level only |
@@ -204,28 +204,28 @@ covertable's `PictModel` accepts PICT-format input, but the underlying engine wo
 
 ### Weights
 
-| | Original PICT | covertable |
+| | Original PICT | CoverTable |
 |---|---|---|
 | **Syntax** | `value (weight)` in model file / `valueWeights[]` in API | `weights` option — `{ factor: { valueIndex: weight } }` |
 | **Effect** | Influences tie-breaking in `PickValue()` and random-row generation | Influences only the `close()` (backtracking completion) phase — higher-weight values are tried first |
 
 ### Randomization and Determinism
 
-| | Original PICT | covertable |
+| | Original PICT | CoverTable |
 |---|---|---|
 | **Default** | Deterministic (seed 0) | Deterministic (`hash` sorter with empty salt) |
 | **Randomize** | `-r [seed]` flag; uses `srand()`/`rand()` | Change `salt` for reproducible variation; use `random` sorter for non-deterministic output |
 
 ### Output and Streaming
 
-| | Original PICT | covertable |
+| | Original PICT | CoverTable |
 |---|---|---|
 | **Output** | Batch only — all rows generated before any are returned (TSV or JSON from CLI; index array from C API) | Generator-based — rows yielded incrementally via `makeAsync()` / `make_async()` |
 | **Format** | Tab-separated table or JSON array of objects | Python `list`/`dict` rows; TypeScript typed arrays/objects with full type inference |
 
 ### Platform
 
-| | Original PICT | covertable |
+| | Original PICT | CoverTable |
 |---|---|---|
 | **Language** | C++ (with C-compatible API via `pictapi.h`) | Pure Python 3 + pure TypeScript — no native code, no compilation |
 | **Runtime** | Compiled binary; Windows, Linux, macOS | Python: pip install; TypeScript: npm install; also runs in browsers |

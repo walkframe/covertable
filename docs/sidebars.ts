@@ -10,18 +10,22 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'Advanced',
-      items: ['advanced/index', 'advanced/options', 'advanced/pict', 'advanced/constraint-logic'],
-    },
-    {
-      type: 'category',
-      label: 'Shortcuts',
-      items: ['shortcuts/constraint'],
+      label: 'Reference',
+      link: { type: 'generated-index', slug: '/reference' },
+      items: [
+        'reference/options',
+        'reference/pict',
+        {
+          type: 'category',
+          label: 'Shortcuts',
+          items: ['reference/shortcuts/constraint'],
+        },
+      ],
     },
     {
       type: 'category',
       label: 'Development',
-      items: ['development/typescript', 'development/python'],
+      items: ['development/typescript', 'development/python', 'development/constraint-logic'],
     },
     {
       type: 'category',

@@ -1,9 +1,28 @@
 ---
-sidebar_position: 2
-title: Options Detail
+sidebar_position: 1
+title: Options
 ---
 
-# Options Detail
+# Options
+
+The `make` function accepts an options object as its second argument:
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `strength` | `number` | `2` | Number of factors to be covered (N-wise). |
+| `subModels` | `SubModelType[]` | `undefined` | Apply a different combination strength to a specific group of factors. |
+| `weights` | `WeightsType` | `undefined` | Index-keyed weights that bias value selection during row completion. |
+| `presets` | `PresetRowType[]` | `undefined` | Rows that must be included in the output. Equivalent to PICT's seeding feature. |
+| `constraints` | `Expression[]` | `undefined` | Declarative constraints evaluated under three-valued logic. |
+| `comparer` | `Comparer` | `undefined` | Custom comparison functions for constraint evaluation. |
+| `sorter` | `Function` | `sorters.hash` | Determines the order of combinations. |
+| `criterion` | `Function` | `criteria.greedy` | Determines the algorithm for generating combinations. |
+| `salt` | `string \| number` | `""` | Value mixed into `sorters.hash` to control the ordering of pairs. |
+| `tolerance` | `number` | `0` | Tolerance used by `criteria.greedy` to trade optimality for speed. |
+
+See also: [PictModel](./pict) for the PICT-compatible model parser, or [Constraint Shortcuts](/reference/shortcuts/constraint) for a concise constraint builder API.
+
+---
 
 ## `strength`
 
@@ -34,7 +53,7 @@ const factors = {
 make(factors, {
   strength: 2,
   subModels: [
-    { keys: ["PLATFORM", "CPUS", "RAM"], strength: 3 },
+    { fields: ["PLATFORM", "CPUS", "RAM"], strength: 3 },
   ],
 });
 ```
@@ -45,7 +64,7 @@ In this example:
 
 ## `weights`
 
-`weights` biases the **completion phase** — the moment covertable picks a value to fill in a column once all required pairs have been satisfied. Higher-weighted values are tried first, so they tend to appear in more rows.
+`weights` biases the **completion phase** — the moment CoverTable picks a value to fill in a column once all required pairs have been satisfied. Higher-weighted values are tried first, so they tend to appear in more rows.
 
 ```typescript
 import { make } from "covertable";
@@ -70,7 +89,7 @@ Weights only affect the **completion phase**. The pairwise (or N-wise) coverage 
 
 ## `presets`
 
-`presets` lets you specify rows that **must appear in the output**. covertable processes them before normal generation, so the pairs they cover are subtracted from the work that the generator has to do — often reducing the total number of generated rows.
+`presets` lets you specify rows that **must appear in the output**. CoverTable processes them before normal generation, so the pairs they cover are subtracted from the work that the generator has to do — often reducing the total number of generated rows.
 
 ```typescript
 import { make } from "covertable";
@@ -100,12 +119,12 @@ make(factors, {
 | Row cannot be completed (e.g. constraints leave no valid filler) | Silently dropped |
 
 :::info[Equivalent to PICT's seeding (`/e:file`)]
-PICT calls this feature **seeding** and reads the seed rows from a tab-separated file via the `/e:file.txt` CLI option. covertable's `presets` is the same concept, expressed as plain JavaScript objects so you can compose them programmatically.
+PICT calls this feature **seeding** and reads the seed rows from a tab-separated file via the `/e:file.txt` CLI option. CoverTable's `presets` is the same concept, expressed as plain JavaScript objects so you can compose them programmatically.
 :::
 
 ## `constraints`
 
-Declarative constraints evaluated under Kleene three-valued logic. See [Constraint Logic](/advanced/constraint-logic) for full documentation.
+Declarative constraints evaluated under Kleene three-valued logic. See [Constraint Logic](/development/constraint-logic) for full documentation.
 
 ```typescript
 make(factors, {
@@ -120,7 +139,7 @@ make(factors, {
 ```
 
 :::tip
-Writing constraint objects by hand can be verbose. The [`Constraint` shortcut class](/shortcuts/constraint) provides a concise builder API:
+Writing constraint objects by hand can be verbose. The [`Constraint` shortcut class](/reference/shortcuts/constraint) provides a concise builder API:
 
 ```typescript
 import { Constraint } from "covertable/shortcuts";
@@ -151,7 +170,7 @@ make(factors, { sorter: sorters.random });
 ```
 
 :::tip[Salt for Reproducibility]
-When using `sorters.hash`, the `salt` option controls the ordering of unstored pairs. When the combination of factors and salt are the same, covertable **reproduces the same result set**. Changing the salt is the easiest way to explore alternative orderings without changing the input factors.
+When using `sorters.hash`, the `salt` option controls the ordering of unstored pairs. When the combination of factors and salt are the same, CoverTable **reproduces the same result set**. Changing the salt is the easiest way to explore alternative orderings without changing the input factors.
 :::
 
 :::info[Renamed from `seed`]

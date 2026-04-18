@@ -4,7 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 import path from 'path';
 
 const config: Config = {
-  title: 'covertable',
+  title: 'CoverTable',
   tagline: 'A flexible pairwise testing tool for generating covering arrays',
   favicon: 'img/favicon.ico',
 
@@ -73,7 +73,7 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'covertable',
+      title: 'CoverTable',
       items: [
         {
           href: 'https://www.npmjs.com/package/covertable',
@@ -103,8 +103,8 @@ const config: Config = {
               to: '/',
             },
             {
-              label: 'Advanced Usage',
-              to: '/advanced',
+              label: 'Reference',
+              to: '/reference',
             },
             {
               label: 'Compatible PICT',

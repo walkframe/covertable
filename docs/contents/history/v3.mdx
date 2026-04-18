@@ -12,9 +12,9 @@ Major release with breaking changes, declarative constraints, and full PICT-form
 - The `length` option has been renamed to `strength`.
 - The `seed` option (used by `sorters.hash`) has been renamed to `salt`.
 - The default export has been removed. Use `import { make } from "covertable"` instead of `import make from "covertable"`.
-- `PictConstraintsLexer` is no longer exported. Use the new [`PictModel`](/advanced/pict) class instead.
+- `PictConstraintsLexer` is no longer exported. Use the new [`PictModel`](/reference/pict) class instead.
 - `PictModel.errors` (`string[]`) has been replaced with `PictModel.issues` (`PictModelIssue[]`). Each issue carries `severity`, `source`, `index`, `line`, and `message`.
-- `preFilter` and `postFilter` have been replaced by declarative `constraints`. See [Constraint Logic](/advanced/constraint-logic) and [Migration Guide](./migration).
+- `preFilter` and `postFilter` have been replaced by declarative `constraints`. See [Constraint Logic](/development/constraint-logic) and [Migration Guide](./migration).
 
 ## Why replace `preFilter` with `constraints`?
 
