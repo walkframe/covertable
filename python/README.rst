@@ -90,7 +90,7 @@ Supported condition operators:
 
 - **Comparison**: ``eq``, ``ne``, ``gt``, ``lt``, ``gte``, ``lte``, ``in``
 - **Logical**: ``and``, ``or``, ``not``
-- **Custom**: ``custom`` (escape hatch with ``fields`` and ``evaluate`` callable)
+- **Custom**: ``fn`` (escape hatch with ``requires`` and ``evaluate`` callable)
 
 Field-to-field comparison uses ``right``:
 

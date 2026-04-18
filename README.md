@@ -36,14 +36,12 @@ CoverTable is available in two implementations, with TypeScript as the primary f
 Works in both **Node.js** and **browsers** (ESM/CJS dual build).
 
 - [README](https://github.com/walkframe/covertable/blob/master/typescript/README.md)
-- [History](https://github.com/walkframe/covertable/blob/master/typescript/history.md)
 
 ### Python
 
 [![PyPI Version](https://badge.fury.io/py/covertable.svg)](https://badge.fury.io/py/covertable) [![Build Status](https://github.com/walkframe/covertable/actions/workflows/python.yaml/badge.svg)](https://github.com/walkframe/covertable/actions/workflows/python.yaml)
 
 - [README](https://github.com/walkframe/covertable/blob/master/python/README.rst)
-- [History](https://github.com/walkframe/covertable/blob/master/python/history.md)
 
 
 ## Documentation
