@@ -42,7 +42,7 @@ IF [os] = "iOS" THEN [machine] = "iPhone";
 const rows = model.make();
 ```
 
-If you only want to apply constraints to factors you already have in code, you can pass `model.filter` directly to `make` as a `preFilter`:
+If you only want to apply constraints to factors you already have in code, you can pass `model.constraints` to `make`:
 
 ```typescript
 import { make } from "covertable";
@@ -62,7 +62,7 @@ IF [os] = "iOS" THEN [machine] = "iPhone";
 `);
 
 make({ machine, os, browser }, {
-  preFilter: model.filter,
+  constraints: model.constraints,
 });
 ```
 
