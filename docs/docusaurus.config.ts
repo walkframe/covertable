@@ -31,6 +31,12 @@ const config: Config = {
   },
 
   plugins: [
+    [
+      '@docusaurus/plugin-google-tag-manager',
+      {
+        containerId: 'GTM-WZFTP5F2',
+      },
+    ],
     function covertablePlugin() {
       return {
         name: 'covertable-webpack-plugin',
@@ -66,6 +72,7 @@ const config: Config = {
       } satisfies Preset.Options,
     ],
   ],
+
 
   themeConfig: {
     image: 'img/covertable-social-card.png',
@@ -126,6 +133,19 @@ const config: Config = {
             {
               label: 'PyPI',
               href: 'https://pypi.org/project/covertable/',
+            },
+          ],
+        },
+        {
+          title: 'Legal',
+          items: [
+            {
+              label: 'About',
+              to: '/about',
+            },
+            {
+              label: 'Privacy Policy',
+              to: '/privacy-policy',
             },
           ],
         },

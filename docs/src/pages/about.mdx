@@ -1,0 +1,34 @@
+---
+title: About
+---
+
+# About CoverTable
+
+CoverTable is an open-source **N-wise covering array generator** for combinatorial testing, available in both TypeScript and Python.
+
+## What is Combinatorial Testing?
+
+When software has multiple parameters, testing every possible combination is often impractical. Combinatorial testing (also known as pairwise testing) generates a minimal set of test cases that covers all N-wise interactions between parameter values. This approach dramatically reduces the number of test cases while maintaining high defect detection rates.
+
+## Features
+
+- **N-wise coverage** with configurable strength (pairwise by default)
+- **Constraint support** with three-valued logic and forward checking
+- **PICT-format compatibility** via `PictModel`
+- **Streaming output** via generators for incremental processing
+- **Deterministic results** controlled by a hash-based sorter and salt
+- **Sub-model support** for different strengths across parameter groups
+- **TypeScript and Python** implementations with the same algorithm
+
+## Project
+
+CoverTable is developed and maintained by [walkframe](https://github.com/walkframe).
+
+- Source code: [GitHub](https://github.com/walkframe/covertable)
+- TypeScript package: [npm](https://www.npmjs.com/package/covertable)
+- Python package: [PyPI](https://pypi.org/project/covertable/)
+- License: Apache 2.0
+
+## Contact
+
+For bug reports, feature requests, or questions, please open an issue on our [GitHub repository](https://github.com/walkframe/covertable/issues).
