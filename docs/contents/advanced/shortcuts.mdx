@@ -1,0 +1,157 @@
+---
+sidebar_position: 5
+title: Shortcuts
+---
+
+# Constraint Shortcuts
+
+Writing constraint expressions as plain objects is verbose. The `Constraint` class provides a concise builder API with `$`-prefixed field references.
+
+## Setup
+
+```typescript
+import { make } from "covertable";
+import { Constraint } from "covertable/shortcuts";
+
+const factors = {
+  OS: ["Win", "Mac", "Linux"],
+  Browser: ["Chrome", "Firefox", "Safari"],
+  Price: [100, 500, 1000],
+  Qty: [1, 2, 5],
+};
+
+const c = new Constraint<typeof factors>();
+```
+
+```python
+from covertable import make
+from covertable.shortcuts import Constraint
+
+c = Constraint()
+```
+
+In TypeScript, passing `typeof factors` as a type parameter enables autocompletion for `$`-prefixed field names.
+
+## Field References
+
+Prefix a field name with `$` to reference it. Anything without `$` is treated as a literal value.
+
+```typescript
+c.eq("$OS", "Mac")          // OS == "Mac"  (field vs literal)
+c.ne("$OS", "$Browser")     // OS != Browser (field vs field)
+c.gt("$Price", 500)         // Price > 500  (field vs number)
+```
+
+## Comparison
+
+| Method | Raw equivalent |
+|--------|---------------|
+| `c.eq("$A", "x")` | `{ operator: 'eq', left: 'A', value: 'x' }` |
+| `c.ne("$A", "$B")` | `{ operator: 'ne', left: 'A', right: 'B' }` |
+| `c.gt("$A", 10)` | `{ operator: 'gt', left: 'A', value: 10 }` |
+| `c.lt("$A", "$B")` | `{ operator: 'lt', left: 'A', right: 'B' }` |
+| `c.gte("$A", 0)` | `{ operator: 'gte', left: 'A', value: 0 }` |
+| `c.lte("$A", 100)` | `{ operator: 'lte', left: 'A', value: 100 }` |
+| `c.in("$A", [1, 2])` | `{ operator: 'in', left: 'A', values: [1, 2] }` |
+
+## Logical
+
+```typescript
+c.and(c.eq("$OS", "Mac"), c.eq("$Browser", "Safari"))
+c.or(c.eq("$OS", "Mac"), c.eq("$OS", "Win"))
+c.not(c.eq("$OS", "Linux"))
+```
+
+In Python, use `c.and_()`, `c.or_()`, `c.not_()` (trailing underscore to avoid reserved words).
+
+## Arithmetic
+
+Binary operators that return an expression (usable as an operand in comparisons):
+
+```typescript
+c.add("$A", "$B")       // A + B
+c.sub("$A", 100)        // A - 100
+c.mul("$Price", "$Qty") // Price * Qty
+c.div("$Total", 2)      // Total / 2
+c.mod("$A", 2)          // A % 2
+```
+
+Nest them for complex expressions:
+
+```typescript
+c.gt(c.mul("$Price", "$Qty"), 10000)  // Price * Qty > 10000
+c.lte(c.mul(c.add("$Price", 100), "$Qty"), 30000)  // (Price + 100) * Qty <= 30000
+```
+
+## Variadic Arithmetic
+
+`sum` and `product` fold multiple operands left-to-right:
+
+```typescript
+c.sum("$A", "$B", "$C")       // (A + B) + C
+c.product("$X", "$Y", "$Z")   // (X * Y) * Z
+c.lte(c.sum("$A", "$B", "$C"), 100)  // A + B + C <= 100
+```
+
+## Custom Function (`fn`)
+
+For constraints that can't be expressed declaratively:
+
+```typescript
+c.fn(["OS", "Browser"], (row) => {
+  return row.OS !== "Linux" || row.Browser !== "Safari";
+})
+```
+
+```python
+c.fn(["OS", "Browser"], lambda row: row["OS"] != "Linux" or row["Browser"] != "Safari")
+```
+
+The `fields` parameter tells the engine which factors to wait for before calling the function (three-valued logic).
+
+## Full Example
+
+```typescript
+import { make } from "covertable";
+import { Constraint } from "covertable/shortcuts";
+
+const factors = {
+  OS: ["Win", "Mac", "Linux"],
+  Browser: ["Chrome", "Firefox", "Safari"],
+  Price: [100, 500, 1000],
+  Qty: [1, 2, 5, 10],
+};
+
+const c = new Constraint<typeof factors>();
+
+const rows = make(factors, {
+  constraints: [
+    // Safari only on Mac
+    c.or(c.ne("$Browser", "Safari"), c.eq("$OS", "Mac")),
+    // Total must not exceed 5000
+    c.lte(c.mul("$Price", "$Qty"), 5000),
+    // Bulk orders (qty >= 5) require Price >= 500
+    c.or(c.lt("$Qty", 5), c.gte("$Price", 500)),
+  ],
+});
+```
+
+```python
+from covertable import make
+from covertable.shortcuts import Constraint
+
+factors = {
+    "OS": ["Win", "Mac", "Linux"],
+    "Browser": ["Chrome", "Firefox", "Safari"],
+    "Price": [100, 500, 1000],
+    "Qty": [1, 2, 5, 10],
+}
+
+c = Constraint()
+
+rows = make(factors, constraints=[
+    c.or_(c.ne("$Browser", "Safari"), c.eq("$OS", "Mac")),
+    c.lte(c.mul("$Price", "$Qty"), 5000),
+    c.or_(c.lt("$Qty", 5), c.gte("$Price", 500)),
+])
+```

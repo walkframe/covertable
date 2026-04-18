@@ -26,12 +26,12 @@ const rows = make(factors, {
   constraints: [
     // iPhone ↔ iOS
     { operator: 'or', conditions: [
-      { operator: 'ne', field: 'machine', value: 'iPhone' },
-      { operator: 'eq', field: 'os', value: 'iOS' },
+      { operator: 'ne', left: 'machine', value: 'iPhone' },
+      { operator: 'eq', left: 'os', value: 'iOS' },
     ]},
     { operator: 'or', conditions: [
-      { operator: 'eq', field: 'machine', value: 'iPhone' },
-      { operator: 'ne', field: 'os', value: 'iOS' },
+      { operator: 'eq', left: 'machine', value: 'iPhone' },
+      { operator: 'ne', left: 'os', value: 'iOS' },
     ]},
   ],
 });
@@ -47,11 +47,11 @@ The `make` function accepts an options object as its second argument:
 | `subModels` | `SubModelType[]` | `undefined` | Apply a different combination strength to a specific group of factors. |
 | `weights` | `WeightsType` | `undefined` | Index-keyed weights that bias value selection during row completion. |
 | `presets` | `PresetRowType[]` | `undefined` | Rows that must be included in the output. Equivalent to PICT's seeding feature. |
-| `constraints` | `Condition[]` | `undefined` | Declarative constraints evaluated under three-valued logic. See [Constraint Logic](/advanced/constraint-logic). |
+| `constraints` | `Expression[]` | `undefined` | Declarative constraints evaluated under three-valued logic. See [Constraint Logic](/advanced/constraint-logic). |
 | `comparer` | `Comparer` | `undefined` | Custom comparison functions for constraint evaluation. |
 | `sorter` | `Function` | `sorters.hash` | Determines the order of combinations. |
 | `criterion` | `Function` | `criteria.greedy` | Determines the algorithm for generating combinations. |
 | `salt` | `string \| number` | `""` | Value mixed into `sorters.hash` to control the ordering of pairs. |
 | `tolerance` | `number` | `0` | Tolerance used by `criteria.greedy` to trade optimality for speed. |
 
-See [Options Detail](./options) for full documentation of each option, or [PictModel](./pict) for the PICT-compatible model parser.
+See [Options Detail](./options) for full documentation of each option, [PictModel](./pict) for the PICT-compatible model parser, or [Shortcuts](./shortcuts) for a concise constraint builder API.

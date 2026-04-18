@@ -539,7 +539,7 @@ C: 7, 8, 9
 
 { A, B, C } @ 3
     `);
-    expect(model.subModels).toEqual([{ keys: ['A', 'B', 'C'], strength: 3 }]);
+    expect(model.subModels).toEqual([{ fields: ['A', 'B', 'C'], strength: 3 }]);
     expect(errorMessages(model)).toEqual([]);
   });
 
@@ -610,7 +610,7 @@ D: d1, d2
 A: a1, a2, a3
 B: b1, b2, b3
 C: c1, c2, c3
-    `).make({ subModels: [{ keys: ['A', 'B', 'C'], strength: 3 }] });
+    `).make({ subModels: [{ fields: ['A', 'B', 'C'], strength: 3 }] });
     // All 3-wise must be covered
     for (const a of ['a1', 'a2', 'a3']) {
       for (const b of ['b1', 'b2', 'b3']) {

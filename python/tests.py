@@ -60,9 +60,9 @@ class Test_covertable:
             factors,
             strength=2,
             constraints=[
-                {"operator": "custom", "keys": [0, 1], "evaluate":
+                {"operator": "fn", "requires": [0, 1], "evaluate":
                     lambda row: not (row[0] == "a" and row[1] == "d")},
-                {"operator": "custom", "keys": [0, 1], "evaluate":
+                {"operator": "fn", "requires": [0, 1], "evaluate":
                     lambda row: not (row[0] == "b" and row[1] == "e")},
             ],
         )
@@ -78,7 +78,7 @@ class Test_covertable:
             factors,
             strength=2,
             constraints=[
-                {"operator": "custom", "keys": [2], "evaluate":
+                {"operator": "fn", "requires": [2], "evaluate":
                     lambda row: row[2] != "f"},
             ],
         )
@@ -166,7 +166,7 @@ class Test_covertable:
         rows = make(
             factors,
             constraints=[
-                {"operator": "custom", "keys": ["OS", "Browser"], "evaluate":
+                {"operator": "fn", "requires": ["OS", "Browser"], "evaluate":
                     lambda row: not (row["OS"] == "iOS" and row["Browser"] == "Chrome")},
             ],
             presets=[
@@ -210,3 +210,88 @@ class Test_covertable:
         rows = call(factors, strength=2)
         for row in rows:
             assert sorted(row.keys()) == sorted(factors.keys())
+
+
+class Test_custom_condition:
+    def test_evaluate_returns_result_when_all_fields_present(self):
+        from covertable.evaluate import evaluate
+        cond = {"operator": "fn", "requires": ["A", "B"],
+                "evaluate": lambda row: row["A"] + row["B"] > 5}
+        assert evaluate(cond, {"A": 3, "B": 4}) is True
+        assert evaluate(cond, {"A": 1, "B": 2}) is False
+
+    def test_evaluate_returns_none_when_field_missing(self):
+        from covertable.evaluate import evaluate
+        cond = {"operator": "fn", "requires": ["A", "B"],
+                "evaluate": lambda row: row["A"] != row["B"]}
+        assert evaluate(cond, {"A": 1}) is None
+        assert evaluate(cond, {}) is None
+
+    def test_evaluate_returns_none_when_partial_fields(self):
+        from covertable.evaluate import evaluate
+        cond = {"operator": "fn", "requires": ["X", "Y", "Z"],
+                "evaluate": lambda row: row["X"] + row["Y"] + row["Z"] == 6}
+        assert evaluate(cond, {"X": 1, "Y": 2}) is None
+
+    def test_evaluate_with_empty_fields(self):
+        from covertable.evaluate import evaluate
+        cond = {"operator": "fn", "requires": [], "evaluate": lambda row: True}
+        assert evaluate(cond, {}) is True
+
+    def test_extract_keys_from_custom(self):
+        from covertable.evaluate import extract_keys
+        cond = {"operator": "fn", "requires": ["OS", "Browser", "Device"],
+                "evaluate": lambda row: True}
+        assert extract_keys(cond) == {"OS", "Browser", "Device"}
+
+    def test_make_with_custom_constraint(self):
+        from covertable import make
+        rows = make(
+            {"A": [1, 2, 3], "B": [10, 20, 30]},
+            constraints=[{"operator": "fn", "requires": ["A", "B"],
+                          "evaluate": lambda row: row["A"] * 10 == row["B"]}],
+        )
+        for row in rows:
+            assert row["A"] * 10 == row["B"]
+
+    def test_custom_prunes_infeasible_pairs(self):
+        from covertable import make
+        rows = make(
+            {"X": ["a", "b"], "Y": ["c", "d"], "Z": ["e", "f"]},
+            constraints=[{"operator": "fn", "requires": ["X", "Y"],
+                          "evaluate": lambda row: not (row["X"] == "a" and row["Y"] == "c")}],
+        )
+        for row in rows:
+            assert not (row["X"] == "a" and row["Y"] == "c")
+
+    def test_custom_alongside_declarative(self):
+        from covertable import make
+        rows = make(
+            {"OS": ["Win", "Mac", "Linux"], "Browser": ["Chrome", "Firefox", "Safari"], "Lang": ["en", "ja"]},
+            constraints=[
+                {"operator": "or", "conditions": [
+                    {"operator": "ne", "left": "Browser", "value": "Safari"},
+                    {"operator": "eq", "left": "OS", "value": "Mac"},
+                ]},
+                {"operator": "fn", "requires": ["Browser", "Lang"],
+                 "evaluate": lambda row: row["Lang"] != "ja" or row["Browser"] == "Chrome"},
+            ],
+        )
+        for row in rows:
+            if row["Browser"] == "Safari":
+                assert row["OS"] == "Mac"
+            if row["Lang"] == "ja":
+                assert row["Browser"] == "Chrome"
+
+    def test_custom_inside_logical_operator(self):
+        from covertable import make
+        rows = make(
+            {"A": [1, 2, 3], "B": [1, 2, 3]},
+            constraints=[{"operator": "or", "conditions": [
+                {"operator": "eq", "left": "A", "value": 1},
+                {"operator": "fn", "requires": ["B"],
+                 "evaluate": lambda row: row["B"] >= 2},
+            ]}],
+        )
+        for row in rows:
+            assert row["A"] == 1 or row["B"] >= 2

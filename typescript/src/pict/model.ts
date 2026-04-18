@@ -1,5 +1,5 @@
 import type {
-  Condition,
+  Expression,
   FilterRowType,
   OptionsType,
   SubModelType,
@@ -42,7 +42,7 @@ export class PictModel {
 
   get parameters(): PictFactorsType { return this._parameters; }
   get subModels(): SubModelType[] { return this._subModels; }
-  get constraints(): Condition[] { return this._modelConstraints(); }
+  get constraints(): Expression[] { return this._modelConstraints(); }
   get negatives(): Map<string, Set<string | number>> { return this._negatives; }
   get weights(): { [factorKey: string]: { [index: number]: number } } { return this._weights; }
   get progress(): number { return this._controller?.progress ?? 0; }
@@ -70,12 +70,12 @@ export class PictModel {
   };
 
   /**
-   * Convert this model's constraints into `Condition[]` for the controller.
+   * Convert this model's constraints into `Expression[]` for the controller.
    * Each lexer filter becomes a `custom` condition with its dependency keys.
    * The negative-value rule also becomes a `custom` condition.
    */
-  private _modelConstraints(): Condition[] {
-    const list: Condition[] = [];
+  private _modelConstraints(): Expression[] {
+    const list: Expression[] = [];
 
     if (this._lexer) {
       const filters = this._lexer.filters;
@@ -84,8 +84,8 @@ export class PictModel {
         const f = filters[i];
         if (f == null) continue;
         list.push({
-          operator: 'custom',
-          keys: [...filterKeys[i]],
+          operator: 'fn',
+          requires: [...filterKeys[i]],
           evaluate: f,
         });
       }
@@ -95,8 +95,8 @@ export class PictModel {
       const negativeKeys = [...this._negatives.keys()] as string[];
       const negatives = this._negatives;
       list.push({
-        operator: 'custom',
-        keys: negativeKeys,
+        operator: 'fn',
+        requires: negativeKeys,
         evaluate: (row) => {
           let seen = false;
           for (const [key, set] of negatives) {

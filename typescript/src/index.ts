@@ -5,7 +5,7 @@ import random from "./sorters/random";
 import greedy from "./criteria/greedy";
 import simple from "./criteria/simple";
 
-import { FactorsType, OptionsType, SuggestRowType, DictType, ListType, Condition, ComparisonCondition, LogicalCondition, CustomCondition, Comparer } from "./types";
+import { FactorsType, OptionsType, SuggestRowType, DictType, ListType, Expression, ComparisonExpression, LogicalExpression, Comparer } from "./types";
 import { Controller, ControllerStats } from "./controller";
 import { NeverMatch, UncoveredPair } from "./exceptions";
 
@@ -46,10 +46,9 @@ export type {
   SuggestRowType,
   DictType,
   ListType,
-  Condition,
-  ComparisonCondition,
-  LogicalCondition,
-  CustomCondition,
+  Expression,
+  ComparisonExpression,
+  LogicalExpression,
   Comparer,
   UncoveredPair,
   ControllerStats,

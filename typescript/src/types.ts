@@ -48,7 +48,7 @@ export interface CriterionArgsType {
 };
 
 export interface SubModelType {
-  keys: ScalarType[];
+  fields: ScalarType[];
   strength: number;
 };
 
@@ -61,43 +61,58 @@ export type PresetRowType = { [key: string]: any; [index: number]: any };
 // ---------------------------------------------------------------------------
 
 /**
- * A comparison condition. `field` supports dot notation for nested access
- * (e.g. `"payment.method"`). `target` references another field for
- * field-to-field comparisons.
+ * An operand is either a field reference (string, supports dot notation
+ * like `"payment.method"`) or an arithmetic expression.
  */
-export type ComparisonCondition =
-  | { operator: 'eq'; field: string; value: any }
-  | { operator: 'eq'; field: string; target: string }
-  | { operator: 'ne'; field: string; value: any }
-  | { operator: 'ne'; field: string; target: string }
-  | { operator: 'gt'; field: string; value: any }
-  | { operator: 'gt'; field: string; target: string }
-  | { operator: 'lt'; field: string; value: any }
-  | { operator: 'lt'; field: string; target: string }
-  | { operator: 'gte'; field: string; value: any }
-  | { operator: 'gte'; field: string; target: string }
-  | { operator: 'lte'; field: string; value: any }
-  | { operator: 'lte'; field: string; target: string }
-  | { operator: 'in'; field: string; values: any[] };
+export type Operand = string | ArithmeticExpression;
 
-export type LogicalCondition =
-  | { operator: 'not'; condition: Condition }
-  | { operator: 'and'; conditions: Condition[] }
-  | { operator: 'or'; conditions: Condition[] };
+/**
+ * Arithmetic expressions compute a value from two operands.
+ * Both `left` and `right` can be field references or nested expressions.
+ * When `right` is omitted, `value` provides a literal operand.
+ */
+export type ArithmeticExpression =
+  | { operator: 'add' | 'sub' | 'mul' | 'div' | 'mod' | 'pow'; left: Operand; right: Operand }
+  | { operator: 'add' | 'sub' | 'mul' | 'div' | 'mod' | 'pow'; left: Operand; value: any };
+
+/**
+ * A comparison condition. `left` is the first operand (field reference or
+ * expression). The second operand is either `right` (another field/expression)
+ * or `value` (a literal). For `in`, use `values` (an array of literals).
+ */
+export type ComparisonExpression =
+  | { operator: 'eq'; left: Operand; value: any }
+  | { operator: 'eq'; left: Operand; right: Operand }
+  | { operator: 'ne'; left: Operand; value: any }
+  | { operator: 'ne'; left: Operand; right: Operand }
+  | { operator: 'gt'; left: Operand; value: any }
+  | { operator: 'gt'; left: Operand; right: Operand }
+  | { operator: 'lt'; left: Operand; value: any }
+  | { operator: 'lt'; left: Operand; right: Operand }
+  | { operator: 'gte'; left: Operand; value: any }
+  | { operator: 'gte'; left: Operand; right: Operand }
+  | { operator: 'lte'; left: Operand; value: any }
+  | { operator: 'lte'; left: Operand; right: Operand }
+  | { operator: 'in'; left: Operand; values: any[] };
+
+export type LogicalExpression =
+  | { operator: 'not'; condition: Expression }
+  | { operator: 'and'; conditions: Expression[] }
+  | { operator: 'or'; conditions: Expression[] };
 
 /**
  * Escape hatch for constraints that cannot be expressed declaratively.
  * The engine cannot perform three-valued reasoning on these — when a
  * dependency key is missing the condition is treated as `null`.
- * Provide `keys` so the engine knows when it is safe to call `evaluate`.
+ * Provide `requires` so the engine knows when it is safe to call `evaluate`.
  */
-export type CustomCondition = {
-  operator: 'custom';
-  keys: string[];
+export type FnExpression = {
+  operator: 'fn';
+  requires: string[];
   evaluate: (row: { [key: string]: any }) => boolean;
 };
 
-export type Condition = ComparisonCondition | LogicalCondition | CustomCondition;
+export type Expression = ComparisonExpression | LogicalExpression | FnExpression;
 
 /**
  * Custom comparison functions. Each key matches a comparison operator name.
@@ -144,7 +159,7 @@ export interface OptionsType<T extends FactorsType> {
    * The top-level array is an implicit AND: every condition must be
    * satisfied for a row to be accepted.
    */
-  constraints?: Condition[];
+  constraints?: Expression[];
   /**
    * Custom comparison functions. See `Comparer` for details.
    */

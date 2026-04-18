@@ -64,6 +64,7 @@ const pictMark = {
   paramName: Decoration.mark({ class: "cm-pict-param-name" }),
   paramValue: Decoration.mark({ class: "cm-pict-param-value" }),
   operator: Decoration.mark({ class: "cm-pict-operator" }),
+  arithmetic: Decoration.mark({ class: "cm-pict-arithmetic" }),
   subModel: Decoration.mark({ class: "cm-pict-sub-model" }),
 };
 
@@ -179,6 +180,12 @@ function buildPictDecorations(view: EditorView): DecorationSet {
         tokens.push({ from: base + m.index, to: base + m.index + m[0].length, mark: pictMark.keyword });
       }
 
+      // Arithmetic operators +, -, *, /, %
+      const arithRe = /[+\-*/%]/g;
+      while ((m = arithRe.exec(text)) !== null) {
+        tokens.push({ from: base + m.index, to: base + m.index + 1, mark: pictMark.arithmetic });
+      }
+
       pos = line.to + 1;
     }
   }
@@ -226,6 +233,7 @@ const pictHighlightTheme = EditorView.baseTheme({
   ".cm-pict-param-name": { color: "#4ec9b0", fontWeight: "bold" },
   ".cm-pict-param-value": { color: "#9cdcfe" },
   ".cm-pict-operator": { color: "#d4d4d4" },
+  ".cm-pict-arithmetic": { color: "#d4d4d4", fontWeight: "bold" },
   ".cm-pict-sub-model": { color: "#dcdcaa" },
 });
 

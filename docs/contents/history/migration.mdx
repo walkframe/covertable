@@ -46,8 +46,8 @@ make(factors, {
 make(factors, {
   constraints: [
     { operator: 'or', conditions: [
-      { operator: 'ne', field: 'machine', value: 'iPhone' },
-      { operator: 'eq', field: 'os', value: 'iOS' },
+      { operator: 'ne', left: 'machine', value: 'iPhone' },
+      { operator: 'eq', left: 'os', value: 'iOS' },
     ]},
   ],
 });

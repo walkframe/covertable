@@ -47,6 +47,11 @@
       "types": "./dist/pict.d.ts",
       "import": "./dist/pict.js",
       "require": "./dist/pict.cjs"
+    },
+    "./shortcuts": {
+      "types": "./dist/shortcuts.d.ts",
+      "import": "./dist/shortcuts.js",
+      "require": "./dist/shortcuts.cjs"
     }
   },
   "files": [

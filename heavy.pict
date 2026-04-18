@@ -20,6 +20,9 @@ SupportPlan: None, Basic, Plus
 AccountAge: New, Recent, Established, Old
 EmailVerified: Yes, No
 PhoneVerified: Yes, No
+UnitPrice: 100, 500, 1000, 5000
+Quantity: 1, 2, 5, 10
+DiscountRate: 0, 10, 20, 50
 
 # ----- constraints -----
 
@@ -90,3 +93,27 @@ IF [GiftOption] = "Message" THEN NOT ([ItemCategory] IN {"Digital"});
 
 IF [Region] IN {"JP", "EU"} THEN [TaxMode] = "Inclusive";
 IF [Region] = "US" THEN [TaxMode] = "Exclusive";
+
+# ----- arithmetic constraints -----
+
+# Subtotal must not exceed 25000
+[UnitPrice] * [Quantity] <= 25000;
+
+# Discount amount must not exceed subtotal (parentheses override precedence)
+[UnitPrice] * [Quantity] * [DiscountRate] / 100 <= [UnitPrice] * [Quantity];
+
+# Bulk orders (qty >= 5) require unit price >= 500
+IF [Quantity] >= 5 THEN [UnitPrice] >= 500;
+
+# High-value orders (subtotal > 10000) cannot use Guest
+IF [UnitPrice] * [Quantity] > 10000 THEN NOT ([UserType] IN {"Guest"});
+
+# Net amount after discount: parenthesized addition overrides multiplication
+# (UnitPrice + 100) * Quantity <= 30000 — shipping surcharge model
+([UnitPrice] + 100) * [Quantity] <= 30000;
+
+# Discount 50% only for subtotal >= 5000
+IF [DiscountRate] = 50 THEN [UnitPrice] * [Quantity] >= 5000;
+
+# Free shipping threshold: net payable must be >= 3000
+[UnitPrice] * [Quantity] - [UnitPrice] * [Quantity] * [DiscountRate] / 100 >= 0;

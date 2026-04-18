@@ -1,5 +1,5 @@
 import { Controller } from '../controller';
-import type { Condition } from '../types';
+import type { Expression } from '../types';
 
 describe('contradictory constraints', () => {
 
@@ -15,39 +15,39 @@ describe('contradictory constraints', () => {
       D: [1000, 2000],
       E: ['x', 'y', 'z'],
     };
-    const constraints: Condition[] = [
+    const constraints: Expression[] = [
       // A=1 → B∈{10,20}
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'A', value: 1 },
-        { operator: 'in', field: 'B', values: [10, 20] },
+        { operator: 'ne', left: 'A', value: 1 },
+        { operator: 'in', left: 'B', values: [10, 20] },
       ]},
       // B=10 → C=100
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'B', value: 10 },
-        { operator: 'eq', field: 'C', value: 100 },
+        { operator: 'ne', left: 'B', value: 10 },
+        { operator: 'eq', left: 'C', value: 100 },
       ]},
       // B=20 → C=200
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'B', value: 20 },
-        { operator: 'eq', field: 'C', value: 200 },
+        { operator: 'ne', left: 'B', value: 20 },
+        { operator: 'eq', left: 'C', value: 200 },
       ]},
       // B=10 AND C=100 → D=1000
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'B', value: 10 },
-        { operator: 'ne', field: 'C', value: 100 },
-        { operator: 'eq', field: 'D', value: 1000 },
+        { operator: 'ne', left: 'B', value: 10 },
+        { operator: 'ne', left: 'C', value: 100 },
+        { operator: 'eq', left: 'D', value: 1000 },
       ]},
       // B=20 AND C=200 → D=1000
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'B', value: 20 },
-        { operator: 'ne', field: 'C', value: 200 },
-        { operator: 'eq', field: 'D', value: 1000 },
+        { operator: 'ne', left: 'B', value: 20 },
+        { operator: 'ne', left: 'C', value: 200 },
+        { operator: 'eq', left: 'D', value: 1000 },
       ]},
       // So when A=1, D must be 1000. Pair (A=1, D=2000) is infeasible.
       // But also add: D=1000 → E='x'
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'D', value: 1000 },
-        { operator: 'eq', field: 'E', value: 'x' },
+        { operator: 'ne', left: 'D', value: 1000 },
+        { operator: 'eq', left: 'E', value: 'x' },
       ]},
       // Now (A=1, E='y') and (A=1, E='z') are also infeasible
       // because A=1 → B∈{10,20} → (B,C) forces D=1000 → E='x'

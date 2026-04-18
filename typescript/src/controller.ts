@@ -25,7 +25,7 @@ import {
   OptionsType,
   PairType,
   SuggestRowType,
-  Condition,
+  Expression,
   Comparer,
 } from "./types";
 import { evaluate, extractKeys, TriState } from "./evaluate";
@@ -53,7 +53,7 @@ export class Row extends Map<ScalarType, number> implements RowType {
 }
 
 interface ResolvedConstraint {
-  condition: Condition;
+  condition: Expression;
   keys: ReadonlySet<string>;
 }
 
@@ -182,7 +182,7 @@ export class Controller<T extends FactorsType> {
     const pairs: PairType[] = [];
     const allKeys = getItems(this.serials).map(([k, _]) => k);
     const subModels = this.options.subModels ?? [];
-    const subModelKeySets = subModels.map(sm => new Set(sm.keys));
+    const subModelKeySets = subModels.map(sm => new Set(sm.fields));
 
     const isWithinSubModel = (keys: ScalarType[]) =>
       subModelKeySets.some(ks => keys.every(k => ks.has(k)));
@@ -196,7 +196,7 @@ export class Controller<T extends FactorsType> {
     }
 
     for (const sub of subModels) {
-      for (const keys of combinations(sub.keys, sub.strength)) {
+      for (const keys of combinations(sub.fields, sub.strength)) {
         const comb = range(0, sub.strength).map((i) => this.serials.get(keys[i]) as PairType);
         for (let pair of product(...comb)) {
           pairs.push(pair.sort(ascOrder));

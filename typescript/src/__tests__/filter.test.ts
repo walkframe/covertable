@@ -10,12 +10,12 @@ test('exclude impossible combinations', () => {
     constraints: [
       // machine=iPhone ↔ os=iOS (bidirectional)
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'machine', value: 'iPhone' },
-        { operator: 'eq', field: 'os', value: 'iOS' },
+        { operator: 'ne', left: 'machine', value: 'iPhone' },
+        { operator: 'eq', left: 'os', value: 'iOS' },
       ]},
       { operator: 'or', conditions: [
-        { operator: 'eq', field: 'machine', value: 'iPhone' },
-        { operator: 'ne', field: 'os', value: 'iOS' },
+        { operator: 'eq', left: 'machine', value: 'iPhone' },
+        { operator: 'ne', left: 'os', value: 'iOS' },
       ]},
     ],
   });
@@ -45,8 +45,8 @@ test('Limited to iphone and iOS combinations only.', () => {
   const factors = {machine, os, browser};
   const rows = make(factors, {
     constraints: [
-      { operator: 'eq', field: 'machine', value: 'iPhone' },
-      { operator: 'eq', field: 'os', value: 'iOS' },
+      { operator: 'eq', left: 'machine', value: 'iPhone' },
+      { operator: 'eq', left: 'os', value: 'iOS' },
     ],
   });
   expect(rows.length).toBe(browser.length);
@@ -61,7 +61,7 @@ test('Use a constant-false constraint', () => {
   const rows = make(factors, {
     constraints: [
       // No machine value equals 'WindowsPhone', so this rejects everything
-      { operator: 'eq', field: 'machine', value: 'WindowsPhone' },
+      { operator: 'eq', left: 'machine', value: 'WindowsPhone' },
     ],
   });
   expect(rows).toEqual([]);

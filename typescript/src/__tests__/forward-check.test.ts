@@ -1,5 +1,5 @@
 import { make } from '../index';
-import type { Condition } from '../types';
+import type { Expression } from '../types';
 
 describe('forward checking (constraint chain propagation)', () => {
   it('respects transitive constraint chain: Language=de → Region=EU → Currency∈{EUR,GBP}', () => {
@@ -11,16 +11,16 @@ describe('forward checking (constraint chain propagation)', () => {
       Browser: ['Chrome', 'Firefox', 'Safari', 'Edge'],
     };
 
-    const constraints: Condition[] = [
+    const constraints: Expression[] = [
       // IF Language=de THEN Region=EU
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'Language', value: 'de' },
-        { operator: 'eq', field: 'Region', value: 'EU' },
+        { operator: 'ne', left: 'Language', value: 'de' },
+        { operator: 'eq', left: 'Region', value: 'EU' },
       ]},
       // IF Region=EU THEN Currency IN {EUR, GBP}
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'Region', value: 'EU' },
-        { operator: 'in', field: 'Currency', values: ['EUR', 'GBP'] },
+        { operator: 'ne', left: 'Region', value: 'EU' },
+        { operator: 'in', left: 'Currency', values: ['EUR', 'GBP'] },
       ]},
     ];
 
@@ -46,21 +46,21 @@ describe('forward checking (constraint chain propagation)', () => {
       D: [1000, 2000, 3000],
     };
 
-    const constraints: Condition[] = [
+    const constraints: Expression[] = [
       // IF A=1 THEN B=10
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'A', value: 1 },
-        { operator: 'eq', field: 'B', value: 10 },
+        { operator: 'ne', left: 'A', value: 1 },
+        { operator: 'eq', left: 'B', value: 10 },
       ]},
       // IF B=10 THEN C=100
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'B', value: 10 },
-        { operator: 'eq', field: 'C', value: 100 },
+        { operator: 'ne', left: 'B', value: 10 },
+        { operator: 'eq', left: 'C', value: 100 },
       ]},
       // IF C=100 THEN D=1000
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'C', value: 100 },
-        { operator: 'eq', field: 'D', value: 1000 },
+        { operator: 'ne', left: 'C', value: 100 },
+        { operator: 'eq', left: 'D', value: 1000 },
       ]},
     ];
 
@@ -81,11 +81,11 @@ describe('forward checking (constraint chain propagation)', () => {
       C: [100, 200],
     };
 
-    const constraints: Condition[] = [
+    const constraints: Expression[] = [
       // IF A=1 THEN B=10
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'A', value: 1 },
-        { operator: 'eq', field: 'B', value: 10 },
+        { operator: 'ne', left: 'A', value: 1 },
+        { operator: 'eq', left: 'B', value: 10 },
       ]},
     ];
 

@@ -68,8 +68,8 @@ while **deferring** judgment when information is incomplete.
 // Example: IF [Region] = "EU" THEN [Currency] IN {"EUR", "GBP"}
 // Expressed as:
 { operator: 'or', conditions: [
-  { operator: 'ne', field: 'Region', value: 'EU' },
-  { operator: 'in', field: 'Currency', values: ['EUR', 'GBP'] },
+  { operator: 'ne', left: 'Region', value: 'EU' },
+  { operator: 'in', left: 'Currency', values: ['EUR', 'GBP'] },
 ]}
 
 // Row = { Region: "EU" }           → null  (Currency not set)
@@ -304,11 +304,11 @@ Use `Controller.make()` directly if you want to handle incomplete coverage witho
 
 | Type | Example | Description |
 |------|---------|-------------|
-| `eq` | `{ operator: 'eq', field: 'A', value: 1 }` | Equality with literal |
-| `eq` (target) | `{ operator: 'eq', field: 'A', target: 'B' }` | Equality with another field |
-| `ne` | `{ operator: 'ne', field: 'A', value: 1 }` | Inequality |
-| `gt`, `lt`, `gte`, `lte` | `{ operator: 'gt', field: 'A', value: 5 }` | Comparison operators |
-| `in` | `{ operator: 'in', field: 'A', values: [1,2,3] }` | Set membership |
+| `eq` | `{ operator: 'eq', left: 'A', value: 1 }` | Equality with literal |
+| `eq` (right) | `{ operator: 'eq', left: 'A', right: 'B' }` | Equality with another field |
+| `ne` | `{ operator: 'ne', left: 'A', value: 1 }` | Inequality |
+| `gt`, `lt`, `gte`, `lte` | `{ operator: 'gt', left: 'A', value: 5 }` | Comparison operators |
+| `in` | `{ operator: 'in', left: 'A', values: [1,2,3] }` | Set membership |
 | `not` | `{ operator: 'not', condition: ... }` | Logical negation |
 | `and` | `{ operator: 'and', conditions: [...] }` | Logical AND (all must hold) |
 | `or` | `{ operator: 'or', conditions: [...] }` | Logical OR (at least one) |
@@ -321,8 +321,8 @@ PICT-style `IF [A] = x THEN [B] = y` is expressed as:
 ```typescript
 // IF A THEN B  ≡  NOT A OR B
 { operator: 'or', conditions: [
-  { operator: 'ne', field: 'A', value: 'x' },   // NOT A
-  { operator: 'eq', field: 'B', value: 'y' },    // B
+  { operator: 'ne', left: 'A', value: 'x' },   // NOT A
+  { operator: 'eq', left: 'B', value: 'y' },    // B
 ]}
 ```
 

@@ -159,8 +159,8 @@ class PictModel:
                 if f is None:
                     continue
                 result.append({
-                    "operator": "custom",
-                    "keys": list(filter_keys[i]),
+                    "operator": "fn",
+                    "requires": list(filter_keys[i]),
                     "evaluate": f,
                 })
 
@@ -179,8 +179,8 @@ class PictModel:
                 return True
 
             result.append({
-                "operator": "custom",
-                "keys": negative_keys,
+                "operator": "fn",
+                "requires": negative_keys,
                 "evaluate": eval_negatives,
             })
 

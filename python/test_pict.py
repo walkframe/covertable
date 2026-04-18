@@ -225,7 +225,7 @@ C: 7, 8, 9
 
 { A, B, C } @ 3
 """)
-        assert model.sub_models == [{"keys": ["A", "B", "C"], "strength": 3}]
+        assert model.sub_models == [{"fields": ["A", "B", "C"], "strength": 3}]
         assert model.errors == []
 
     def test_sub_model_increases_coverage(self):
@@ -389,7 +389,7 @@ OS: iOS, Android
 Browser: Chrome, Safari
 """)
         rows = model.make(constraints=[
-            {"operator": "ne", "field": "OS", "value": "iOS"},
+            {"operator": "ne", "left": "OS", "value": "iOS"},
         ])
         for row in rows:
             assert row["OS"] != "iOS"

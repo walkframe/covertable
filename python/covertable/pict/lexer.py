@@ -21,6 +21,7 @@ _COMMA = "COMMA"
 _COLON = "COLON"
 _SEMICOLON = "SEMICOLON"
 _WHITESPACE = "WHITESPACE"
+_ARITHMETIC = "ARITHMETIC"
 _UNKNOWN = "UNKNOWN"
 
 
@@ -59,6 +60,10 @@ def _classify_token(token):
         return {"type": _COLON, "value": token}
     if token == ";":
         return {"type": _SEMICOLON, "value": token}
+    if token in ("+", "-", "*", "/", "%", "^"):
+        return {"type": _ARITHMETIC, "value": token}
+    if token == "**":
+        return {"type": _ARITHMETIC, "value": "^"}
     return {"type": _UNKNOWN, "value": token}
 
 
@@ -138,6 +143,15 @@ class PictConstraintsLexer:
                     tokens.append(_classify_token(buffer))
                     buffer = ""
                 tokens.append({"type": _COMMA, "value": ch})
+            elif ch in "+-*/%^" and not inside_braces and not inside_brackets:
+                if buffer:
+                    tokens.append(_classify_token(buffer))
+                    buffer = ""
+                if ch == "*" and i + 1 < n and constraints[i + 1] == "*":
+                    tokens.append(_classify_token("**"))
+                    i += 1
+                else:
+                    tokens.append(_classify_token(ch))
             elif ch in "[]=<>!();:" and not inside_braces and not inside_brackets:
                 if buffer:
                     tokens.append(_classify_token(buffer))
@@ -230,6 +244,33 @@ class PictConstraintsLexer:
             idx[0] -= 1
             return left
 
+        def _is_logical_paren():
+            """Peek ahead to determine if '(' starts a logical group or an arithmetic operand.
+
+            A logical group contains a comparison operator (=, <>, >, <, >=, <=, IN, LIKE)
+            at the top level (not nested in deeper parens). If we only see arithmetic
+            operators and operands before the matching ')', it's arithmetic.
+            """
+            saved = idx[0]
+            depth = 1
+            found_comparer = False
+            while idx[0] < len(tokens):
+                t = tokens[idx[0]]
+                idx[0] += 1
+                if t["type"] == _WHITESPACE:
+                    continue
+                if t["type"] == _LPAREN:
+                    depth += 1
+                elif t["type"] == _RPAREN:
+                    depth -= 1
+                    if depth == 0:
+                        break
+                elif depth == 1 and t["type"] == _COMPARER:
+                    found_comparer = True
+                    break
+            idx[0] = saved
+            return found_comparer
+
         def parse_factor():
             tok = next_token()
             if tok is not None:
@@ -237,11 +278,17 @@ class PictConstraintsLexer:
                     operand = parse_factor()
                     return lambda row: not operand(row)
                 if tok["type"] == _LPAREN:
-                    expr = parse_expression()
-                    tok = next_token()
-                    if not tok or tok["type"] != _RPAREN:
-                        raise ValueError("Expected closing parenthesis")
-                    return expr
+                    if _is_logical_paren():
+                        # Logical grouping: (condition AND/OR condition)
+                        expr = parse_expression()
+                        tok = next_token()
+                        if not tok or tok["type"] != _RPAREN:
+                            raise ValueError("Expected closing parenthesis")
+                        return expr
+                    else:
+                        # Arithmetic parentheses — let parse_condition handle it
+                        idx[0] -= 1
+                        return parse_condition()
                 if tok["type"] == _BOOLEAN:
                     val = tok["value"].upper() == "TRUE"
                     return lambda row: val
@@ -326,10 +373,28 @@ class PictConstraintsLexer:
                 raise ValueError("Empty set in IN clause")
             return set(elements)
 
-        def parse_operand():
+        _arith_ops = {
+            "+": lambda a, b: a + b,
+            "-": lambda a, b: a - b,
+            "*": lambda a, b: a * b,
+            "/": lambda a, b: a / b,
+            "%": lambda a, b: a % b,
+            "^": lambda a, b: a ** b,
+        }
+
+        def parse_primary_operand():
             tok = next_token()
             if tok is None:
                 return None
+            if tok["type"] == _LPAREN:
+                # Parenthesized arithmetic expression
+                inner = parse_operand()
+                if inner is None:
+                    raise ValueError('Expected expression after "("')
+                close_paren = next_token()
+                if not close_paren or close_paren["type"] != _RPAREN:
+                    raise ValueError('Expected closing ")" in arithmetic expression')
+                return inner
             if tok["type"] == _REF:
                 key = tok["value"][1:-1]
                 current_keys[0].add(key)
@@ -350,6 +415,60 @@ class PictConstraintsLexer:
             if tok["type"] == _NULL:
                 return lambda row: None
             return None
+
+        # Power: ^ or ** (highest arithmetic precedence, right-associative)
+        def parse_pow_operand():
+            left = parse_primary_operand()
+            if left is None:
+                return None
+            saved = idx[0]
+            tok = next_token()
+            if tok and tok["type"] == _ARITHMETIC and tok["value"] == "^":
+                right = parse_pow_operand()  # right-associative
+                if right is None:
+                    raise ValueError("Expected operand after '^'")
+                left = (lambda l, r: lambda row: l(row) ** r(row))(left, right)
+            else:
+                idx[0] = saved
+            return left
+
+        # Multiplicative: *, /, %
+        def parse_mul_operand():
+            left = parse_pow_operand()
+            if left is None:
+                return None
+            while True:
+                saved = idx[0]
+                tok = next_token()
+                if tok and tok["type"] == _ARITHMETIC and tok["value"] in "*/%":
+                    fn = _arith_ops[tok["value"]]
+                    right = parse_pow_operand()
+                    if right is None:
+                        raise ValueError("Expected operand after '{}'".format(tok["value"]))
+                    left = (lambda l, r, fn: lambda row: fn(l(row), r(row)))(left, right, fn)
+                else:
+                    idx[0] = saved
+                    break
+            return left
+
+        # Additive: +, - (lower precedence)
+        def parse_operand():
+            left = parse_mul_operand()
+            if left is None:
+                return None
+            while True:
+                saved = idx[0]
+                tok = next_token()
+                if tok and tok["type"] == _ARITHMETIC and tok["value"] in "+-":
+                    fn = _arith_ops[tok["value"]]
+                    right = parse_mul_operand()
+                    if right is None:
+                        raise ValueError("Expected operand after '{}'".format(tok["value"]))
+                    left = (lambda l, r, fn: lambda row: fn(l(row), r(row)))(left, right, fn)
+                else:
+                    idx[0] = saved
+                    break
+            return left
 
         def abandon():
             while idx[0] < len(tokens) and tokens[idx[0]]["type"] != _SEMICOLON:

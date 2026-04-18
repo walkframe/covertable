@@ -1,5 +1,5 @@
 import { Controller } from '../controller';
-import type { Condition } from '../types';
+import type { Expression } from '../types';
 
 describe('forward check complex cases', () => {
 
@@ -16,31 +16,31 @@ describe('forward check complex cases', () => {
       F: ['X', 'Y', 'Z'],
     };
 
-    const constraints: Condition[] = [
+    const constraints: Expression[] = [
       // A=1 → B∈{10,20}
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'A', value: 1 },
-        { operator: 'in', field: 'B', values: [10, 20] },
+        { operator: 'ne', left: 'A', value: 1 },
+        { operator: 'in', left: 'B', values: [10, 20] },
       ]},
       // B∈{10,20} → C∈{100,200}
       { operator: 'or', conditions: [
-        { operator: 'in', field: 'B', values: [30] },
-        { operator: 'in', field: 'C', values: [100, 200] },
+        { operator: 'in', left: 'B', values: [30] },
+        { operator: 'in', left: 'C', values: [100, 200] },
       ]},
       // C∈{100,200} → D=1000
       { operator: 'or', conditions: [
-        { operator: 'in', field: 'C', values: [300] },
-        { operator: 'eq', field: 'D', value: 1000 },
+        { operator: 'in', left: 'C', values: [300] },
+        { operator: 'eq', left: 'D', value: 1000 },
       ]},
       // D=1000 → E∈{α,β}
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'D', value: 1000 },
-        { operator: 'in', field: 'E', values: ['α', 'β'] },
+        { operator: 'ne', left: 'D', value: 1000 },
+        { operator: 'in', left: 'E', values: ['α', 'β'] },
       ]},
       // E∈{α,β} → F=X
       { operator: 'or', conditions: [
-        { operator: 'in', field: 'E', values: ['γ'] },
-        { operator: 'eq', field: 'F', value: 'X' },
+        { operator: 'in', left: 'E', values: ['γ'] },
+        { operator: 'eq', left: 'F', value: 'X' },
       ]},
     ];
 
@@ -77,26 +77,26 @@ describe('forward check complex cases', () => {
       E: ['X', 'Y', 'Z'],
     };
 
-    const constraints: Condition[] = [
+    const constraints: Expression[] = [
       // A=1 → B=10
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'A', value: 1 },
-        { operator: 'eq', field: 'B', value: 10 },
+        { operator: 'ne', left: 'A', value: 1 },
+        { operator: 'eq', left: 'B', value: 10 },
       ]},
       // B=10 → C=100
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'B', value: 10 },
-        { operator: 'eq', field: 'C', value: 100 },
+        { operator: 'ne', left: 'B', value: 10 },
+        { operator: 'eq', left: 'C', value: 100 },
       ]},
       // D=α → B=20
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'D', value: 'α' },
-        { operator: 'eq', field: 'B', value: 20 },
+        { operator: 'ne', left: 'D', value: 'α' },
+        { operator: 'eq', left: 'B', value: 20 },
       ]},
       // B=20 → E=X
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'B', value: 20 },
-        { operator: 'eq', field: 'E', value: 'X' },
+        { operator: 'ne', left: 'B', value: 20 },
+        { operator: 'eq', left: 'E', value: 'X' },
       ]},
     ];
 
@@ -127,13 +127,13 @@ describe('forward check complex cases', () => {
     const vals = [1, 2, 3, 4];
     const factors = { A: vals, B: vals, C: vals, D: vals };
 
-    const constraints: Condition[] = [
-      { operator: 'ne', field: 'A', target: 'B' },
-      { operator: 'ne', field: 'A', target: 'C' },
-      { operator: 'ne', field: 'A', target: 'D' },
-      { operator: 'ne', field: 'B', target: 'C' },
-      { operator: 'ne', field: 'B', target: 'D' },
-      { operator: 'ne', field: 'C', target: 'D' },
+    const constraints: Expression[] = [
+      { operator: 'ne', left: 'A', right: 'B' },
+      { operator: 'ne', left: 'A', right: 'C' },
+      { operator: 'ne', left: 'A', right: 'D' },
+      { operator: 'ne', left: 'B', right: 'C' },
+      { operator: 'ne', left: 'B', right: 'D' },
+      { operator: 'ne', left: 'C', right: 'D' },
     ];
 
     const ctrl = new Controller(factors, { constraints });
@@ -165,26 +165,26 @@ describe('forward check complex cases', () => {
       E: ['p', 'q'],
     };
 
-    const constraints: Condition[] = [
+    const constraints: Expression[] = [
       // A=1 → B=10
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'A', value: 1 },
-        { operator: 'eq', field: 'B', value: 10 },
+        { operator: 'ne', left: 'A', value: 1 },
+        { operator: 'eq', left: 'B', value: 10 },
       ]},
       // B=10 → A=1
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'B', value: 10 },
-        { operator: 'eq', field: 'A', value: 1 },
+        { operator: 'ne', left: 'B', value: 10 },
+        { operator: 'eq', left: 'A', value: 1 },
       ]},
       // B=10 → C=100
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'B', value: 10 },
-        { operator: 'eq', field: 'C', value: 100 },
+        { operator: 'ne', left: 'B', value: 10 },
+        { operator: 'eq', left: 'C', value: 100 },
       ]},
       // C=100 → B=10
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'C', value: 100 },
-        { operator: 'eq', field: 'B', value: 10 },
+        { operator: 'ne', left: 'C', value: 100 },
+        { operator: 'eq', left: 'B', value: 10 },
       ]},
     ];
 
@@ -219,21 +219,21 @@ describe('forward check complex cases', () => {
       E: [1, 2, 3, 4, 5],
     };
 
-    const constraints: Condition[] = [
+    const constraints: Expression[] = [
       // A excludes its own value from B
-      { operator: 'ne', field: 'A', target: 'B' },
+      { operator: 'ne', left: 'A', right: 'B' },
       // B excludes its own value from C
-      { operator: 'ne', field: 'B', target: 'C' },
+      { operator: 'ne', left: 'B', right: 'C' },
       // C excludes its own value from D
-      { operator: 'ne', field: 'C', target: 'D' },
+      { operator: 'ne', left: 'C', right: 'D' },
       // D excludes its own value from E
-      { operator: 'ne', field: 'D', target: 'E' },
+      { operator: 'ne', left: 'D', right: 'E' },
       // Additionally: A value also can't equal C (skip one)
-      { operator: 'ne', field: 'A', target: 'C' },
+      { operator: 'ne', left: 'A', right: 'C' },
       // B value also can't equal D
-      { operator: 'ne', field: 'B', target: 'D' },
+      { operator: 'ne', left: 'B', right: 'D' },
       // C value also can't equal E
-      { operator: 'ne', field: 'C', target: 'E' },
+      { operator: 'ne', left: 'C', right: 'E' },
     ];
 
     const ctrl = new Controller(factors, { constraints });
@@ -269,38 +269,38 @@ describe('forward check complex cases', () => {
       Approval: ['none', 'lead', 'director'],
     };
 
-    const constraints: Condition[] = [
+    const constraints: Expression[] = [
       // Assignee != Reviewer
-      { operator: 'ne', field: 'Assignee', target: 'Reviewer' },
+      { operator: 'ne', left: 'Assignee', right: 'Reviewer' },
       // critical → prod
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'Priority', value: 'critical' },
-        { operator: 'eq', field: 'Environment', value: 'prod' },
+        { operator: 'ne', left: 'Priority', value: 'critical' },
+        { operator: 'eq', left: 'Environment', value: 'prod' },
       ]},
       // prod → director approval
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'Environment', value: 'prod' },
-        { operator: 'eq', field: 'Approval', value: 'director' },
+        { operator: 'ne', left: 'Environment', value: 'prod' },
+        { operator: 'eq', left: 'Approval', value: 'director' },
       ]},
       // high → staging or prod
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'Priority', value: 'high' },
-        { operator: 'in', field: 'Environment', values: ['staging', 'prod'] },
+        { operator: 'ne', left: 'Priority', value: 'high' },
+        { operator: 'in', left: 'Environment', values: ['staging', 'prod'] },
       ]},
       // staging → lead or director approval
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'Environment', value: 'staging' },
-        { operator: 'in', field: 'Approval', values: ['lead', 'director'] },
+        { operator: 'ne', left: 'Environment', value: 'staging' },
+        { operator: 'in', left: 'Approval', values: ['lead', 'director'] },
       ]},
       // low → no approval needed
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'Priority', value: 'low' },
-        { operator: 'eq', field: 'Approval', value: 'none' },
+        { operator: 'ne', left: 'Priority', value: 'low' },
+        { operator: 'eq', left: 'Approval', value: 'none' },
       ]},
       // low → dev only
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'Priority', value: 'low' },
-        { operator: 'eq', field: 'Environment', value: 'dev' },
+        { operator: 'ne', left: 'Priority', value: 'low' },
+        { operator: 'eq', left: 'Environment', value: 'dev' },
       ]},
     ];
 

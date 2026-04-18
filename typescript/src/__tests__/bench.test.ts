@@ -79,16 +79,16 @@ describe('benchmarks', () => {
     const vals = [1, 2, 3, 4, 5];
     const factors = { A: vals, B: vals, C: vals, D: vals, E: vals };
     const constraints = [
-      { operator: 'ne' as const, field: 'A', target: 'B' },
-      { operator: 'ne' as const, field: 'A', target: 'C' },
-      { operator: 'ne' as const, field: 'A', target: 'D' },
-      { operator: 'ne' as const, field: 'A', target: 'E' },
-      { operator: 'ne' as const, field: 'B', target: 'C' },
-      { operator: 'ne' as const, field: 'B', target: 'D' },
-      { operator: 'ne' as const, field: 'B', target: 'E' },
-      { operator: 'ne' as const, field: 'C', target: 'D' },
-      { operator: 'ne' as const, field: 'C', target: 'E' },
-      { operator: 'ne' as const, field: 'D', target: 'E' },
+      { operator: 'ne' as const, left: 'A', right: 'B' },
+      { operator: 'ne' as const, left: 'A', right: 'C' },
+      { operator: 'ne' as const, left: 'A', right: 'D' },
+      { operator: 'ne' as const, left: 'A', right: 'E' },
+      { operator: 'ne' as const, left: 'B', right: 'C' },
+      { operator: 'ne' as const, left: 'B', right: 'D' },
+      { operator: 'ne' as const, left: 'B', right: 'E' },
+      { operator: 'ne' as const, left: 'C', right: 'D' },
+      { operator: 'ne' as const, left: 'C', right: 'E' },
+      { operator: 'ne' as const, left: 'D', right: 'E' },
     ];
     const result = bench('5x5 all-diff greedy', () => {
       const ctrl = new Controller(factors, { constraints, criterion: criteria.greedy });

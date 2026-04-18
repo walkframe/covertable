@@ -172,4 +172,4 @@ def parse_sub_model(line):
         return None
     keys = [k.strip() for k in match.group(1).split(",") if k.strip()]
     strength = int(match.group(2))
-    return {"keys": keys, "strength": strength}
+    return {"fields": keys, "strength": strength}

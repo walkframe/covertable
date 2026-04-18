@@ -1,5 +1,5 @@
 import { Controller } from '../controller';
-import type { Condition } from '../types';
+import type { Expression } from '../types';
 
 describe('coverage benchmark', () => {
   it('constraint chain coverage', () => {
@@ -14,38 +14,38 @@ describe('coverage benchmark', () => {
       Auth: ['OAuth', 'SAML', 'Password', 'MFA'],
     };
 
-    const constraints: Condition[] = [
+    const constraints: Expression[] = [
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'Language', value: 'de' },
-        { operator: 'eq', field: 'Region', value: 'EU' },
+        { operator: 'ne', left: 'Language', value: 'de' },
+        { operator: 'eq', left: 'Region', value: 'EU' },
       ]},
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'Language', value: 'ja' },
-        { operator: 'eq', field: 'Region', value: 'AP' },
+        { operator: 'ne', left: 'Language', value: 'ja' },
+        { operator: 'eq', left: 'Region', value: 'AP' },
       ]},
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'Language', value: 'pt' },
-        { operator: 'eq', field: 'Region', value: 'SA' },
+        { operator: 'ne', left: 'Language', value: 'pt' },
+        { operator: 'eq', left: 'Region', value: 'SA' },
       ]},
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'Region', value: 'EU' },
-        { operator: 'in', field: 'Currency', values: ['EUR', 'GBP'] },
+        { operator: 'ne', left: 'Region', value: 'EU' },
+        { operator: 'in', left: 'Currency', values: ['EUR', 'GBP'] },
       ]},
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'Region', value: 'AP' },
-        { operator: 'in', field: 'Currency', values: ['JPY', 'CNY', 'KRW'] },
+        { operator: 'ne', left: 'Region', value: 'AP' },
+        { operator: 'in', left: 'Currency', values: ['JPY', 'CNY', 'KRW'] },
       ]},
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'Region', value: 'SA' },
-        { operator: 'in', field: 'Currency', values: ['BRL'] },
+        { operator: 'ne', left: 'Region', value: 'SA' },
+        { operator: 'in', left: 'Currency', values: ['BRL'] },
       ]},
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'OS', value: 'iOS' },
-        { operator: 'in', field: 'Browser', values: ['Safari', 'Chrome'] },
+        { operator: 'ne', left: 'OS', value: 'iOS' },
+        { operator: 'in', left: 'Browser', values: ['Safari', 'Chrome'] },
       ]},
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'Screen', value: 'Mobile' },
-        { operator: 'in', field: 'OS', values: ['iOS', 'Android'] },
+        { operator: 'ne', left: 'Screen', value: 'Mobile' },
+        { operator: 'in', left: 'OS', values: ['iOS', 'Android'] },
       ]},
     ];
 

@@ -1,8 +1,8 @@
 import { Controller } from '../controller';
 import { criteria } from '../index';
-import type { Condition } from '../types';
+import type { Expression } from '../types';
 
-const runWithSimple = (factors: any, constraints: Condition[]) => {
+const runWithSimple = (factors: any, constraints: Expression[]) => {
   const ctrl = new Controller(factors, { constraints, criterion: criteria.simple });
   const rows = ctrl.make();
   return { rows, stats: ctrl.stats };
@@ -17,18 +17,18 @@ describe('simple criterion with constraints', () => {
       C: [100, 200, 300],
       D: [1000, 2000, 3000],
     };
-    const constraints: Condition[] = [
+    const constraints: Expression[] = [
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'A', value: 1 },
-        { operator: 'eq', field: 'B', value: 10 },
+        { operator: 'ne', left: 'A', value: 1 },
+        { operator: 'eq', left: 'B', value: 10 },
       ]},
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'B', value: 10 },
-        { operator: 'eq', field: 'C', value: 100 },
+        { operator: 'ne', left: 'B', value: 10 },
+        { operator: 'eq', left: 'C', value: 100 },
       ]},
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'C', value: 100 },
-        { operator: 'eq', field: 'D', value: 1000 },
+        { operator: 'ne', left: 'C', value: 100 },
+        { operator: 'eq', left: 'D', value: 1000 },
       ]},
     ];
     const { rows, stats } = runWithSimple(factors, constraints);
@@ -50,26 +50,26 @@ describe('simple criterion with constraints', () => {
       E: ['α', 'β', 'γ'],
       F: ['X', 'Y', 'Z'],
     };
-    const constraints: Condition[] = [
+    const constraints: Expression[] = [
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'A', value: 1 },
-        { operator: 'in', field: 'B', values: [10, 20] },
+        { operator: 'ne', left: 'A', value: 1 },
+        { operator: 'in', left: 'B', values: [10, 20] },
       ]},
       { operator: 'or', conditions: [
-        { operator: 'in', field: 'B', values: [30] },
-        { operator: 'in', field: 'C', values: [100, 200] },
+        { operator: 'in', left: 'B', values: [30] },
+        { operator: 'in', left: 'C', values: [100, 200] },
       ]},
       { operator: 'or', conditions: [
-        { operator: 'in', field: 'C', values: [300] },
-        { operator: 'eq', field: 'D', value: 1000 },
+        { operator: 'in', left: 'C', values: [300] },
+        { operator: 'eq', left: 'D', value: 1000 },
       ]},
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'D', value: 1000 },
-        { operator: 'in', field: 'E', values: ['α', 'β'] },
+        { operator: 'ne', left: 'D', value: 1000 },
+        { operator: 'in', left: 'E', values: ['α', 'β'] },
       ]},
       { operator: 'or', conditions: [
-        { operator: 'in', field: 'E', values: ['γ'] },
-        { operator: 'eq', field: 'F', value: 'X' },
+        { operator: 'in', left: 'E', values: ['γ'] },
+        { operator: 'eq', left: 'F', value: 'X' },
       ]},
     ];
     const { rows, stats } = runWithSimple(factors, constraints);
@@ -87,13 +87,13 @@ describe('simple criterion with constraints', () => {
   it('all-different', () => {
     const vals = [1, 2, 3, 4];
     const factors = { A: vals, B: vals, C: vals, D: vals };
-    const constraints: Condition[] = [
-      { operator: 'ne', field: 'A', target: 'B' },
-      { operator: 'ne', field: 'A', target: 'C' },
-      { operator: 'ne', field: 'A', target: 'D' },
-      { operator: 'ne', field: 'B', target: 'C' },
-      { operator: 'ne', field: 'B', target: 'D' },
-      { operator: 'ne', field: 'C', target: 'D' },
+    const constraints: Expression[] = [
+      { operator: 'ne', left: 'A', right: 'B' },
+      { operator: 'ne', left: 'A', right: 'C' },
+      { operator: 'ne', left: 'A', right: 'D' },
+      { operator: 'ne', left: 'B', right: 'C' },
+      { operator: 'ne', left: 'B', right: 'D' },
+      { operator: 'ne', left: 'C', right: 'D' },
     ];
     const { rows, stats } = runWithSimple(factors, constraints);
     console.log('all-different simple:', { rowCount: stats.rowCount, progress: stats.progress, pruned: stats.prunedPairs });
@@ -111,31 +111,31 @@ describe('simple criterion with constraints', () => {
       Environment: ['dev', 'staging', 'prod'],
       Approval: ['none', 'lead', 'director'],
     };
-    const constraints: Condition[] = [
-      { operator: 'ne', field: 'Assignee', target: 'Reviewer' },
+    const constraints: Expression[] = [
+      { operator: 'ne', left: 'Assignee', right: 'Reviewer' },
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'Priority', value: 'critical' },
-        { operator: 'eq', field: 'Environment', value: 'prod' },
+        { operator: 'ne', left: 'Priority', value: 'critical' },
+        { operator: 'eq', left: 'Environment', value: 'prod' },
       ]},
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'Environment', value: 'prod' },
-        { operator: 'eq', field: 'Approval', value: 'director' },
+        { operator: 'ne', left: 'Environment', value: 'prod' },
+        { operator: 'eq', left: 'Approval', value: 'director' },
       ]},
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'Priority', value: 'high' },
-        { operator: 'in', field: 'Environment', values: ['staging', 'prod'] },
+        { operator: 'ne', left: 'Priority', value: 'high' },
+        { operator: 'in', left: 'Environment', values: ['staging', 'prod'] },
       ]},
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'Environment', value: 'staging' },
-        { operator: 'in', field: 'Approval', values: ['lead', 'director'] },
+        { operator: 'ne', left: 'Environment', value: 'staging' },
+        { operator: 'in', left: 'Approval', values: ['lead', 'director'] },
       ]},
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'Priority', value: 'low' },
-        { operator: 'eq', field: 'Approval', value: 'none' },
+        { operator: 'ne', left: 'Priority', value: 'low' },
+        { operator: 'eq', left: 'Approval', value: 'none' },
       ]},
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'Priority', value: 'low' },
-        { operator: 'eq', field: 'Environment', value: 'dev' },
+        { operator: 'ne', left: 'Priority', value: 'low' },
+        { operator: 'eq', left: 'Environment', value: 'dev' },
       ]},
     ];
     const { rows, stats } = runWithSimple(factors, constraints);

@@ -105,7 +105,7 @@ class Controller:
     def _set_incomplete(self):
         pairs = []
         all_keys = [k for k, _ in get_items(self.serials)]
-        sub_model_key_sets = [set(sm["keys"]) for sm in self.sub_models]
+        sub_model_key_sets = [set(sm["fields"]) for sm in self.sub_models]
 
         def is_within_sub_model(keys):
             return any(all(k in ks for k in keys) for ks in sub_model_key_sets)
@@ -118,7 +118,7 @@ class Controller:
                 pairs.append(tuple(sorted(pair)))
 
         for sm in self.sub_models:
-            for keys in combinations(sm["keys"], sm["strength"]):
+            for keys in combinations(sm["fields"], sm["strength"]):
                 comb = [self.serials[keys[i]] for i in range(sm["strength"])]
                 for pair in product(*comb):
                     pairs.append(tuple(sorted(pair)))

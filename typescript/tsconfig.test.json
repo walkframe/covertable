@@ -3,5 +3,6 @@
   "compilerOptions": {
     "rootDir": "."
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/_bench.ts", "src/tmp", "node_modules", "dist"]
 }

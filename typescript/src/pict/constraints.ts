@@ -26,6 +26,7 @@ enum TokenType {
   COMMA = 'COMMA',
   COLON = 'COLON',
   SEMICOLON = 'SEMICOLON',
+  ARITHMETIC = 'ARITHMETIC',
   WHITESPACE = 'WHITESPACE',
   UNKNOWN = 'UNKNOWN',
 }
@@ -56,6 +57,12 @@ function classifyToken(token: string, line: number): Token {
   }
   if (['AND', 'OR', 'NOT'].includes(token.toUpperCase())) {
     return { type: TokenType.OPERATOR, value: token.toUpperCase(), line };
+  }
+  if (['+', '-', '*', '/', '%', '^'].includes(token)) {
+    return { type: TokenType.ARITHMETIC, value: token, line };
+  }
+  if (token === '**') {
+    return { type: TokenType.ARITHMETIC, value: '^', line };
   }
   switch (token) {
     case '(': return { type: TokenType.LPAREN, value: token, line };
@@ -161,6 +168,14 @@ export class PictConstraintsLexer {
       } else if (char === ',' && insideBraces) {
         flushBuffer();
         addToken(TokenType.COMMA, char, currentLine);
+      } else if ('+-*/%^'.includes(char) && !insideBraces && !insideBrackets) {
+        flushBuffer();
+        if (char === '*' && constraints[i + 1] === '*') {
+          tokens.push(classifyToken('**', currentLine));
+          i++;
+        } else {
+          tokens.push(classifyToken(char, currentLine));
+        }
       } else if ('[]=<>!();:'.includes(char) && !insideBraces && !insideBrackets) {
         flushBuffer();
         if (char === '<' || char === '>' || char === '!' || char === '=') {
@@ -261,6 +276,21 @@ export class PictConstraintsLexer {
       return left;
     }
 
+    const isLogicalParen = (): boolean => {
+      const saved = tokenIndex;
+      let depth = 1;
+      let found = false;
+      while (tokenIndex < tokens.length) {
+        const t = tokens[tokenIndex++];
+        if (t.type === TokenType.WHITESPACE) continue;
+        if (t.type === TokenType.LPAREN) depth++;
+        else if (t.type === TokenType.RPAREN) { depth--; if (depth === 0) break; }
+        else if (depth === 1 && t.type === TokenType.COMPARER) { found = true; break; }
+      }
+      tokenIndex = saved;
+      return found;
+    };
+
     const parseFactor: () => Evaluator = () => {
       let token = nextToken();
       if (token != null) {
@@ -269,12 +299,17 @@ export class PictConstraintsLexer {
           return (row) => !operand(row);
         }
         if (token.type === TokenType.LPAREN) {
-          const expr = parseExpression();
-          token = nextToken();
-          if (!token || token.type !== TokenType.RPAREN) {
-            throw new Error('Expected closing parenthesis');
+          if (isLogicalParen()) {
+            const expr = parseExpression();
+            token = nextToken();
+            if (!token || token.type !== TokenType.RPAREN) {
+              throw new Error('Expected closing parenthesis');
+            }
+            return expr;
+          } else {
+            tokenIndex--;
+            return parseCondition();
           }
-          return expr;
         }
         if (token.type === TokenType.BOOLEAN) {
           const val = token.value.toUpperCase() === 'TRUE';
@@ -377,12 +412,32 @@ export class PictConstraintsLexer {
       return new Set(elements);
     }
 
-    const parseOperand: () => Evaluator | null = () => {
+    const ARITHMETIC_MAP: Record<string, (a: number, b: number) => number> = {
+      '+': (a, b) => a + b,
+      '-': (a, b) => a - b,
+      '*': (a, b) => a * b,
+      '/': (a, b) => a / b,
+      '%': (a, b) => a % b,
+      '^': (a, b) => a ** b,
+    };
+
+    const parsePrimaryOperand: () => Evaluator | null = () => {
       const token = nextToken();
       if (token == null) {
         return null;
       }
-      if (token.type === TokenType.REF) {
+      if (token.type === TokenType.LPAREN) {
+        // Parenthesized arithmetic expression
+        const inner = parseOperand();
+        if (inner == null) {
+          throw new Error('Expected expression after "("');
+        }
+        const closeParen = nextToken();
+        if (!closeParen || closeParen.type !== TokenType.RPAREN) {
+          throw new Error('Expected closing ")" in arithmetic expression');
+        }
+        return inner;
+      } else if (token.type === TokenType.REF) {
         const key = token.value.slice(1, -1); // remove [ and ]
         currentKeys.add(key);
         return (row) => row[key];
@@ -402,6 +457,71 @@ export class PictConstraintsLexer {
       } else {
         return null;
       }
+    }
+
+    // Power: ^ or ** (highest arithmetic precedence, right-associative)
+    const parsePowOperand: () => Evaluator | null = () => {
+      let left = parsePrimaryOperand();
+      if (left == null) return null;
+      const saved = tokenIndex;
+      const tok = nextToken();
+      if (tok && tok.type === TokenType.ARITHMETIC && tok.value === '^') {
+        const right = parsePowOperand(); // right-associative
+        if (right == null) {
+          throw new Error("Expected operand after '^'");
+        }
+        const l = left, r = right;
+        left = ((l, r) => (row: FilterRowType) => l(row) ** r(row))(l, r);
+      } else {
+        tokenIndex = saved;
+      }
+      return left;
+    }
+
+    // Multiplicative: *, /, % (higher precedence)
+    const parseMulOperand: () => Evaluator | null = () => {
+      let left = parsePowOperand();
+      if (left == null) return null;
+      while (true) {
+        const saved = tokenIndex;
+        const tok = nextToken();
+        if (tok && tok.type === TokenType.ARITHMETIC && '*/%'.includes(tok.value)) {
+          const fn = ARITHMETIC_MAP[tok.value];
+          const right = parsePowOperand();
+          if (right == null) {
+            throw new Error(`Expected operand after '${tok.value}'`);
+          }
+          const l = left, r = right;
+          left = ((l, r, fn) => (row: FilterRowType) => fn(l(row), r(row)))(l, r, fn);
+        } else {
+          tokenIndex = saved;
+          break;
+        }
+      }
+      return left;
+    }
+
+    // Additive: +, - (lower precedence)
+    const parseOperand: () => Evaluator | null = () => {
+      let left = parseMulOperand();
+      if (left == null) return null;
+      while (true) {
+        const saved = tokenIndex;
+        const tok = nextToken();
+        if (tok && tok.type === TokenType.ARITHMETIC && '+-'.includes(tok.value)) {
+          const fn = ARITHMETIC_MAP[tok.value];
+          const right = parseMulOperand();
+          if (right == null) {
+            throw new Error(`Expected operand after '${tok.value}'`);
+          }
+          const l = left, r = right;
+          left = ((l, r, fn) => (row: FilterRowType) => fn(l(row), r(row)))(l, r, fn);
+        } else {
+          tokenIndex = saved;
+          break;
+        }
+      }
+      return left;
     }
 
     const abandon = () => {

@@ -41,7 +41,7 @@ Import ``covertable`` and call the ``make`` function.
   ...     criterion=criteria.simple,  # default: criteria.greedy
   ...     salt='my_seed',  # default: ''
   ...     constraints=[
-  ...         {'operator': 'custom', 'keys': [0, 1], 'evaluate':
+  ...         {'operator': 'custom', 'fields': [0, 1], 'evaluate':
   ...             lambda row: not(row[1] == 'android' and row[0] != 'pixel') and not(row[1] == 'ios' and row[0] != 'iphone')},
   ...     ],
   ... )
@@ -54,8 +54,8 @@ Import ``covertable`` and call the ``make`` function.
   ...     tolerance=3,
   ...     constraints=[
   ...         {'operator': 'or', 'conditions': [
-  ...             {'operator': 'eq', 'field': 'os', 'value': 'android'},
-  ...             {'operator': 'ne', 'field': 'machine', 'value': 'pixel'},
+  ...             {'operator': 'eq', 'left': 'os', 'value': 'android'},
+  ...             {'operator': 'ne', 'left': 'machine', 'value': 'pixel'},
   ...         ]},
   ...     ],
   ... )
@@ -80,8 +80,8 @@ three-valued logic with forward checking and constraint propagation.
   ...     constraints=[
   ...         # Safari only on Mac
   ...         {'operator': 'or', 'conditions': [
-  ...             {'operator': 'ne', 'field': 'Browser', 'value': 'Safari'},
-  ...             {'operator': 'eq', 'field': 'OS', 'value': 'Mac'},
+  ...             {'operator': 'ne', 'left': 'Browser', 'value': 'Safari'},
+  ...             {'operator': 'eq', 'left': 'OS', 'value': 'Mac'},
   ...         ]},
   ...     ],
   ... )
@@ -90,13 +90,22 @@ Supported condition operators:
 
 - **Comparison**: ``eq``, ``ne``, ``gt``, ``lt``, ``gte``, ``lte``, ``in``
 - **Logical**: ``and``, ``or``, ``not``
-- **Custom**: ``custom`` (escape hatch with ``keys`` and ``evaluate`` callable)
+- **Custom**: ``custom`` (escape hatch with ``fields`` and ``evaluate`` callable)
 
-Field-to-field comparison is supported via the ``target`` key:
+Field-to-field comparison uses ``right``:
 
 .. code-block:: python3
 
-  {'operator': 'ne', 'field': 'A', 'target': 'B'}
+  {'operator': 'ne', 'left': 'A', 'right': 'B'}
+
+Arithmetic expressions can be used as operands:
+
+.. code-block:: python3
+
+  # A + B > 10
+  {'operator': 'gt', 'left': {'operator': 'add', 'left': 'A', 'right': 'B'}, 'value': 10}
+
+Supported arithmetic operators: ``add``, ``sub``, ``mul``, ``div``, ``mod``
 
 Stats
 -----
@@ -109,7 +118,7 @@ When using ``constraints``, the ``Controller`` exposes a ``stats`` property:
 
   >>> ctrl = Controller(
   ...     {'A': [1, 2, 3], 'B': ['x', 'y', 'z']},
-  ...     constraints=[{'operator': 'ne', 'field': 'A', 'value': 1}],
+  ...     constraints=[{'operator': 'ne', 'left': 'A', 'value': 1}],
   ... )
   >>> rows = list(ctrl.make_async())
   >>> ctrl.stats

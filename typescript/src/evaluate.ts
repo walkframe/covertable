@@ -1,4 +1,4 @@
-import type { Condition, Comparer, DictType } from './types';
+import type { Expression, Comparer, DictType, Operand } from './types';
 
 export type TriState = true | false | null;
 
@@ -16,12 +16,54 @@ export function resolve(row: DictType, field: string): any {
   return current;
 }
 
+const ARITHMETIC_OPS: Record<string, (a: number, b: number) => number> = {
+  add: (a, b) => a + b,
+  sub: (a, b) => a - b,
+  mul: (a, b) => a * b,
+  div: (a, b) => a / b,
+  mod: (a, b) => a % b,
+  pow: (a, b) => a ** b,
+};
+
+/**
+ * Resolve an operand (field reference or arithmetic expression) against a row.
+ * Returns `undefined` if any referenced field is missing.
+ */
+function resolveOperand(row: DictType, operand: Operand): any {
+  if (typeof operand === 'string') {
+    return resolve(row, operand);
+  }
+  // Arithmetic expression
+  const left = resolveOperand(row, operand.left);
+  if (left === undefined) return undefined;
+  const right = 'right' in operand
+    ? resolveOperand(row, operand.right)
+    : operand.value;
+  if (right === undefined) return undefined;
+  const fn = ARITHMETIC_OPS[operand.operator];
+  return fn(left, right);
+}
+
+/**
+ * Extract the set of top-level factor keys that an operand depends on.
+ */
+function extractOperandKeys(operand: Operand): Set<string> {
+  if (typeof operand === 'string') {
+    return new Set([operand.split('.')[0]]);
+  }
+  const keys = extractOperandKeys(operand.left);
+  if ('right' in operand) {
+    for (const k of extractOperandKeys(operand.right)) keys.add(k);
+  }
+  return keys;
+}
+
 /**
  * Extract the set of top-level factor keys that a condition depends on.
  * For dot-separated paths, only the first segment is returned (that is the
  * factor key; deeper segments are properties within the factor value).
  */
-export function extractKeys(c: Condition): Set<string> {
+export function extractKeys(c: Expression): Set<string> {
   switch (c.operator) {
     case 'not':
       return extractKeys(c.condition);
@@ -33,13 +75,12 @@ export function extractKeys(c: Condition): Set<string> {
       }
       return keys;
     }
-    case 'custom':
-      return new Set(c.keys);
+    case 'fn':
+      return new Set(c.requires);
     default: {
-      const keys = new Set<string>();
-      keys.add(c.field.split('.')[0]);
-      if ('target' in c && typeof c.target === 'string') {
-        keys.add(c.target.split('.')[0]);
+      const keys = extractOperandKeys(c.left);
+      if ('right' in c) {
+        for (const k of extractOperandKeys(c.right)) keys.add(k);
       }
       return keys;
     }
@@ -68,7 +109,7 @@ const DEFAULT_COMPARER: Required<Comparer> = {
  * `undefined`).
  */
 export function evaluate(
-  c: Condition,
+  c: Expression,
   row: DictType,
   comparer: Comparer = {},
 ): TriState {
@@ -99,8 +140,8 @@ export function evaluate(
     }
 
     // -- custom --
-    case 'custom': {
-      for (const k of c.keys) {
+    case 'fn': {
+      for (const k of c.requires) {
         if (resolve(row, k) === undefined) return null;
       }
       return c.evaluate(row);
@@ -108,19 +149,19 @@ export function evaluate(
 
     // -- in --
     case 'in': {
-      const v = resolve(row, c.field);
+      const v = resolveOperand(row, c.left);
       if (v === undefined) return null;
       return (comparer.in ?? DEFAULT_COMPARER.in)(v, c.values);
     }
 
     // -- comparison --
     default: {
-      const v = resolve(row, c.field);
+      const v = resolveOperand(row, c.left);
       if (v === undefined) return null;
 
       let target: any;
-      if ('target' in c) {
-        target = resolve(row, c.target);
+      if ('right' in c) {
+        target = resolveOperand(row, c.right);
         if (target === undefined) return null;
       } else {
         target = (c as any).value;

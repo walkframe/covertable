@@ -73,13 +73,13 @@ test('constraints exclude specified pairs before', () => {
     constraints: [
       // NOT (0="a" AND 1="d")
       { operator: 'not', condition: { operator: 'and', conditions: [
-        { operator: 'eq', field: '0', value: 'a' },
-        { operator: 'eq', field: '1', value: 'd' },
+        { operator: 'eq', left: '0', value: 'a' },
+        { operator: 'eq', left: '1', value: 'd' },
       ]}},
       // NOT (0="b" AND 1="e")
       { operator: 'not', condition: { operator: 'and', conditions: [
-        { operator: 'eq', field: '0', value: 'b' },
-        { operator: 'eq', field: '1', value: 'e' },
+        { operator: 'eq', left: '0', value: 'b' },
+        { operator: 'eq', left: '1', value: 'e' },
       ]}},
     ],
   });
@@ -189,8 +189,8 @@ test('presets violating constraints are silently dropped', () => {
     constraints: [
       // NOT (OS=iOS AND Browser=Chrome)
       { operator: 'not' as const, condition: { operator: 'and' as const, conditions: [
-        { operator: 'eq' as const, field: 'OS', value: 'iOS' },
-        { operator: 'eq' as const, field: 'Browser', value: 'Chrome' },
+        { operator: 'eq' as const, left: 'OS', value: 'iOS' },
+        { operator: 'eq' as const, left: 'Browser', value: 'Chrome' },
       ]}},
     ],
     presets: [

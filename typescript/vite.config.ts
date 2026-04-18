@@ -8,6 +8,7 @@ export default defineConfig({
       entry: {
         index: resolve(__dirname, 'src/index.ts'),
         pict: resolve(__dirname, 'src/pict/index.ts'),
+        shortcuts: resolve(__dirname, 'src/shortcuts/index.ts'),
       },
       formats: ['es', 'cjs'],
     },

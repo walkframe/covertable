@@ -1,5 +1,5 @@
 import { make, Controller, NeverMatch } from '../index';
-import type { Condition } from '../types';
+import type { Expression } from '../types';
 
 describe('forward check weakness cases', () => {
 
@@ -14,21 +14,21 @@ describe('forward check weakness cases', () => {
       C: [100, 200, 300],
     };
 
-    const constraints: Condition[] = [
+    const constraints: Expression[] = [
       // IF A=1 THEN B IN {10, 20}
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'A', value: 1 },
-        { operator: 'in', field: 'B', values: [10, 20] },
+        { operator: 'ne', left: 'A', value: 1 },
+        { operator: 'in', left: 'B', values: [10, 20] },
       ]},
       // IF B=10 THEN C=100
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'B', value: 10 },
-        { operator: 'eq', field: 'C', value: 100 },
+        { operator: 'ne', left: 'B', value: 10 },
+        { operator: 'eq', left: 'C', value: 100 },
       ]},
       // IF B=20 THEN C=200
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'B', value: 20 },
-        { operator: 'eq', field: 'C', value: 200 },
+        { operator: 'ne', left: 'B', value: 20 },
+        { operator: 'eq', left: 'C', value: 200 },
       ]},
     ];
 
@@ -70,12 +70,12 @@ describe('forward check weakness cases', () => {
       C: [100, 200],
     };
 
-    const constraints: Condition[] = [
+    const constraints: Expression[] = [
       // IF A=1 AND B=10 THEN C=100
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'A', value: 1 },
-        { operator: 'ne', field: 'B', value: 10 },
-        { operator: 'eq', field: 'C', value: 100 },
+        { operator: 'ne', left: 'A', value: 1 },
+        { operator: 'ne', left: 'B', value: 10 },
+        { operator: 'eq', left: 'C', value: 100 },
       ]},
     ];
 
@@ -110,22 +110,22 @@ describe('forward check weakness cases', () => {
       D: [1000, 2000],
     };
 
-    const constraints: Condition[] = [
+    const constraints: Expression[] = [
       // IF A=1 THEN B=10
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'A', value: 1 },
-        { operator: 'eq', field: 'B', value: 10 },
+        { operator: 'ne', left: 'A', value: 1 },
+        { operator: 'eq', left: 'B', value: 10 },
       ]},
       // IF A=1 THEN C=100
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'A', value: 1 },
-        { operator: 'eq', field: 'C', value: 100 },
+        { operator: 'ne', left: 'A', value: 1 },
+        { operator: 'eq', left: 'C', value: 100 },
       ]},
       // IF B=10 AND C=100 THEN D=1000
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'B', value: 10 },
-        { operator: 'ne', field: 'C', value: 100 },
-        { operator: 'eq', field: 'D', value: 1000 },
+        { operator: 'ne', left: 'B', value: 10 },
+        { operator: 'ne', left: 'C', value: 100 },
+        { operator: 'eq', left: 'D', value: 1000 },
       ]},
     ];
 
@@ -160,16 +160,16 @@ describe('forward check weakness cases', () => {
       C: [100, 200],
     };
 
-    const constraints: Condition[] = [
+    const constraints: Expression[] = [
       // IF A=1 THEN B<>10
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'A', value: 1 },
-        { operator: 'ne', field: 'B', value: 10 },
+        { operator: 'ne', left: 'A', value: 1 },
+        { operator: 'ne', left: 'B', value: 10 },
       ]},
       // IF A=1 THEN B<>20
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'A', value: 1 },
-        { operator: 'ne', field: 'B', value: 20 },
+        { operator: 'ne', left: 'A', value: 1 },
+        { operator: 'ne', left: 'B', value: 20 },
       ]},
     ];
 
@@ -201,21 +201,21 @@ describe('forward check weakness cases', () => {
       D: [1000, 2000],
     };
 
-    const constraints: Condition[] = [
+    const constraints: Expression[] = [
       // IF A=1 THEN B IN {10, 20}
       { operator: 'or', conditions: [
-        { operator: 'ne', field: 'A', value: 1 },
-        { operator: 'in', field: 'B', values: [10, 20] },
+        { operator: 'ne', left: 'A', value: 1 },
+        { operator: 'in', left: 'B', values: [10, 20] },
       ]},
       // IF B IN {10, 20} THEN C IN {100, 200}
       { operator: 'or', conditions: [
-        { operator: 'in', field: 'B', values: [30] },
-        { operator: 'in', field: 'C', values: [100, 200] },
+        { operator: 'in', left: 'B', values: [30] },
+        { operator: 'in', left: 'C', values: [100, 200] },
       ]},
       // IF C IN {100, 200} THEN D=1000
       { operator: 'or', conditions: [
-        { operator: 'in', field: 'C', values: [300] },
-        { operator: 'eq', field: 'D', value: 1000 },
+        { operator: 'in', left: 'C', values: [300] },
+        { operator: 'eq', left: 'D', value: 1000 },
       ]},
     ];
 
