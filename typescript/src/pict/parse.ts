@@ -1,5 +1,5 @@
 import type { SubModelType } from '../types';
-import type { PictFactorsType, PictModelIssue, SourceLine } from './types';
+import type { CommentBlock, PictFactorsType, PictModelIssue, SourceLine } from './types';
 import { isParameterLine, parseParameters } from './parameters';
 import { parseSubModel, subModelPattern } from './subModels';
 import { PictConstraintsLexer } from './constraints';
@@ -17,6 +17,8 @@ export interface ParseResult {
   subModels: SubModelType[];
   lexer: PictConstraintsLexer | null;
   issues: PictModelIssue[];
+  /** Comment blocks, each classified as a field description or freestanding. */
+  comments: CommentBlock[];
 }
 
 interface SplitSections {
@@ -58,6 +60,60 @@ function splitSections(input: string): SplitSections {
       .join('\n'),
     constraintStartLine: constraintStart + 1,
   };
+}
+
+/** Strip a leading `#` and one optional space from a comment line. */
+function stripComment(text: string): string {
+  return text.trim().replace(/^#\s?/, '');
+}
+
+/**
+ * Classify every comment (`#`) block in the model.
+ *
+ * A block is a maximal run of consecutive comment lines. It is **field-attached**
+ * (its `attachedTo` is the following parameter's key) when the very next line is
+ * a parameter line with no blank line between; otherwise it is **freestanding**
+ * (`attachedTo` = null). A blank line always ends a block and detaches it.
+ *
+ * This is the single source of truth for both prompt assembly (field-attached
+ * comments become per-field descriptions / the task on the output line) and the
+ * editor's syntax highlighting.
+ */
+export function classifyComments(input: string): CommentBlock[] {
+  const lines = input.split('\n');
+  const blocks: CommentBlock[] = [];
+  let pending: SourceLine[] = [];
+
+  const flush = (attachedTo: string | null) => {
+    if (pending.length === 0) {
+      return;
+    }
+    blocks.push({
+      lines: pending,
+      text: pending.map(l => stripComment(l.text)).join('\n'),
+      attachedTo,
+    });
+    pending = [];
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const text = lines[i];
+    const trimmed = text.trim();
+    if (trimmed.startsWith('#')) {
+      pending.push({ text, line: i + 1 });
+    } else if (trimmed === '') {
+      // A blank line detaches any pending block.
+      flush(null);
+    } else if (isParameterLine(trimmed)) {
+      // Adjacent (no blank line) → describes this parameter.
+      flush(trimmed.slice(0, trimmed.indexOf(':')).trim());
+    } else {
+      // Sub-model / constraint / other → not a field description.
+      flush(null);
+    }
+  }
+  flush(null);
+  return blocks;
 }
 
 /**
@@ -120,5 +176,14 @@ export function parse(input: string, options: ParseOptions = {}): ParseResult {
     });
   }
 
-  return { factors, aliases, negatives, weights, subModels, lexer, issues };
+  return {
+    factors,
+    aliases,
+    negatives,
+    weights,
+    subModels,
+    lexer,
+    issues,
+    comments: classifyComments(input),
+  };
 }

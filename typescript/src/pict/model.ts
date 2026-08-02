@@ -5,7 +5,7 @@ import type {
   SubModelType,
 } from '../types';
 import { Controller } from '../controller';
-import type { PictFactorsType, PictModelIssue } from './types';
+import type { CommentBlock, PictFactorsType, PictModelIssue } from './types';
 import { PictModelError } from './types';
 import { parse } from './parse';
 import type { PictConstraintsLexer } from './constraints';
@@ -21,6 +21,7 @@ export class PictModel {
   private _negatives: Map<string, Set<string | number>>;
   private _weights: { [factorKey: string]: { [index: number]: number } };
   private _lexer: PictConstraintsLexer | null;
+  private _comments: CommentBlock[];
   private _controller: Controller<PictFactorsType> | null = null;
   public issues: PictModelIssue[];
 
@@ -33,6 +34,7 @@ export class PictModel {
     this._negatives = result.negatives;
     this._weights = result.weights;
     this._lexer = result.lexer;
+    this._comments = result.comments;
     this.issues = result.issues;
 
     if (strict && this.issues.some(i => i.severity === "error")) {
@@ -45,6 +47,7 @@ export class PictModel {
   get constraints(): Expression[] { return this._modelConstraints(); }
   get negatives(): Map<string, Set<string | number>> { return this._negatives; }
   get weights(): { [factorKey: string]: { [index: number]: number } } { return this._weights; }
+  get comments(): CommentBlock[] { return this._comments; }
   get progress(): number { return this._controller?.progress ?? 0; }
   get stats() { return this._controller?.stats ?? null; }
 
