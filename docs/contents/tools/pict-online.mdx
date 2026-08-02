@@ -80,8 +80,8 @@ make({ machine, os, browser }, {
 | `=` / `<>` | `[os] = "iOS"` / `[os] <> "Android"` | Equality / Inequality |
 | `>` / `<` / `>=` / `<=` | `[price] > 100` | Numeric comparisons |
 | `AND` / `OR` / `NOT` | `[os] = "iOS" AND [browser] = "Safari"` | Logical operators with parentheses |
-| `LIKE` | `[machine] LIKE "i*"` | Pattern matching with `*` and `?` |
-| `IN` | `[os] IN {"iOS", "Android"}` | Set membership |
+| `LIKE` | `[machine] LIKE "i*"` | Pattern matching with `*` and `?` (all other characters are literal) |
+| `IN` | `[os] IN {"iOS", "Android"}`, `[size] IN {512, 1024}` | Set membership (string or numeric sets) |
 
 ### Parameters
 
@@ -93,4 +93,4 @@ make({ machine, os, browser }, {
 | **Invalid (`~`)** | `Type: A, ~Bad` | Negative-test value (at most one per row) |
 | **Weight** | `Browser: Chrome (10), Firefox` | Bias value selection during completion |
 | **Reference** | `B: <A>, extra` | Inherit values from another parameter |
-| **Sub-model** | `{ A, B, C } @ 3` | Apply different N-wise strength to a group |
+| **Sub-model** | `{ A, B, C } @ 3` or `{ A, B, C }` | Apply different N-wise strength to a group; `@ N` is optional (defaults to the global order) |

@@ -46,7 +46,7 @@ new PictModel(input: string, options?: PictModelOptions)
 
 The input string is split into three sections:
 1. **Parameters** — `Name: value1, value2, ...`
-2. **Sub-models** — `{ A, B, C } @ N`
+2. **Sub-models** — `{ A, B, C } @ N` (the `@ N` order is optional; when omitted it defaults to the global order)
 3. **Constraints** — `IF [P] = "x" THEN [Q] = "y";` or unconditional `[P] <> [Q];`
 
 ## Properties
@@ -103,10 +103,12 @@ model.issues;
 | **Aliases** | `OS: Windows \| Win, Linux` | First value is canonical. Aliases work in constraints. |
 | **Invalid values** | `Type: Valid, ~Invalid` | Negative-test value. At most one per row. Output includes `~` prefix. |
 | **Weights** | `Browser: Chrome (10), Firefox` | Biases value selection during completion. |
-| **Sub-models** | `{ A, B, C } @ 3` | Different N-wise strength for listed parameters. |
+| **Sub-models** | `{ A, B, C } @ 3` or `{ A, B, C }` | Different N-wise strength for listed parameters. The `@ N` order is optional and defaults to the global order. |
 | **Conditional** | `IF [A] = 1 THEN [B] = 2;` | Standard PICT-style conditional constraints. |
 | **Unconditional** | `[A] <> [B];` | Always-applied invariants. |
-| **Comparisons** | `=`, `<>`, `>`, `<`, `>=`, `<=`, `IN`, `LIKE` | All standard PICT operators. |
+| **Comparisons** | `=`, `<>`, `>`, `<`, `>=`, `<=` | All standard PICT operators. |
+| **Set membership** | `[FS] IN {"FAT", "NTFS"}`, `[Size] IN {512, 1024}` | `IN` accepts string **and** numeric sets. |
+| **Pattern** | `[Name] LIKE "FAT*"` | `LIKE` matches with wildcards `*` (any run) and `?` (one char); every other character (e.g. `.`) is literal. |
 | **Logical** | `AND`, `OR`, `NOT` | With parentheses for grouping. |
 
 ## Invalid Values (`~`)
@@ -201,6 +203,7 @@ CoverTable's `PictModel` accepts PICT-format input, but the underlying engine wo
 | **Structure** | Fully hierarchical — sub-models are independent `Model` instances combined via pseudo-parameters | Flat key-set partitioning with per-set strength |
 | **Nesting** | Sub-models can be nested arbitrarily | Single level only |
 | **Overlap** | Parameters can appear in multiple sub-models; conflicts resolved by exclusion generation | Each parameter belongs to at most one sub-model |
+| **Default order** | An omitted `@ N` uses the `/o` order | An omitted `@ N` uses the global (`strength`) order — same behavior |
 
 ### Weights
 
