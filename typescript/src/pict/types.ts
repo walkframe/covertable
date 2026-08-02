@@ -6,6 +6,23 @@ export interface SourceLine {
   line: number; // 1-based
 }
 
+/**
+ * A contiguous block of comment (`#`) lines, classified by what it describes.
+ *
+ * A block directly above a parameter line, with no blank line between, is a
+ * field description (`attachedTo` = that parameter's key). A block separated by
+ * a blank line, or sitting above a non-parameter line, is freestanding
+ * (`attachedTo` = null) and is treated as documentation only.
+ */
+export interface CommentBlock {
+  /** The comment lines in this block, in source order. */
+  lines: SourceLine[];
+  /** Comment text with the leading `#` (and one space) stripped, joined by `\n`. */
+  text: string;
+  /** The parameter key this block describes, or null if freestanding. */
+  attachedTo: string | null;
+}
+
 export type IssueSeverity = "error" | "warning";
 export type IssueSource = "factor" | "subModel" | "constraint";
 

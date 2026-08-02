@@ -622,14 +622,28 @@ C: c1, c2, c3
     }
   });
 
-  it('invalid sub-model line produces error', () => {
+  it('sub-model without an order uses the global order (per PICT spec)', () => {
     const model = new PictModel(`
 A: 1, 2
 B: 3, 4
 
 { A, B }
     `);
-    // "{ A, B }" without @ is not a valid sub-model, treated as constraint
+    // "{ A, B }" without @ is a valid sub-model; the order defaults to /o.
+    expect(errorMessages(model)).toHaveLength(0);
+    expect(model.subModels).toHaveLength(1);
+    expect(model.subModels[0]).toEqual({ fields: ['A', 'B'] });
+    expect(model.make().length).toBeGreaterThan(0);
+  });
+
+  it('malformed sub-model line (non-numeric order) produces error', () => {
+    const model = new PictModel(`
+A: 1, 2
+B: 3, 4
+
+{ A, B } @ x
+    `);
+    // "@ x" is not a valid order, so the line is not a sub-model.
     expect(errorMessages(model).length).toBeGreaterThan(0);
   });
 });
@@ -808,6 +822,64 @@ IF [COLOR] IN {"Red", "Blue", "Green"} THEN [CATEGORY] = "Primary" ELSE [CATEGOR
 
     const row3 = { COLOR: 'Red', CATEGORY: 'Secondary' };
     expect(model.filter(row3)).toBe(false);
+  });
+
+  it('should handle IN conditions with numeric sets', () => {
+    // PICT's own docs use numeric IN sets, e.g. IN {512, 1024, 2048}.
+    const model = new PictModel(`
+CLUSTER: 512, 1024, 2048
+COMPRESSION: On, Off
+
+IF [CLUSTER] IN {512, 1024} THEN [COMPRESSION] = "Off";
+    `);
+    expect(errorMessages(model)).toEqual([]);
+    expect(model.filter({ CLUSTER: 512, COMPRESSION: 'Off' })).toBe(true);
+    expect(model.filter({ CLUSTER: 1024, COMPRESSION: 'Off' })).toBe(true);
+    expect(model.filter({ CLUSTER: 512, COMPRESSION: 'On' })).toBe(false);
+    // Value outside the set → antecedent false → row passes.
+    expect(model.filter({ CLUSTER: 2048, COMPRESSION: 'On' })).toBe(true);
+  });
+
+  it('should mix numeric and float values in an IN set', () => {
+    const model = new PictModel(`
+V: 1, 2.5, 3
+R: ok, ng
+
+IF [V] IN {2.5, 3} THEN [R] = "ok";
+    `);
+    expect(errorMessages(model)).toEqual([]);
+    expect(model.filter({ V: 2.5, R: 'ok' })).toBe(true);
+    expect(model.filter({ V: 3, R: 'ng' })).toBe(false);
+    expect(model.filter({ V: 1, R: 'ng' })).toBe(true);
+  });
+
+  it('should treat non-wildcard characters in LIKE as literals', () => {
+    // Only * and ? are wildcards; "." must match a literal dot, not any char.
+    const model = new PictModel(`
+VER: "4.8", "4.8.1", "4x8"
+OK: yes, no
+
+IF [VER] LIKE "4.8*" THEN [OK] = "yes";
+    `);
+    expect(errorMessages(model)).toEqual([]);
+    expect(model.filter({ VER: '4.8', OK: 'yes' })).toBe(true);
+    expect(model.filter({ VER: '4.8.1', OK: 'yes' })).toBe(true);
+    // "4x8" must NOT match "4.8*" because the dot is literal.
+    expect(model.filter({ VER: '4x8', OK: 'no' })).toBe(true);
+    expect(model.filter({ VER: '4.8', OK: 'no' })).toBe(false);
+  });
+
+  it('should handle ? and * wildcards in LIKE', () => {
+    const model = new PictModel(`
+NAME: Alice, Alicia, Bob
+TAG: a, b
+
+IF [NAME] LIKE "Alic?" THEN [TAG] = "a";
+    `);
+    expect(errorMessages(model)).toEqual([]);
+    expect(model.filter({ NAME: 'Alice', TAG: 'a' })).toBe(true);   // ? = one char
+    expect(model.filter({ NAME: 'Alicia', TAG: 'b' })).toBe(true);  // "Alicia" != "Alic?" → antecedent false
+    expect(model.filter({ NAME: 'Alice', TAG: 'b' })).toBe(false);
   });
 
   it('should handle complex conditions with nested parentheses', () => {

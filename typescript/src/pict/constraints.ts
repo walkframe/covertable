@@ -361,7 +361,12 @@ export class PictConstraintsLexer {
         if (typeof patternStr !== 'string') {
           throw new Error('Expected string pattern after LIKE');
         }
-        const regexPattern = patternStr.replace(/\*/g, '.*').replace(/\?/g, '.');
+        // Escape every regex metacharacter (including * and ?), then re-enable
+        // only the two PICT wildcards: * → any run, ? → any single char.
+        const regexPattern = patternStr
+          .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+          .replace(/\\\*/g, '.*')
+          .replace(/\\\?/g, '.');
         const regex = new RegExp('^' + regexPattern + '$', ci ? 'i' : '');
         return (row) => regex.test(left(row));
       }
@@ -387,8 +392,8 @@ export class PictConstraintsLexer {
       }
     }
 
-    const parseSet: () => Set<string> = () => {
-      const elements: string[] = [];
+    const parseSet: () => Set<string | number> = () => {
+      const elements: (string | number)[] = [];
       let token = nextToken();
       if (token && token.type === TokenType.LBRACE) {
         token = nextToken();
@@ -398,6 +403,8 @@ export class PictConstraintsLexer {
             const lookup = ci ? raw.toLowerCase() : raw;
             const resolved = this.aliases.get(lookup) ?? raw;
             elements.push(norm(resolved));
+          } else if (token.type === TokenType.NUMBER) {
+            elements.push(parseFloat(token.value));
           } else if (token.type !== TokenType.COMMA && token.type !== TokenType.WHITESPACE) {
             throw new Error(`Unexpected token in array: ${token.value}`);
           }

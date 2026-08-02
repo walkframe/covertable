@@ -172,6 +172,58 @@ IF [OS] IN {"Win10", "Mac"} THEN [Result] = "pass";
         assert model.filter({"OS": "Mac OS", "Result": "pass"}) is True
         assert model.filter({"OS": "Linux", "Result": "fail"}) is True
 
+    def test_numeric_in_clause(self):
+        # PICT's own example uses numeric IN sets (doc/pict.md).
+        model = PictModel("""
+Cluster: 512, 1024, 2048
+Compression: On, Off
+
+IF [Cluster] IN {512, 1024} THEN [Compression] = "Off";
+""")
+        assert model.errors == []
+        assert model.filter({"Cluster": 512, "Compression": "Off"}) is True
+        assert model.filter({"Cluster": 512, "Compression": "On"}) is False
+        assert model.filter({"Cluster": 2048, "Compression": "On"}) is True
+
+    def test_float_in_clause(self):
+        model = PictModel("""
+V: 1, 2.5, 3
+R: ok, ng
+
+IF [V] IN {2.5, 3} THEN [R] = "ok";
+""")
+        assert model.errors == []
+        assert model.filter({"V": 2.5, "R": "ok"}) is True
+        assert model.filter({"V": 3, "R": "ng"}) is False
+        assert model.filter({"V": 1, "R": "ng"}) is True
+
+    def test_like_treats_non_wildcards_as_literals(self):
+        # Only * and ? are wildcards; "." must match a literal dot.
+        model = PictModel("""
+Ver: "4.8", "4.8.1", "4x8"
+Ok: yes, no
+
+IF [Ver] LIKE "4.8*" THEN [Ok] = "yes";
+""")
+        assert model.errors == []
+        assert model.filter({"Ver": "4.8", "Ok": "yes"}) is True
+        assert model.filter({"Ver": "4.8.1", "Ok": "yes"}) is True
+        # "4x8" must NOT match "4.8*" because the dot is literal.
+        assert model.filter({"Ver": "4x8", "Ok": "no"}) is True
+        assert model.filter({"Ver": "4.8", "Ok": "no"}) is False
+
+    def test_like_wildcards(self):
+        model = PictModel("""
+Name: Alice, Alicia, Bob
+Tag: a, b
+
+IF [Name] LIKE "Alic?" THEN [Tag] = "a";
+""")
+        assert model.errors == []
+        assert model.filter({"Name": "Alice", "Tag": "a"}) is True    # ? = one char
+        assert model.filter({"Name": "Alicia", "Tag": "b"}) is True   # no match -> passes
+        assert model.filter({"Name": "Alice", "Tag": "b"}) is False
+
 
 # ---------------------------------------------------------------------------
 # Invalid values (~)
@@ -243,6 +295,28 @@ D: d1, d2
                 for c in ["c1", "c2", "c3"]:
                     found = any(r["A"] == a and r["B"] == b and r["C"] == c for r in rows)
                     assert found, "missing combination ({}, {}, {})".format(a, b, c)
+
+    def test_sub_model_without_order_uses_global_order(self):
+        # Per PICT spec, an omitted "@ N" defaults to the global order (/o).
+        model = PictModel("""
+A: 1, 2
+B: 3, 4
+
+{ A, B }
+""")
+        assert model.errors == []
+        assert model.sub_models == [{"fields": ["A", "B"]}]
+        assert len(model.make()) > 0
+
+    def test_malformed_sub_model_order_produces_error(self):
+        model = PictModel("""
+A: 1, 2
+B: 3, 4
+
+{ A, B } @ x
+""")
+        # "@ x" is not a valid order, so the line is not a sub-model.
+        assert len(model.errors) > 0
 
 
 # ---------------------------------------------------------------------------

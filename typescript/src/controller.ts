@@ -211,8 +211,9 @@ export class Controller<T extends FactorsType> {
     }
 
     for (const sub of subModels) {
-      for (const keys of combinations(sub.fields, sub.strength)) {
-        const comb = range(0, sub.strength).map((i) => this.serials.get(keys[i]) as PairType);
+      const subStrength = sub.strength ?? this.strength;
+      for (const keys of combinations(sub.fields, subStrength)) {
+        const comb = range(0, subStrength).map((i) => this.serials.get(keys[i]) as PairType);
         for (let pair of product(...comb)) {
           pairs.push(pair.sort(ascOrder));
         }
@@ -605,7 +606,7 @@ export class Controller<T extends FactorsType> {
   get allStrengths(): number[] {
     const strengths = new Set([this.strength]);
     for (const sub of this.options.subModels ?? []) {
-      strengths.add(sub.strength);
+      strengths.add(sub.strength ?? this.strength);
     }
     return [...strengths];
   }

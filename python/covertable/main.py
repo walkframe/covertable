@@ -131,8 +131,9 @@ class Controller:
                 pairs.append(tuple(sorted(pair)))
 
         for sm in self.sub_models:
-            for keys in combinations(sm["fields"], sm["strength"]):
-                comb = [self.serials[keys[i]] for i in range(sm["strength"])]
+            sub_strength = sm.get("strength", self.strength)
+            for keys in combinations(sm["fields"], sub_strength):
+                comb = [self.serials[keys[i]] for i in range(sub_strength)]
                 for pair in product(*comb):
                     pairs.append(tuple(sorted(pair)))
 
@@ -342,7 +343,7 @@ class Controller:
     def all_strengths(self):
         strengths = {self.strength}
         for sm in self.sub_models:
-            strengths.add(sm["strength"])
+            strengths.add(sm.get("strength", self.strength))
         return strengths
 
     def get_candidate(self, pair):

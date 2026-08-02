@@ -363,6 +363,9 @@ class PictConstraintsLexer:
                         lookup = raw.lower() if ci else raw
                         resolved = aliases.get(lookup, raw)
                         elements.append(norm(resolved))
+                    elif tok["type"] == _NUMBER:
+                        num = float(tok["value"])
+                        elements.append(int(num) if num.is_integer() else num)
                     elif tok["type"] not in (_COMMA, _WHITESPACE):
                         raise ValueError("Unexpected token in array: {}".format(tok["value"]))
                     tok = next_token()
