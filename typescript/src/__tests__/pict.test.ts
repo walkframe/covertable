@@ -622,14 +622,28 @@ C: c1, c2, c3
     }
   });
 
-  it('invalid sub-model line produces error', () => {
+  it('sub-model without an order uses the global order (per PICT spec)', () => {
     const model = new PictModel(`
 A: 1, 2
 B: 3, 4
 
 { A, B }
     `);
-    // "{ A, B }" without @ is not a valid sub-model, treated as constraint
+    // "{ A, B }" without @ is a valid sub-model; the order defaults to /o.
+    expect(errorMessages(model)).toHaveLength(0);
+    expect(model.subModels).toHaveLength(1);
+    expect(model.subModels[0]).toEqual({ fields: ['A', 'B'] });
+    expect(model.make().length).toBeGreaterThan(0);
+  });
+
+  it('malformed sub-model line (non-numeric order) produces error', () => {
+    const model = new PictModel(`
+A: 1, 2
+B: 3, 4
+
+{ A, B } @ x
+    `);
+    // "@ x" is not a valid order, so the line is not a sub-model.
     expect(errorMessages(model).length).toBeGreaterThan(0);
   });
 });

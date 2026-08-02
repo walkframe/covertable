@@ -162,8 +162,9 @@ def parse_pict_model(input_str):
     }
 
 
-# Sub-model line: { P1, P2, P3 } @ N
-SUB_MODEL_PATTERN = re.compile(r"^\{\s*(.+?)\s*\}\s*@\s*(\d+)\s*$")
+# Sub-model line: { P1, P2, P3 } @ N  — the "@ N" order is optional and, when
+# absent, the global order (/o) is applied at generation time.
+SUB_MODEL_PATTERN = re.compile(r"^\{\s*(.+?)\s*\}\s*(?:@\s*(\d+))?\s*$")
 
 
 def parse_sub_model(line):
@@ -171,5 +172,6 @@ def parse_sub_model(line):
     if not match:
         return None
     keys = [k.strip() for k in match.group(1).split(",") if k.strip()]
-    strength = int(match.group(2))
-    return {"fields": keys, "strength": strength}
+    if match.group(2) is None:
+        return {"fields": keys}
+    return {"fields": keys, "strength": int(match.group(2))}

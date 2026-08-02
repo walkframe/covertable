@@ -49,7 +49,8 @@ export interface CriterionArgsType {
 
 export interface SubModelType {
   fields: ScalarType[];
-  strength: number;
+  /** Combinatory order. When omitted, the global order (`/o`, default 2) is used. */
+  strength?: number;
 };
 
 export type WeightsType = { [factorKey: string]: { [index: number]: number } };

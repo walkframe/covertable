@@ -172,6 +172,19 @@ IF [OS] IN {"Win10", "Mac"} THEN [Result] = "pass";
         assert model.filter({"OS": "Mac OS", "Result": "pass"}) is True
         assert model.filter({"OS": "Linux", "Result": "fail"}) is True
 
+    def test_numeric_in_clause(self):
+        # PICT's own example uses numeric IN sets (doc/pict.md).
+        model = PictModel("""
+Cluster: 512, 1024, 2048
+Compression: On, Off
+
+IF [Cluster] IN {512, 1024} THEN [Compression] = "Off";
+""")
+        assert model.errors == []
+        assert model.filter({"Cluster": 512, "Compression": "Off"}) is True
+        assert model.filter({"Cluster": 512, "Compression": "On"}) is False
+        assert model.filter({"Cluster": 2048, "Compression": "On"}) is True
+
 
 # ---------------------------------------------------------------------------
 # Invalid values (~)
@@ -243,6 +256,28 @@ D: d1, d2
                 for c in ["c1", "c2", "c3"]:
                     found = any(r["A"] == a and r["B"] == b and r["C"] == c for r in rows)
                     assert found, "missing combination ({}, {}, {})".format(a, b, c)
+
+    def test_sub_model_without_order_uses_global_order(self):
+        # Per PICT spec, an omitted "@ N" defaults to the global order (/o).
+        model = PictModel("""
+A: 1, 2
+B: 3, 4
+
+{ A, B }
+""")
+        assert model.errors == []
+        assert model.sub_models == [{"fields": ["A", "B"]}]
+        assert len(model.make()) > 0
+
+    def test_malformed_sub_model_order_produces_error(self):
+        model = PictModel("""
+A: 1, 2
+B: 3, 4
+
+{ A, B } @ x
+""")
+        # "@ x" is not a valid order, so the line is not a sub-model.
+        assert len(model.errors) > 0
 
 
 # ---------------------------------------------------------------------------
