@@ -185,6 +185,45 @@ IF [Cluster] IN {512, 1024} THEN [Compression] = "Off";
         assert model.filter({"Cluster": 512, "Compression": "On"}) is False
         assert model.filter({"Cluster": 2048, "Compression": "On"}) is True
 
+    def test_float_in_clause(self):
+        model = PictModel("""
+V: 1, 2.5, 3
+R: ok, ng
+
+IF [V] IN {2.5, 3} THEN [R] = "ok";
+""")
+        assert model.errors == []
+        assert model.filter({"V": 2.5, "R": "ok"}) is True
+        assert model.filter({"V": 3, "R": "ng"}) is False
+        assert model.filter({"V": 1, "R": "ng"}) is True
+
+    def test_like_treats_non_wildcards_as_literals(self):
+        # Only * and ? are wildcards; "." must match a literal dot.
+        model = PictModel("""
+Ver: "4.8", "4.8.1", "4x8"
+Ok: yes, no
+
+IF [Ver] LIKE "4.8*" THEN [Ok] = "yes";
+""")
+        assert model.errors == []
+        assert model.filter({"Ver": "4.8", "Ok": "yes"}) is True
+        assert model.filter({"Ver": "4.8.1", "Ok": "yes"}) is True
+        # "4x8" must NOT match "4.8*" because the dot is literal.
+        assert model.filter({"Ver": "4x8", "Ok": "no"}) is True
+        assert model.filter({"Ver": "4.8", "Ok": "no"}) is False
+
+    def test_like_wildcards(self):
+        model = PictModel("""
+Name: Alice, Alicia, Bob
+Tag: a, b
+
+IF [Name] LIKE "Alic?" THEN [Tag] = "a";
+""")
+        assert model.errors == []
+        assert model.filter({"Name": "Alice", "Tag": "a"}) is True    # ? = one char
+        assert model.filter({"Name": "Alicia", "Tag": "b"}) is True   # no match -> passes
+        assert model.filter({"Name": "Alice", "Tag": "b"}) is False
+
 
 # ---------------------------------------------------------------------------
 # Invalid values (~)
