@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run PICT Extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/editors/vscode",
+        "${workspaceFolder}/editors/vscode/samples"
+      ],
+      "outFiles": ["${workspaceFolder}/editors/vscode/dist/**/*.js"]
+    }
+  ]
+}

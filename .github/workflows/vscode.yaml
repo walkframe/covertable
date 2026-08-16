@@ -1,0 +1,70 @@
+name: Publish VS Code Extension
+
+# Publish the PICT extension when a tag like `vscode-v0.1.0` is pushed.
+# Bump editors/vscode/package.json "version" to match the tag first.
+#
+# Required repository secret:
+#   VSCE_PAT   - Visual Studio Marketplace Personal Access Token (Marketplace > Manage)
+# Optional repository secret (enables Open VSX publishing when present):
+#   OVSX_TOKEN - Open VSX access token
+
+on:
+  push:
+    tags:
+      - "vscode-v*"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: editors/vscode
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v5
+        with:
+          package_json_file: editors/vscode/package.json
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Check tag matches package version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          TAG="${GITHUB_REF_NAME#vscode-v}"
+          PKG="$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME ($TAG) does not match package.json version ($PKG)."
+            exit 1
+          fi
+
+      - name: Package VSIX
+        run: pnpm exec vsce package --no-dependencies -o pict-covertable.vsix
+
+      - name: Publish to Visual Studio Marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: pnpm exec vsce publish --no-dependencies --packagePath pict-covertable.vsix
+
+      - name: Publish to Open VSX
+        env:
+          OVSX_TOKEN: ${{ secrets.OVSX_TOKEN }}
+        run: |
+          if [ -z "$OVSX_TOKEN" ]; then
+            echo "OVSX_TOKEN not set — skipping Open VSX publish."
+          else
+            pnpm exec ovsx publish pict-covertable.vsix -p "$OVSX_TOKEN"
+          fi
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pict-covertable-vsix
+          path: editors/vscode/pict-covertable.vsix

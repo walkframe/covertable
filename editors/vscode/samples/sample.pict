@@ -1,0 +1,39 @@
+# Sample PICT model — open this in the Extension Development Host.
+# Run "PICT: Generate Covering Array" (Cmd+Shift+P) or the context menu.
+
+# Operating system under test
+OS:         Windows, Linux, macOS, FreeBSD
+# Values can carry weights (N), aliases a|b, and negatives ~
+Type:       Primary (5), Logical, ~Single, Spanned
+FileSystem: FAT | FAT32, NTFS, ext4, APFS, ZFS, Btrfs
+Size:       10, 100, 1000, 5000, 20000
+Compress:   On, Off
+Encryption: None, AES128, AES256, ~Weak
+Cluster:    <Size>
+Format:     Quick, Full, ~Corrupt
+
+# CPU / memory profile
+Arch:       x86, x64 | amd64, arm64, riscv
+Cores:      1, 2, 4, 8, 16
+Memory:     512, 1024, 4096, 16384
+Locale:     en-US, ja-JP, de-DE, zh-CN, ar-EG
+
+# Networking
+Protocol:   TCP, UDP, QUIC
+Port:       80, 443, 8080, ~0
+
+# A sub-model gives these factors their own order:
+{ OS, FileSystem } @ 3
+{ Arch, Cores, Memory } @ 2
+
+# ----- constraints -----
+IF [FileSystem] = "NTFS" THEN [OS] = "Windows";
+IF [FileSystem] IN {"ext4", "Btrfs"} THEN [OS] = "Linux";
+IF [FileSystem] = "APFS" THEN [OS] = "macOS";
+IF [FileSystem] = "ZFS" THEN [OS] IN {"FreeBSD", "Linux"};
+IF [Size] > 1000 THEN [Compress] = "On";
+IF [Type] = "Logical" THEN [Size] >= 100;
+IF [Encryption] <> "None" THEN [Type] = "Primary";
+IF [Arch] = "arm64" THEN [OS] IN {"Linux", "macOS"};
+IF [Memory] < 1024 THEN [Cores] <= 2;
+IF [Protocol] = "QUIC" THEN [Port] = 443;

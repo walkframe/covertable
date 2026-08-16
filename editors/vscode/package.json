@@ -1,0 +1,157 @@
+{
+  "name": "pict-covertable",
+  "displayName": "PICT Pairwise Testing with CoverTable",
+  "description": "Syntax highlighting, diagnostics, and covering-array generation for Microsoft PICT model files, powered by the covertable engine.",
+  "version": "0.1.0",
+  "publisher": "walkframe",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/walkframe/covertable"
+  },
+  "homepage": "https://covertable.walkframe.com",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Testing"
+  ],
+  "keywords": [
+    "pict",
+    "pairwise",
+    "combinatorial",
+    "covering-array",
+    "testing"
+  ],
+  "main": "./dist/extension.js",
+  "icon": "icon.png",
+  "activationEvents": [],
+  "contributes": {
+    "languages": [
+      {
+        "id": "pict",
+        "aliases": [
+          "PICT",
+          "pict"
+        ],
+        "extensions": [
+          ".pict"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "pict",
+        "scopeName": "source.pict",
+        "path": "./syntaxes/pict.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "pict.generate",
+        "title": "PICT: Generate Covering Array",
+        "category": "PICT"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "pict.generate",
+          "when": "resourceLangId == pict",
+          "group": "z_commands"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "pict.generate",
+          "when": "resourceLangId == pict"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "PICT (covertable)",
+      "properties": {
+        "pict.strength": {
+          "type": "integer",
+          "default": 2,
+          "minimum": 1,
+          "markdownDescription": "Combinatorial order (`/o`). 2 = pairwise, 3 = triple-wise, etc. A per-file `{ ... } @ N` sub-model still overrides this for its factors."
+        },
+        "pict.criterion": {
+          "type": "string",
+          "enum": [
+            "greedy",
+            "simple"
+          ],
+          "enumDescriptions": [
+            "Greedy row construction — packs the most uncovered combinations into each row (fewest rows).",
+            "Simple criterion — lighter, less aggressive packing."
+          ],
+          "default": "greedy",
+          "description": "Row-construction criterion."
+        },
+        "pict.sorter": {
+          "type": "string",
+          "enum": [
+            "random",
+            "hash"
+          ],
+          "enumDescriptions": [
+            "Random ordering of candidate pairs (varies between runs).",
+            "Deterministic hash-based ordering (stable across runs)."
+          ],
+          "default": "random",
+          "description": "Order in which candidate combinations are considered."
+        },
+        "pict.caseSensitive": {
+          "type": "boolean",
+          "default": false,
+          "description": "Match constraint comparisons and alias lookups case-sensitively. When off (default), matching is case-insensitive."
+        },
+        "pict.output.format": {
+          "type": "string",
+          "enum": [
+            "tsv",
+            "csv"
+          ],
+          "default": "tsv",
+          "description": "Column separator used for the generated result document."
+        },
+        "pict.output.includeHeader": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include a header row with the parameter names."
+        },
+        "pict.output.promptFileName": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Ask for the output file name before generating (pre-filled with `<model>.tsv`/`.csv`). Turn off to open the result directly with the default name."
+        },
+        "pict.diagnostics.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Report parse errors (unknown references, malformed constraints, etc.) as editor diagnostics."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.mjs --production",
+    "watch": "node esbuild.mjs --watch",
+    "compile": "node esbuild.mjs",
+    "vscode:prepublish": "node esbuild.mjs --production",
+    "package": "vsce package --no-dependencies",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.9.2",
+    "esbuild": "^0.24.0",
+    "ovsx": "^1.1.1",
+    "typescript": "^5.9.3"
+  }
+}

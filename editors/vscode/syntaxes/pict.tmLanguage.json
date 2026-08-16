@@ -1,0 +1,132 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "PICT",
+  "scopeName": "source.pict",
+  "patterns": [
+    { "include": "#comment" },
+    { "include": "#subModel" },
+    { "include": "#parameter" },
+    { "include": "#constraint" }
+  ],
+  "repository": {
+    "comment": {
+      "match": "^\\s*#.*$",
+      "name": "comment.line.number-sign.pict"
+    },
+
+    "subModel": {
+      "begin": "^\\s*(\\{)(?=[^:]*\\}\\s*(@\\s*\\d+)?\\s*$)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.submodel.begin.pict" }
+      },
+      "end": "$",
+      "name": "meta.submodel.pict",
+      "patterns": [
+        { "match": "\\}", "name": "punctuation.definition.submodel.end.pict" },
+        { "match": "@", "name": "keyword.operator.submodel.pict" },
+        { "match": "\\b\\d+\\b", "name": "constant.numeric.strength.pict" },
+        { "match": ",", "name": "punctuation.separator.pict" },
+        { "match": "[^,{}@\\s][^,{}@]*", "name": "variable.other.factor.pict" }
+      ]
+    },
+
+    "parameter": {
+      "begin": "^\\s*(?![Ii][Ff]\\b)(?=[^:\\[\\n]+:)([^:\\[\\n]+?)\\s*(:)",
+      "beginCaptures": {
+        "1": { "name": "entity.name.tag.parameter.pict" },
+        "2": { "name": "punctuation.separator.key-value.pict" }
+      },
+      "end": "$",
+      "name": "meta.parameter.pict",
+      "patterns": [
+        { "include": "#value" }
+      ]
+    },
+
+    "value": {
+      "patterns": [
+        {
+          "match": "<[^>\\n]+>",
+          "name": "variable.other.reference.pict"
+        },
+        {
+          "match": "~",
+          "name": "keyword.operator.negative.pict"
+        },
+        {
+          "match": "\\(\\s*\\d+\\s*\\)",
+          "name": "constant.numeric.weight.pict"
+        },
+        {
+          "match": "\\|",
+          "name": "keyword.operator.alias.pict"
+        },
+        { "include": "#string" },
+        {
+          "match": "\\b-?\\d+(?:\\.\\d+)?\\b",
+          "name": "constant.numeric.pict"
+        },
+        {
+          "match": ",",
+          "name": "punctuation.separator.pict"
+        }
+      ]
+    },
+
+    "constraint": {
+      "patterns": [
+        { "include": "#comment" },
+        { "include": "#string" },
+        {
+          "match": "(?i)\\b(IF|THEN|ELSE)\\b",
+          "name": "keyword.control.conditional.pict"
+        },
+        {
+          "match": "(?i)\\b(AND|OR|NOT)\\b",
+          "name": "keyword.operator.logical.pict"
+        },
+        {
+          "match": "(?i)\\b(IN|LIKE)\\b",
+          "name": "keyword.operator.comparison.pict"
+        },
+        {
+          "match": "(?i)\\b(TRUE|FALSE|NULL)\\b",
+          "name": "constant.language.pict"
+        },
+        {
+          "match": "\\[[^\\]\\n]*\\]",
+          "name": "variable.other.factor.pict"
+        },
+        {
+          "match": "<>|>=|<=|=|<|>",
+          "name": "keyword.operator.comparison.pict"
+        },
+        {
+          "match": "\\*\\*|[+\\-*/%^]",
+          "name": "keyword.operator.arithmetic.pict"
+        },
+        {
+          "match": "\\b-?\\d+(?:\\.\\d+)?\\b",
+          "name": "constant.numeric.pict"
+        },
+        {
+          "match": "[{}]",
+          "name": "punctuation.definition.set.pict"
+        },
+        {
+          "match": ";",
+          "name": "punctuation.terminator.statement.pict"
+        },
+        {
+          "match": ",",
+          "name": "punctuation.separator.pict"
+        }
+      ]
+    },
+
+    "string": {
+      "match": "\"[^\"\\n]*\"",
+      "name": "string.quoted.double.pict"
+    }
+  }
+}
