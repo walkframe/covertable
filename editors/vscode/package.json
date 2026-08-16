@@ -5,6 +5,7 @@
   "version": "0.1.0",
   "publisher": "walkframe",
   "license": "Apache-2.0",
+  "packageManager": "pnpm@9.15.9",
   "repository": {
     "type": "git",
     "url": "https://github.com/walkframe/covertable"
