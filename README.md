@@ -8,6 +8,8 @@ It is **PICT-compatible**: you can use PICT-format model files — including par
 
 Try the online demo: **[Compatible PICT](https://covertable.walkframe.com/tools/pict)** — an interactive tool that parses PICT models and generates covering arrays in your browser.
 
+Prefer your editor? Install the **[VS Code extension](https://marketplace.visualstudio.com/items?itemName=walkframe.pict-covertable)** for PICT syntax highlighting, live diagnostics, and one-click covering-array generation.
+
 ## Algorithm
 
 CoverTable uses a **one-test-at-a-time greedy algorithm** to generate covering arrays.
@@ -42,6 +44,20 @@ Works in both **Node.js** and **browsers** (ESM/CJS dual build).
 [![PyPI Version](https://badge.fury.io/py/covertable.svg)](https://badge.fury.io/py/covertable) [![Build Status](https://github.com/walkframe/covertable/actions/workflows/python.yaml/badge.svg)](https://github.com/walkframe/covertable/actions/workflows/python.yaml)
 
 - [README](https://github.com/walkframe/covertable/blob/master/python/README.rst)
+
+### VS Code Extension
+
+[![VS Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/walkframe.pict-covertable?label=VS%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=walkframe.pict-covertable) [![Open VSX Version](https://img.shields.io/open-vsx/v/walkframe/pict-covertable?label=Open%20VSX)](https://open-vsx.org/extension/walkframe/pict-covertable)
+
+**PICT Pairwise Testing with CoverTable** brings PICT support into your editor, powered by the same CoverTable engine — no external binary required.
+
+- **Syntax highlighting** for `.pict` files (parameters, values, weights, negatives, aliases, references, sub-models, and the constraint language).
+- **Live diagnostics** for parse errors, with line numbers.
+- **Generate Covering Array** — run the model and write the result as a TSV/CSV file next to it, with a status-bar footer (strength / criterion / sorter / case) and a cancellable progress indicator.
+
+Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=walkframe.pict-covertable) / [Open VSX](https://open-vsx.org/extension/walkframe/pict-covertable), or run `code --install-extension walkframe.pict-covertable`.
+
+- [README](https://github.com/walkframe/covertable/blob/master/editors/vscode/README.md)
 
 
 ## Documentation

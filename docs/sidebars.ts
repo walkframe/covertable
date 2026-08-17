@@ -5,8 +5,8 @@ const sidebars: SidebarsConfig = {
     'index',
     {
       type: 'category',
-      label: 'Online Tools',
-      items: ['tools/pict-online'],
+      label: 'Tools',
+      items: ['tools/pict-online', 'tools/vscode'],
     },
     {
       type: 'category',

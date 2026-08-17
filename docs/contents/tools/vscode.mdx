@@ -1,0 +1,72 @@
+---
+sidebar_position: 2
+slug: /tools/vscode
+title: "VS Code Extension"
+---
+
+# PICT VS Code Extension
+
+[![VS Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/walkframe.pict-covertable?label=VS%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=walkframe.pict-covertable)
+[![VS Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/walkframe.pict-covertable?label=installs)](https://marketplace.visualstudio.com/items?itemName=walkframe.pict-covertable)
+[![Open VSX Version](https://img.shields.io/open-vsx/v/walkframe/pict-covertable?label=Open%20VSX)](https://open-vsx.org/extension/walkframe/pict-covertable)
+
+**PICT Pairwise Testing with CoverTable** brings PICT support directly into your
+editor — syntax highlighting, live diagnostics, and covering-array generation —
+powered by the same [CoverTable](/) engine as the online tool. No external binary
+is required.
+
+## Install
+
+- **VS Code**: [Marketplace page](https://marketplace.visualstudio.com/items?itemName=walkframe.pict-covertable), or run in the Quick Open bar (`Cmd`/`Ctrl` + `P`):
+
+  ```
+  ext install walkframe.pict-covertable
+  ```
+
+- **Cursor / VSCodium / Windsurf / Gitpod** (Open VSX): [Open VSX page](https://open-vsx.org/extension/walkframe/pict-covertable)
+
+- **CLI**:
+
+  ```bash
+  code --install-extension walkframe.pict-covertable
+  ```
+
+## Features
+
+- **Syntax highlighting** for `.pict` files: parameters, values, weights `(N)`,
+  negatives `~`, aliases `a|b`, parameter references `<Name>`, sub-models
+  `{ A, B } @ N`, and the constraint language (`IF/THEN/ELSE`, `AND/OR/NOT`,
+  `IN/LIKE`, `[Field]` refs, sets, strings, arithmetic).
+- **Diagnostics**: unknown references, malformed constraints, and other parse
+  errors are reported inline with line numbers as you type.
+- **Generate Covering Array**: run the model and write the result as a TSV/CSV
+  file next to it. Command: `PICT: Generate Covering Array` (also on the editor
+  context menu).
+- **Status-bar footer**: while a `.pict` file is active, the bottom bar shows
+  **Strength · Criterion · Sorter · Case · ▷ Generate**. Click any option to
+  change it; click **Generate** to run.
+- **Progress & cancel**: generation runs with a determinate, cancellable
+  progress indicator and a completion summary (row count, order, elapsed time).
+
+## Settings
+
+| Setting | Default | Description |
+| --- | --- | --- |
+| `pict.strength` | `2` | Combinatorial order (`/o`). 2 = pairwise, 3 = triple-wise. |
+| `pict.criterion` | `greedy` | Row-construction criterion: `greedy` (fewest rows) or `simple`. |
+| `pict.sorter` | `random` | Candidate ordering: `random` (varies) or `hash` (deterministic). |
+| `pict.caseSensitive` | `false` | Case-sensitive comparisons/aliases. Off = case-insensitive. |
+| `pict.output.format` | `tsv` | Result separator: `tsv` or `csv`. |
+| `pict.output.includeHeader` | `true` | Emit a header row of parameter names. |
+| `pict.output.promptFileName` | `true` | Ask for the output file name before generating. |
+| `pict.diagnostics.enable` | `true` | Toggle inline parse diagnostics. |
+
+:::info[Same engine, same format]
+The extension uses CoverTable's model format, a **superset of Microsoft PICT**
+(arithmetic expressions and `#` comments in constraints). See
+[Compatible PICT](/tools/pict) to try the same engine in your browser, and the
+[PICT reference](/reference/pict) for the full model syntax.
+:::
+
+The source lives in the monorepo at
+[`editors/vscode`](https://github.com/walkframe/covertable/tree/master/editors/vscode).
