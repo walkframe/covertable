@@ -1,0 +1,12 @@
+version: 2
+updates:
+  # Disable Dependabot for the docs (Docusaurus) site, including security updates.
+  # The docs site produces many PRs for transitive devDependencies that we don't need.
+  # open-pull-requests-limit: 0 stops version updates; ignore "*" stops security updates.
+  - package-ecosystem: "npm"
+    directory: "/docs"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 0
+    ignore:
+      - dependency-name: "*"
