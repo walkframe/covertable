@@ -76,6 +76,42 @@ class Controller:
         self._pruned_pairs = self._total_pairs - len(self.incomplete)
         self._num_all_chunks = len(self.incomplete)
 
+    def make(self):
+        """Build the covering array, storing it for a later ``optimize()``.
+
+        Parity with the TS ``Controller.make``: unlike the module-level
+        :func:`make`, this does not raise on uncovered pairs — inspect
+        ``self.stats`` if you need to know.
+        """
+        rows = list(self.make_async())
+        self._made_rows = rows
+        return rows
+
+    def optimize(self, rows=None, tuning=None):
+        """SA post-process (single process). Shrinks ``rows`` (default: this
+        Controller's last ``make()`` output), reusing this Controller's
+        ``strength`` / ``constraints`` / ``comparer`` so they never drift.
+        """
+        from .optimize import optimize as _optimize
+        if rows is None:
+            rows = getattr(self, "_made_rows", None) or []
+        return _optimize(self, rows, tuning)
+
+    def optimize_parallel(self, rows=None, tuning=None):
+        """SA post-process with cooperative-island-model multiprocessing.
+
+        Falls back to a single process when ``workers <= 1`` or the run uses a
+        custom ``comparer`` / ``fn`` constraint. Same config source as
+        :meth:`optimize`.
+        """
+        from .optimize import optimize_parallel as _optimize_parallel
+        if rows is None:
+            rows = getattr(self, "_made_rows", None) or []
+        return _optimize_parallel(self, rows, tuning)
+
+    # camelCase aliases mirroring the TypeScript API surface
+    optimizeParallel = optimize_parallel
+
     @staticmethod
     def _normalize_condition(cond):
         """Convert ``values`` lists to sets for O(1) lookup in ``in`` conditions."""
