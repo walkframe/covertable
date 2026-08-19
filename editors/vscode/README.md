@@ -23,6 +23,12 @@ required.
   responsive and can be **cancelled** mid-run. On completion you get a summary
   (row count, order, elapsed time) and a warning if any pairs were left
   uncovered by the constraints.
+- **Optimize (off by default)**: an optional simulated-annealing post-process
+  that shrinks the array further — same coverage, fewer rows. It is **disabled
+  by default**; to use it, turn on **`pict.optimize.enable`** in settings (see
+  below). It is *anytime* — cancel to keep the best result found so far — but it
+  **ignores `weights`** (it rewrites cell values freely), so leave it off if you
+  rely on a weighted value distribution.
 - **Status-bar footer**: while a `.pict` file is active, the bottom bar shows
   **Strength · Criterion · Sorter · Case · ▷ Generate**. Click any option to
   change it (persisted to settings); click **Generate** to run.
@@ -35,6 +41,9 @@ required.
 | `pict.criterion` | `greedy` | Row-construction criterion: `greedy` (fewest rows) or `simple`. |
 | `pict.sorter` | `random` | Candidate ordering: `random` (varies) or `hash` (deterministic). |
 | `pict.caseSensitive` | `false` | Case-sensitive comparisons/aliases. Off = case-insensitive. |
+| `pict.optimize.enable` | `false` | **Off by default.** Run the simulated-annealing optimizer after generating to shrink the array. Ignores `weights`. |
+| `pict.optimize.budgetMs` | `5000` | Time budget (ms) for the optimizer (anytime). Only used when `pict.optimize.enable` is on. |
+| `pict.optimize.workers` | `4` | Parallel worker threads for the optimizer (cooperative island model). Only used when `pict.optimize.enable` is on. |
 | `pict.output.format` | `tsv` | Result separator: `tsv` or `csv`. |
 | `pict.output.includeHeader` | `true` | Emit a header row of parameter names. |
 | `pict.output.promptFileName` | `true` | Ask for the output file name before generating. |

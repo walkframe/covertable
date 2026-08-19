@@ -1,0 +1,226 @@
+---
+sidebar_position: 2
+title: Optimize (SA)
+---
+
+# Optimize: Simulated-Annealing Row Reduction
+
+`make` builds a covering array with a fast one-row-at-a-time greedy pass (see
+[Algorithm](./algorithm)). That greedy output is correct but rarely the
+smallest possible. `optimize` is an **optional, decoupled post-process** that
+shrinks the row count using **simulated annealing (SA)**.
+
+Optimization is a **method on the `Controller`**, so it reads `strength`,
+`constraints`, and `comparer` from the same object that generated the array —
+they can never drift out of sync:
+
+```ts
+import { Controller } from "covertable";
+
+const ctrl = new Controller(factors, { strength: 2 /*, constraints, comparer */ });
+const rows = ctrl.make();
+const smaller = ctrl.optimize(rows, { budgetMs: 60_000 });          // single-thread
+// const smaller = await ctrl.optimizeParallel(rows, { budgetMs: 60_000, workers: 8 });
+```
+
+`ctrl.optimize(rows?, tuning?)` takes an existing array (defaulting to this
+Controller's last `make()` output) and returns a smaller one with the same
+shape. It **never mutates its arguments**, and every array it returns is
+**independently verified** before it is handed back (see
+[Guarantees](#guarantees)).
+
+## The idea: drop a row, then re-fill the holes
+
+The row count is the thing we want to minimize. So the loop is blunt:
+
+```
+current = greedy output (N rows)
+while time remains and N > 1:
+    drop one row            →  N-1 rows, now with some "holes"
+    anneal: try to re-fill every hole by rewriting cells of the N-1 rows
+    if all holes closed:    adopt the N-1 array, repeat
+    else:                   grow the iteration budget and try again
+return the smallest array that fully verified
+```
+
+A **hole** is a required *t*-tuple (for pairwise, a column-pair value
+combination) that the original input covered but the current array no longer
+does. Dropping a row loses exactly the tuples that row uniquely carried.
+Annealing does **not** add rows back — it only **rewrites the values of the
+surviving rows** until every required tuple reappears. If it succeeds, the
+smaller array is a valid covering array.
+
+### Energy
+
+The quantity SA minimizes is the **energy** = the number of currently
+uncovered required tuples. Every tuple is encoded as a dense integer id, and a
+`cov[]` array counts how many rows realize each one. The uncovered ids are kept
+in an O(1) swap-remove list whose length *is* the energy. Energy `0` means the
+array is again a full covering array.
+
+### Moves
+
+Each iteration makes one tiny random change and keeps it or reverts it:
+
+- **Targeted move** (probability `targetedMoveRate`): pick an uncovered tuple and force
+  it into a row by overwriting that row's cells. This directly closes one hole,
+  but the overwrite may re-open others (*collateral*).
+- **Random move**: flip a single random cell to a random value.
+
+Changing a cell touches only the `K-1` tuples that share that column, and the
+`cov[]` counters plus the uncovered list are updated **incrementally** — the
+moment a counter crosses `0` tells us a hole just closed (or opened), with no
+rescans. This is what keeps a single iteration cheap (millions per second).
+
+### Acceptance (the "annealing")
+
+Let `dE` be the change in energy the move caused:
+
+```
+if dE <= 0:                 accept          # improvement or sideways, always
+else if random() < exp(-dE / T): accept     # a worse move, with probability e^(-dE/T)
+else:                       revert
+T = T * cool                                 # cool down a little every iteration
+```
+
+Accepting *worse* moves while the temperature `T` is high is the only thing
+that lets the search escape local minima. `T` starts at `startTemperature` and cools
+geometrically toward `endTemperature` over the iteration budget, so the search explores
+freely early and settles into a good configuration late. This is the metallurgy
+metaphor the technique is named for.
+
+### The `t = 2` fast path
+
+The core is written for general strength *t*, encoding each *t*-tuple with a
+mixed-radix id over a column-combination. That general path recomputes a tuple
+id per affected combination on every cell change. For the overwhelmingly common
+pairwise case (`t = 2`), a specialized branch computes the pair id directly
+(`pairBase[i*K+j] + vi*levels[j] + vj`) and decodes target tuples through
+precomputed tables — roughly halving per-iteration cost with no change in
+results.
+
+## Guarantees
+
+`optimize` is designed to be a **safe** post-process:
+
+- **Coverage preserved.** The set of required tuples is exactly those the
+  *input* covered (forbidden combinations under constraints are therefore never
+  required). The result is independently re-verified from scratch before
+  returning; if verification fails, the original input is returned unchanged.
+- **Constraints respected.** With `constraints`, any move that makes the touched
+  row violate a constraint is rejected, and the final independent check confirms
+  every row is valid.
+- **Anytime.** It runs until `budgetMs` elapses and returns the best array found
+  so far, so you trade wall-clock time for smaller arrays. Early rows fall in
+  milliseconds; the last few rows near the optimum get exponentially harder.
+- **Non-destructive.** Inputs are never mutated.
+
+### Tuning
+
+`ctrl.optimize(rows?, tuning?)` takes an `OptimizeTuning` object. The knobs:
+
+| Option | Default | Meaning |
+|---|---|---|
+| `budgetMs` | `1000` | Anytime time budget. The dominant knob. |
+| `seed` | fixed | PRNG seed, for reproducible runs. |
+| `targetedMoveRate` | `0.5` | Probability of a targeted (vs random) move. |
+| `initialIterations` | `400000` | Iteration budget for the first attempt at removing a row. |
+| `iterationGrowth` | `1.6` | Multiplier on the iteration budget after a failed attempt. |
+| `startTemperature` / `endTemperature` | `2.5` / `0.02` | Start / end temperature of the cooling schedule. |
+| `minCollateralSamples` | `1` | Rows to sample for a min-collateral targeted move (`1` = plain). |
+
+`ctrl.optimizeParallel` takes an `OptimizeParallelTuning` (the above plus
+`workers`, the parallel-only worker count).
+
+### Caveat: `weights` are not preserved
+
+`optimize` keeps exactly two things invariant — **t-tuple coverage** and
+**constraints**. It does **not** preserve anything about how often each value
+appears. Simulated annealing rewrites cell values freely to close holes and
+remove rows, so any distribution that
+[`weights`](../reference/options#weights) asked `make` to produce is
+**flattened**: the optimized array still covers every required tuple, but the
+value frequencies `weights` biased toward are lost.
+
+Because of this, `weights` and `optimize` are fundamentally at odds — one shapes
+the value distribution, the other discards it to minimize rows. If you need the
+weighted distribution, do **not** run `optimize` on that output. `optimize`
+ignores the `weights` option rather than honoring it, precisely so it is never
+mistaken for a weight-aware pass.
+
+## Multicore parallelization: `optimizeParallel`
+
+The final rows before the optimum are **high-variance**: whether a given anneal
+run cracks the next row depends heavily on which random trajectory it happens to
+follow. Two runs with different seeds can differ by hundreds of seconds on the
+same hard stage. `optimizeParallel` exploits this with a fleet of cooperating
+workers.
+
+`ctrl.optimizeParallel(rows?, tuning?)` is the parallel counterpart of
+`ctrl.optimize` with an optional `workers` count (it returns a `Promise`, since
+worker results arrive asynchronously):
+
+```ts
+const ctrl = new Controller(factors, { strength: 2 });
+const rows = ctrl.make();
+const smaller = await ctrl.optimizeParallel(rows, {
+  budgetMs: 60_000,
+  workers: 8,       // run 8 cooperating workers
+});
+```
+
+### How it works — cooperative island model
+
+- **Portfolio of strategies × seeds.** Each worker gets a distinct,
+  deterministically-derived seed (`seed`, `seed+1`, …) **and** a different move
+  strategy — plain moves (`minCollateralSamples: 1`), min-collateral moves (higher
+  `minCollateralSamples`), and a couple of `targetedMoveRate` variations. The best strategy
+  is instance-dependent, so mixing them means whichever suits the input is
+  present and wins, without you having to know in advance.
+- **Shared frontier (the "island" merge).** Independent best-of-K wastes cores:
+  every worker re-descends the easy early rows on its own. Instead, the workers
+  share a global-best array through a `SharedArrayBuffer`. A worker that falls
+  behind the global best **and** stalls (spends more than a few times the
+  leader's cost for that stage) **adopts** the shared best and continues from
+  there — so the fleet concentrates on the hard frontier instead of repeating
+  cheap work. A couple of **scout** workers never merge, preserving the
+  diversity that lets the search escape local minima.
+- **Same safety valve.** The chosen array is re-verified **in the main thread**
+  with the real `constraints`/`comparer` before being returned, so the
+  coverage/constraint guarantee holds regardless of what any worker did.
+- **Graceful fallback.** Worker `workerData` uses structured clone, which cannot
+  carry functions. When the run uses a custom `comparer` or an `fn`-constraint,
+  or when worker threads or `SharedArrayBuffer` are unavailable, it transparently
+  falls back to a single in-process run. The synchronous `optimize` is always
+  single-threaded.
+
+### What parallelism does and does not buy
+
+Cooperation removes the redundant re-descent and reliably surfaces a lucky-fast
+trajectory, so results are both better and more reproducible for a given budget
+(e.g. `10^20` reaches `183` in ~400s with 8 workers vs ~1200s on one core). But
+it is still a **constant-factor / robustness** gain, not a way around the
+combinatorial wall: the iterations needed to remove one more row grow roughly
+geometrically near the minimum, so more workers buy a faster path to a given
+size, not a proportionally smaller array (`10^20` stays at `183`, `4^1 3^39 2^35`
+at `20`, on both 1 and 8 cores). The Node backend uses `worker_threads`; a
+browser Web Worker backend can slot in behind the same API (cooperation needs
+`SharedArrayBuffer`, hence cross-origin isolation, otherwise it degrades to
+independent runs).
+
+## The starting array matters more than its row count
+
+How hard the last rows are to shed is a property of the **structure** of the
+array you start from, *not* of how many rows it has. Two greedy arrays for the
+same model can be worlds apart to reduce: for `4^1 3^39 2^35`, feeding a plain
+`make()` (27 rows) reaches `20` in ~10s, while a `random best-of-N` array (26
+rows — one *fewer*) gets stuck grinding the same last row for ~70s, consistently
+across seeds. The smaller starting array had settled into a tighter local basin
+whose endgame the annealer can barely escape; the "worse-looking" 27-row array
+sat in an easier basin.
+
+So the practical guidance is counter-intuitive: **optimize the array you get from
+a single `make()`, not the smallest array from a best-of-N search.** Fewer
+starting rows does not mean a smaller — or faster — optimized result; it can mean
+a harder one. (This is also why reheat matters: it is what lets the search climb
+out of those tight basins at all.)

@@ -27,9 +27,12 @@ import {
   SuggestRowType,
   Expression,
   Comparer,
+  OptimizeTuning,
+  OptimizeParallelTuning,
 } from "./types";
 import { evaluate, extractKeys, TriState } from "./evaluate";
 import { NeverMatch, UncoveredPair } from "./exceptions";
+import { optimize as optimizeFn, optimizeParallel as optimizeParallelFn } from "./optimize";
 
 export class Row extends Map<ScalarType, number> implements RowType {
   /** Pair keys that failed constraint checks for this row attempt. */
@@ -753,8 +756,33 @@ export class Controller<T extends FactorsType> {
     return this.stats.progress;
   }
 
-  public make<T extends FactorsType>(): SuggestRowType<T>[] {
-    return [...this.makeAsync<T>()];
+  private _madeRows?: SuggestRowType<T>[];
+
+  public make<T2 extends FactorsType = T>(): SuggestRowType<T2>[] {
+    const rows = [...this.makeAsync<T2>()];
+    this._madeRows = rows as unknown as SuggestRowType<T>[];
+    return rows;
+  }
+
+  /**
+   * SA post-process (single-threaded). Shrinks `rows` — defaulting to this
+   * Controller's last `make()` output — reusing this Controller's `strength`,
+   * `constraints`, and `comparer`, so they can never drift out of sync.
+   */
+  public optimize(rows?: SuggestRowType<T>[], tuning?: OptimizeTuning): SuggestRowType<T>[] {
+    return optimizeFn(this, (rows ?? this._madeRows ?? []) as SuggestRowType<T>[], tuning);
+  }
+
+  /**
+   * SA post-process with cooperative-island-model parallelism (opt in via
+   * `tuning.workers`). Returns a Promise; falls back to a single thread when no
+   * worker backend is available. Same config source as {@link optimize}.
+   */
+  public optimizeParallel(
+    rows?: SuggestRowType<T>[],
+    tuning?: OptimizeParallelTuning,
+  ): Promise<SuggestRowType<T>[]> {
+    return optimizeParallelFn(this, (rows ?? this._madeRows ?? []) as SuggestRowType<T>[], tuning);
   }
 
   public *makeAsync<T extends FactorsType>() {
