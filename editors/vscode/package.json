@@ -2,7 +2,7 @@
   "name": "pict-covertable",
   "displayName": "PICT Pairwise Testing with CoverTable",
   "description": "Syntax highlighting, diagnostics, and covering-array generation for Microsoft PICT model files, powered by the covertable engine.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "walkframe",
   "license": "Apache-2.0",
   "packageManager": "pnpm@9.15.9",

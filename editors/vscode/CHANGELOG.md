@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.2.0
+
+- **Optimize** (`pict.optimize.enable`): after generation, run the covertable
+  SA post-processor in worker threads to shrink the covering array further,
+  with configurable time budget (`pict.optimize.budgetMs`) and worker count
+  (`pict.optimize.workers`). Coverage and constraints are preserved; value
+  weights are ignored while optimizing.
+
 ## 0.1.0
 
 Initial release.
