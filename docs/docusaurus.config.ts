@@ -40,7 +40,7 @@ const config: Config = {
     function covertablePlugin() {
       return {
         name: 'covertable-webpack-plugin',
-        configureWebpack() {
+        configureWebpack(_config, isServer) {
           return {
             resolve: {
               alias: {
@@ -48,6 +48,15 @@ const config: Config = {
                 covertable: path.resolve(__dirname, '../typescript/src/index.ts'),
               },
             },
+            // The SA optimizer's parallel backend dynamically imports the
+            // Node-only `node:worker_threads`. It is never reached in the
+            // browser (the runtime picks the Web Worker backend), but the
+            // bundler still walks the chunk and chokes on the `node:` scheme.
+            // Mark it external in the client build so it is left as a bare
+            // (never-executed) require instead of being resolved.
+            ...(isServer
+              ? {}
+              : { externals: [{ 'node:worker_threads': 'commonjs node:worker_threads' }] }),
           };
         },
       };

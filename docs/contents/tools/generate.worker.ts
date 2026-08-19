@@ -7,12 +7,14 @@ interface GenerateRequest {
   criterion: "greedy" | "simple";
   sorter: "random" | "hash";
   caseSensitive: boolean;
+  optimize: boolean;
+  optimizeBudgetMs: number;
 }
 
 const ctx = self as unknown as Worker;
 
 ctx.onmessage = (e: MessageEvent<GenerateRequest>) => {
-  const { input, strength, criterion, sorter, caseSensitive } = e.data;
+  const { input, strength, criterion, sorter, caseSensitive, optimize, optimizeBudgetMs } = e.data;
 
   try {
     const m = new PictModel(input, { caseInsensitive: !caseSensitive });
@@ -36,17 +38,56 @@ ctx.onmessage = (e: MessageEvent<GenerateRequest>) => {
     const rows: any[] = [];
     const genStart = Date.now();
 
+    // Optional SA post-process: shrink the greedy array. Runs single-threaded in
+    // this worker (the worker itself keeps the page responsive), reusing the
+    // model's strength/constraints. Cancelling from the UI terminates the worker.
+    const finish = () => {
+      if (optimize && rows.length > 1) {
+        ctx.postMessage({
+          type: "status",
+          message: `Optimizing… ${rows.length} rows`,
+        });
+        // Yield once so the "Optimizing…" status paints before the blocking
+        // annealing loop takes over the worker thread.
+        setTimeout(() => {
+          let optimized = rows;
+          try {
+            optimized = m.optimize({
+              budgetMs: optimizeBudgetMs,
+              onProgress: ({ rows: n }) => {
+                ctx.postMessage({
+                  type: "status",
+                  message: `Optimizing… ${n} rows`,
+                });
+              },
+            });
+          } catch {
+            // Optimizer unavailable/failed — fall back to the greedy result.
+            optimized = rows;
+          }
+          ctx.postMessage({
+            type: "done",
+            rows: optimized,
+            progress: 1,
+            stats: m.stats,
+          });
+        }, 0);
+        return;
+      }
+      ctx.postMessage({
+        type: "done",
+        rows,
+        progress: 1,
+        stats: m.stats,
+      });
+    };
+
     const step = () => {
       const deadline = Date.now() + 100;
       while (Date.now() < deadline) {
         const { value, done } = iter.next();
         if (done) {
-          ctx.postMessage({
-            type: "done",
-            rows,
-            progress: 1,
-            stats: m.stats,
-          });
+          finish();
           return;
         }
         rows.push(value);

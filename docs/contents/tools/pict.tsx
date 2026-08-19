@@ -382,6 +382,8 @@ function PictDemoInner() {
   const [optCaseSensitive, setOptCaseSensitive] = useState(false);
   const [optCriterion, setOptCriterion] = useState<"greedy" | "simple">("greedy");
   const [optSorter, setOptSorter] = useState<"random" | "hash">("random");
+  const [optOptimize, setOptOptimize] = useState(false);
+  const [optBudgetMs, setOptBudgetMs] = useState(3000);
   const cmRef = useRef<ReactCodeMirrorRef | null>(null);
   const workerRef = useRef<Worker | null>(null);
 
@@ -471,6 +473,8 @@ function PictDemoInner() {
       criterion: optCriterion,
       sorter: optSorter,
       caseSensitive: optCaseSensitive,
+      optimize: optOptimize,
+      optimizeBudgetMs: optBudgetMs,
     });
   };
 
@@ -638,6 +642,39 @@ function PictDemoInner() {
                       {" "}Case sensitive
                     </label>
                   </div>
+                  <div className="pd-option-row">
+                    <label className="pd-option-label">
+                      <input
+                        type="checkbox"
+                        checked={optOptimize}
+                        onChange={(e) => setOptOptimize(e.target.checked)}
+                      />
+                      {" "}Optimize (SA)
+                    </label>
+                  </div>
+                  {optOptimize && (
+                    <div className="pd-option-row">
+                      <label className="pd-option-label">Time budget</label>
+                      <select
+                        className="pd-option-select"
+                        value={optBudgetMs}
+                        onChange={(e) => setOptBudgetMs(Number(e.target.value))}
+                      >
+                        <option value={1000}>1s</option>
+                        <option value={3000}>3s</option>
+                        <option value={5000}>5s</option>
+                        <option value={10000}>10s</option>
+                      </select>
+                    </div>
+                  )}
+                  {optOptimize && (
+                    <p className="pd-option-note">
+                      ⚠ Shrinks the array further with simulated annealing (same
+                      coverage, fewer rows). It rewrites cell values freely, so{" "}
+                      <strong>value weights are ignored</strong> — only coverage
+                      and constraints are preserved.
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -1518,6 +1555,18 @@ function DemoStyles() {
         color: var(--pd-text);
         border: 1px solid var(--pd-border);
         border-radius: 4px;
+      }
+      .pd-option-note {
+        margin: 0.4rem 0 0;
+        padding-top: 0.4rem;
+        border-top: 1px solid var(--pd-border);
+        max-width: 240px;
+        font-size: 0.72rem;
+        line-height: 1.4;
+        color: var(--pd-muted);
+      }
+      .pd-option-note strong {
+        color: var(--pd-text);
       }
       .pd-reset-button {
         color: var(--pd-muted);
