@@ -2,7 +2,10 @@ import type {
   Expression,
   FilterRowType,
   OptionsType,
+  OptimizeTuning,
+  OptimizeParallelTuning,
   SubModelType,
+  SuggestRowType,
 } from '../types';
 import { Controller } from '../controller';
 import type { CommentBlock, PictFactorsType, PictModelIssue } from './types';
@@ -23,6 +26,7 @@ export class PictModel {
   private _lexer: PictConstraintsLexer | null;
   private _comments: CommentBlock[];
   private _controller: Controller<PictFactorsType> | null = null;
+  private _rawRows: SuggestRowType<PictFactorsType>[] = [];
   public issues: PictModelIssue[];
 
   constructor(input: string, options: PictModelOptions = {}) {
@@ -145,15 +149,34 @@ export class PictModel {
 
   make(options: OptionsType<PictFactorsType> = {}) {
     this._controller = new Controller(this._parameters, this._buildOptions(options));
-    return [...this._controller.makeAsync<PictFactorsType>()].map(
-      (row) => this._applyNegativePrefix(row)
-    );
+    this._rawRows = [...this._controller.makeAsync<PictFactorsType>()];
+    return this._rawRows.map((row) => this._applyNegativePrefix(row));
   }
 
   *makeAsync(options: OptionsType<PictFactorsType> = {}) {
     this._controller = new Controller(this._parameters, this._buildOptions(options));
+    this._rawRows = [];
     for (const row of this._controller.makeAsync<PictFactorsType>()) {
+      this._rawRows.push(row);
       yield this._applyNegativePrefix(row);
     }
+  }
+
+  /**
+   * SA post-process the rows from the last `make()`/`makeAsync()` — reusing this
+   * model's strength/constraints/comparer via the internal Controller. Returns
+   * the smaller array (negative values re-prefixed for display).
+   */
+  optimize(tuning?: OptimizeTuning): FilterRowType[] {
+    if (!this._controller) throw new Error('PictModel.optimize() requires make() or makeAsync() first');
+    const optimized = this._controller.optimize(this._rawRows, tuning);
+    return optimized.map((row) => this._applyNegativePrefix(row));
+  }
+
+  /** Parallel (cooperative) variant of {@link optimize}. */
+  async optimizeParallel(tuning?: OptimizeParallelTuning): Promise<FilterRowType[]> {
+    if (!this._controller) throw new Error('PictModel.optimizeParallel() requires make() or makeAsync() first');
+    const optimized = await this._controller.optimizeParallel(this._rawRows, tuning);
+    return optimized.map((row) => this._applyNegativePrefix(row));
   }
 }

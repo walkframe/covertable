@@ -112,6 +112,23 @@
           "default": false,
           "description": "Match constraint comparisons and alias lookups case-sensitively. When off (default), matching is case-insensitive."
         },
+        "pict.optimize.enable": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "After generating, run a **simulated-annealing** post-process that shrinks the covering array further (same coverage, fewer rows). Off by default; it trades wall-clock time (`pict.optimize.budgetMs`) for a smaller result.\n\n**⚠️ Ignores `weights`.** Optimization rewrites cell values freely to remove rows, so it **flattens** any value weighting (`Value (N)` in the model) — it preserves only coverage and constraints, not how often each value appears. Leave this off if you rely on weighted value distribution."
+        },
+        "pict.optimize.budgetMs": {
+          "type": "integer",
+          "default": 5000,
+          "minimum": 100,
+          "markdownDescription": "Time budget (ms) for the optimizer. It is *anytime* — it returns the smallest array found so far when the budget elapses. Larger = potentially fewer rows. Only used when `pict.optimize.enable` is on."
+        },
+        "pict.optimize.workers": {
+          "type": "integer",
+          "default": 4,
+          "minimum": 1,
+          "markdownDescription": "Number of parallel worker threads for the optimizer (cooperative island model). `> 1` keeps the editor responsive during optimization and reliably finds a better result; `1` runs single-threaded (may briefly block). Only used when `pict.optimize.enable` is on."
+        },
         "pict.output.format": {
           "type": "string",
           "enum": [

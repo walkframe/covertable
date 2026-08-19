@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { pathToFileURL } from 'url';
 import { PictModel } from 'covertable/pict';
 import type { PictModelIssue } from 'covertable/pict';
 import { sorters, criteria } from 'covertable';
@@ -32,6 +33,9 @@ function getConfig(resource?: vscode.Uri) {
     criterion: cfg.get<CriterionName>('criterion', 'greedy'),
     sorter: cfg.get<SorterName>('sorter', 'random'),
     caseSensitive: cfg.get<boolean>('caseSensitive', false),
+    optimizeEnable: cfg.get<boolean>('optimize.enable', false),
+    optimizeBudgetMs: cfg.get<number>('optimize.budgetMs', 5000),
+    optimizeWorkers: cfg.get<number>('optimize.workers', 4),
     format: cfg.get<'tsv' | 'csv'>('output.format', 'tsv'),
     includeHeader: cfg.get<boolean>('output.includeHeader', true),
     promptFileName: cfg.get<boolean>('output.promptFileName', true),
@@ -144,7 +148,12 @@ async function openResult(
     await vscode.workspace.fs.writeFile(target, new TextEncoder().encode(content));
     const doc = await vscode.workspace.openTextDocument(target);
     await vscode.languages.setTextDocumentLanguage(doc, langId);
-    await vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
+    // Keep focus on the source model so the PICT footer/commands stay available
+    // and the user can immediately tweak-and-regenerate.
+    await vscode.window.showTextDocument(doc, {
+      viewColumn: vscode.ViewColumn.Beside,
+      preserveFocus: true,
+    });
     return;
   }
 
@@ -159,7 +168,10 @@ async function openResult(
   edit.replace(target, new vscode.Range(new vscode.Position(0, 0), end), content);
   await vscode.workspace.applyEdit(edit);
   await vscode.languages.setTextDocumentLanguage(doc, langId);
-  await vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
+  await vscode.window.showTextDocument(doc, {
+    viewColumn: vscode.ViewColumn.Beside,
+    preserveFocus: true,
+  });
 }
 
 async function generate(): Promise<void> {
@@ -172,8 +184,11 @@ async function generate(): Promise<void> {
   }
 
   const doc = editor.document;
-  const { strength, criterion, sorter, caseSensitive, format, includeHeader, promptFileName } =
-    getConfig(doc.uri);
+  const {
+    strength, criterion, sorter, caseSensitive,
+    optimizeEnable, optimizeBudgetMs, optimizeWorkers,
+    format, includeHeader, promptFileName,
+  } = getConfig(doc.uri);
 
   let model: PictModel;
   try {
@@ -297,13 +312,76 @@ async function generate(): Promise<void> {
     return;
   }
 
+  // Optional SA post-process: shrink the greedy array. Uses the parallel
+  // (cooperative) optimizer so worker threads do the work and the host UI stays
+  // responsive; reuses the model's strength/constraints (no drift).
+  const greedyCount = rows.length;
+  if (optimizeEnable && rows.length > 1) {
+    // Optimization rewrites cell values freely, so it flattens any weighting.
+    if (Object.keys(model.weights).length > 0) {
+      void vscode.window.showWarningMessage(
+        'PICT: optimize is on, so the model\'s value weights are ignored (the optimizer preserves coverage/constraints, not value frequencies).',
+      );
+    }
+    try {
+      // Cancelling is safe: optimization is anytime, so an early stop just
+      // returns the smallest valid array found so far.
+      const abort = new AbortController();
+      const optimized = await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: 'PICT: optimizing (simulated annealing) — Cancel to keep the best so far',
+          cancellable: true,
+        },
+        (progress, token) => {
+          token.onCancellationRequested(() => abort.abort());
+          // onProgress only fires when a *smaller* array is found, so between
+          // improvements the message would look frozen. Drive a 1s ticker off our
+          // own clock so the elapsed time always advances (= visibly alive), and
+          // update the row count whenever the optimizer reports one.
+          const optStarted = Date.now();
+          let bestRows = greedyCount;
+          const render = () =>
+            progress.report({
+              message: `${bestRows} rows · ${((Date.now() - optStarted) / 1000).toFixed(0)}s`,
+            });
+          render();
+          const ticker = setInterval(render, 1000);
+          return model
+            .optimizeParallel({
+              budgetMs: optimizeBudgetMs,
+              workers: Math.max(1, Math.floor(optimizeWorkers)),
+              // Point the worker threads at the standalone, vscode-free bundle;
+              // the main extension bundle can't be imported from a worker.
+              workerUrl: pathToFileURL(path.join(__dirname, 'optimize-worker.mjs')).href,
+              signal: abort.signal,
+              onProgress: ({ rows: n }) => {
+                bestRows = n;
+                render();
+              },
+            })
+            .finally(() => clearInterval(ticker));
+        },
+      );
+      rows.length = 0;
+      for (const r of optimized) rows.push(r as Record<string, string | number>);
+    } catch (err) {
+      void vscode.window.showWarningMessage(
+        `PICT: optimize failed — ${err instanceof Error ? err.message : String(err)}. Using the greedy result.`,
+      );
+    }
+  }
+
   const content = formatTable(header, rows, effFormat, includeHeader);
   await openResult(doc, fileName, content, effFormat);
 
   const elapsedMs = Date.now() - started;
   const secs = (elapsedMs / 1000).toFixed(elapsedMs < 10_000 ? 2 : 1);
   const uncovered = model.stats?.uncoveredPairs?.length ?? 0;
-  const summary = `PICT: generated ${rows.length} row(s) at order ${strength} in ${secs}s.`;
+  const summary =
+    optimizeEnable && rows.length < greedyCount
+      ? `PICT: generated ${greedyCount} rows, optimized to ${rows.length} at order ${strength} in ${secs}s.`
+      : `PICT: generated ${rows.length} row(s) at order ${strength} in ${secs}s.`;
   if (uncovered > 0) {
     void vscode.window.showWarningMessage(
       `${summary} ${uncovered} pair(s) could not be covered — constraints may be too tight.`,
@@ -339,18 +417,16 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // ---- Status-bar footer: options + Generate button (shown for .pict files) ----
   const bar: vscode.StatusBarItem[] = [];
-  const mkItem = (priority: number, command: string): vscode.StatusBarItem => {
+  const mkItem = (priority: number, command?: string): vscode.StatusBarItem => {
     const it = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, priority);
-    it.command = command;
+    if (command) it.command = command;
     context.subscriptions.push(it);
     bar.push(it);
     return it;
   };
-  const labelItem = mkItem(101, 'pict.generate');
+  const labelItem = mkItem(101); // non-clickable group label
   const strengthItem = mkItem(100, 'pict.pickStrength');
-  const criterionItem = mkItem(99, 'pict.pickCriterion');
-  const sorterItem = mkItem(98, 'pict.pickSorter');
-  const caseItem = mkItem(97, 'pict.toggleCaseSensitive');
+  const settingsItem = mkItem(99, 'pict.openSettings');
   const generateItem = mkItem(96, 'pict.generate');
 
   // Make the Generate button read as a primary action, not just text.
@@ -364,15 +440,11 @@ export function activate(context: vscode.ExtensionContext): void {
     }
     const c = getConfig(ed.document.uri);
     labelItem.text = '$(beaker) PICT';
-    labelItem.tooltip = 'PICT model — the items to the right set generation options; click to Generate';
+    labelItem.tooltip = 'PICT options — Strength to the right, more in ⚙ Settings; ▷ Generate runs the model.';
     strengthItem.text = `$(symbol-number) Strength: ${c.strength}`;
     strengthItem.tooltip = 'PICT combinatorial order — click to change';
-    criterionItem.text = `$(list-ordered) Criterion: ${c.criterion}`;
-    criterionItem.tooltip = 'PICT row-construction criterion — click to change';
-    sorterItem.text = `$(arrow-swap) Sorter: ${c.sorter}`;
-    sorterItem.tooltip = 'PICT candidate ordering — click to change';
-    caseItem.text = `$(case-sensitive) Case: ${c.caseSensitive ? 'sensitive' : 'insensitive'}`;
-    caseItem.tooltip = 'Case sensitivity — click to toggle';
+    settingsItem.text = c.optimizeEnable ? '$(gear) Settings $(sparkle)' : '$(gear) Settings';
+    settingsItem.tooltip = 'PICT settings — criterion, sorter, optimize (SA), case, output';
     generateItem.text = '$(play) Generate';
     generateItem.tooltip = 'PICT: Generate Covering Array';
     bar.forEach((i) => i.show());
@@ -385,7 +457,7 @@ export function activate(context: vscode.ExtensionContext): void {
     if (context.globalState.get<boolean>(HINT_KEY)) return;
     void context.globalState.update(HINT_KEY, true);
     void vscode.window.showInformationMessage(
-      'PICT: options (Strength / Criterion / Sorter / Case) and the ▷ Generate button are in the status bar at the bottom-left.',
+      'PICT: Strength and the ▷ Generate button are in the status bar (bottom-left). Other options — criterion, sorter, optimize, output — are behind the ⚙ Settings item.',
     );
   };
 
@@ -446,6 +518,12 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('pict.pickCriterion', pickCriterion),
     vscode.commands.registerCommand('pict.pickSorter', pickSorter),
     vscode.commands.registerCommand('pict.toggleCaseSensitive', toggleCase),
+    vscode.commands.registerCommand('pict.openSettings', () =>
+      vscode.commands.executeCommand('workbench.action.openSettings', '@ext:walkframe.pict-covertable'),
+    ),
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration('pict')) updateStatusBar();
+    }),
     vscode.window.onDidChangeActiveTextEditor(() => updateStatusBar()),
     vscode.workspace.onDidOpenTextDocument((doc) => refreshDiagnostics(doc, diagnostics)),
     vscode.workspace.onDidChangeTextDocument((e) => scheduleRefresh(e.document)),

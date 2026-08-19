@@ -67,20 +67,71 @@ Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/item
 
 ## Performance
 
-> **Note:**  
-> The following data was measured in Python 3.7.7 on a `3.1 GHz 6-Core Intel Core i5`.  
-> The coverage number is `2`.
+> **Note:**
+> Measured on an **Apple M4 Mac** with **bun (JavaScriptCore)**, coverage `2`.
+> **`default`** = a single greedy `make`. **`random best`** = the smallest over a
+> random best-of-N search (greedy, except `2^100` which needs the `simple`
+> criterion). **`greedy + Optimize`** = the `default` array fed through
+> `optimize`, shown as the **total** wall-clock time (greedy `make` + `optimize`)
+> as `single-thread / optimizeParallel(8 workers)`. Reproduction and
+> independent-verification code lives in [`evidence/repro/`](./evidence/repro/).
 
-| Combination       | Default                             | Minimum case                          | Fastest case                       |
-|-------------------|-------------------------------------|---------------------------------------|------------------------------------|
-| **3^4**           | num: `9` <br> time: `0.0006s`       | num: `9` <br> time: `0.0006s`         | num: `14` <br> time: `0.0005s`     |
-| **3^13**          | num: `19` <br> time: `0.03s`        | num: `17` <br> time: `0.03s`          | num: `21` <br> time: `0.003s`      |
-| **4^15 + 3^17 + 2^29** | num: `36` <br> time: `7.41s`   | num: `34` <br> time: `7.47s`          | num: `42` <br> time: `0.40s`       |
-| **4^1 + 3^39 + 2^35**  | num: `27` <br> time: `15.19s`  | num: `26` <br> time: `14.70s`         | num: `30` <br> time: `0.51s`       |
-| **2^100**         | num: `14` <br> time: `23.97s`       | num: `12` <br> time: `0.63s`          | num: `13` <br> time: `0.48s`       |
-| **10^20**         | num: `198` <br> time: `14.28s`      | num: `195` <br> time: `14.48s`        | num: `284` <br> time: `0.53s`      |
+| Combination | default | random best | greedy&nbsp;+&nbsp;optimize |
+|---|---|---|---|
+| **3^4** | `13` (0.008s) | `9` (0.001s) | `9` (<1s / <1s) |
+| **3^13** | `19` (0.006s) | `17` (0.005s) | `15` (<1s / <1s) |
+| **2^100** | `15` (3.7s) | `12` (3.6s) | `10` (~3.7s / ~3.7s) |
+| **4^15 + 3^17 + 2^29** | `36` (1.1s) | `34` (1.0s) | `28` (~26s / ~9s) |
+| **4^1 + 3^39 + 2^35** | `27` (2.0s) | `26` (2.0s) | `20` (~106s / ~11s) |
+| **10^20** | `197` (1.6s) | `195` (1.6s) | `187` (~54s / ~38s) <br> `183` (~1167s / ~403s) |
 
 In general, as the number of elements or coverage increases, the number of combinations tends to increase significantly.
+
+## Optimize (SA post-process)
+
+`Controller.optimize()` shrinks a greedy array further with simulated annealing.
+It is an anytime process — it returns the smallest array found within `budgetMs`
+— and every result is independently verified to still cover all required tuples
+(see the **`greedy + optimize`** column in the [Performance](#performance) table
+above). It reads `strength`/`constraints`/`comparer` from the Controller, so
+those can never drift out of sync with the `make` run:
+
+```ts
+import { Controller } from "covertable";
+
+const ctrl = new Controller(factors, { strength: 2, /* constraints, ... */ });
+const rows = ctrl.make();
+const smaller = ctrl.optimize(rows, { budgetMs: 60_000 });          // single-thread
+// const smaller = await ctrl.optimizeParallel(rows, { budgetMs: 60_000, workers: 8 });
+```
+
+The easy cases collapse to their target in well under a second on one core; only
+`10^20` and `4^1 + 3^39 + 2^35` have an expensive endgame, where the cost of
+removing each further row grows roughly geometrically as the array approaches its
+minimum.
+
+### Multi-core (`optimizeParallel`)
+
+`ctrl.optimizeParallel(rows, { workers: N })` runs `N` cooperating workers and
+keeps the smallest verified result. The workers are a
+**cooperative island model**: each gets a distinct seed *and* a different move
+strategy (plain moves, min-collateral moves, a couple of targeting ratios), and
+they **share a global-best array** — a worker that falls behind and stalls adopts
+the shared best and joins the frontier, while a couple of scouts keep exploring.
+Since the endgame is high-variance, this reliably surfaces a lucky-fast
+trajectory:
+
+| Combination | 1 core | 8 workers |
+|---|---|---|
+| **4^1 + 3^39 + 2^35** | `20` in ~104s | `20` in **~9s** (≈12×) |
+| **10^20** | `183` in ~1200s | `183` in **~400s** (≈3×) |
+
+The gain is **variance / robustness**, not a smaller array: the per-row cost
+grows geometrically near the optimum, so more workers buy a faster, more
+reproducible path to a given size — they do not push past the combinatorial wall
+(`4^1 + 3^39 + 2^35` stays at `20`, `10^20` at `183`, on both). See
+[Optimize (SA)](https://covertable.walkframe.com/development/optimize) for the
+algorithm and parallelization details.
 
 ## Tolerance
 

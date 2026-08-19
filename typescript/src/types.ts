@@ -141,6 +141,95 @@ export interface Comparer {
 // Options
 // ---------------------------------------------------------------------------
 
+/**
+ * Tuning knobs for the SA post-processor, passed to `Controller.optimize()` /
+ * `Controller.optimizeParallel()`. It carries only the annealing knobs;
+ * `strength`, `constraints`, and `comparer` come from the Controller itself, so
+ * they can never drift out of sync with the `make` run.
+ */
+export interface OptimizeTuning {
+  /** Anytime budget in milliseconds — the main knob. Default 1000. */
+  budgetMs?: number;
+  /** Seed for the internal PRNG, for reproducible runs. Default 0x9e3779b9. */
+  seed?: number;
+  /** Progress callback, fired whenever a smaller array is accepted. */
+  onProgress?: (info: { rows: number; elapsedMs: number }) => void;
+  /**
+   * Abort signal for early, cooperative cancellation. Because optimization is
+   * *anytime*, aborting simply returns the smallest array found so far — the
+   * result is always a valid covering array.
+   */
+  signal?: AbortSignal;
+
+  // -- advanced annealing knobs (sensible defaults; usually leave untouched) --
+
+  /**
+   * Iteration budget for the first annealing attempt at removing a row. If that
+   * attempt fails, the budget grows (see `iterationGrowth`) and it retries.
+   * Default 400000.
+   */
+  initialIterations?: number;
+  /**
+   * Multiplier applied to the iteration budget after a failed attempt, so harder
+   * rows automatically get more iterations (400k → 640k → …). Default 1.6.
+   */
+  iterationGrowth?: number;
+  /**
+   * Starting temperature of the cooling schedule. Higher = more "uphill" (worse)
+   * moves accepted early, i.e. broader exploration before settling. Default 2.5.
+   */
+  startTemperature?: number;
+  /**
+   * Ending temperature. Lower = the search freezes into near-only-improving
+   * moves by the end. The temperature cools geometrically from
+   * `startTemperature` to here across an attempt. Default 0.02.
+   */
+  endTemperature?: number;
+  /**
+   * Probability that an iteration makes a *targeted* move (force an uncovered
+   * tuple into a row) rather than a *random* cell flip. Higher = more direct
+   * hole-filling, lower = more random exploration. Default 0.5.
+   */
+  targetedMoveRate?: number;
+  /**
+   * Min-collateral move: when a targeted move forces an uncovered tuple into a
+   * row, sample this many candidate rows and keep the one that adds the fewest
+   * uncovered tuples ("collateral"), preferring constraint-valid rows. `1`
+   * (default) is the plain single-random-row move. Higher values cost more per
+   * iteration but can crack hard endgames faster; the effect is case-dependent,
+   * so the default stays `1`. `optimizeParallel` mixes several values across its
+   * workers automatically.
+   */
+  minCollateralSamples?: number;
+}
+
+/**
+ * Tuning for `Controller.optimizeParallel()` — the {@link OptimizeTuning} knobs
+ * plus the parallel-only `workers` count.
+ */
+export interface OptimizeParallelTuning extends OptimizeTuning {
+  /**
+   * Number of parallel workers. Runs this many annealing searches concurrently
+   * as a **cooperative island model**: each worker uses a distinct seed and move
+   * strategy, shares a global-best array, and a lagging worker adopts the shared
+   * best once it stalls (a couple of "scout" workers never merge, to preserve
+   * diversity). The smallest verified result is returned. Default 1 (no
+   * workers). Falls back to a single thread when workers or `SharedArrayBuffer`
+   * are unavailable, or the run uses a custom `comparer`/`fn`-constraint
+   * (functions cannot cross the worker boundary).
+   */
+  workers?: number;
+  /**
+   * URL (or path) of a standalone module that re-exports `__workerReduce`, used
+   * as the worker entry on the Node/Web parallel backends. Needed only in
+   * **bundled** environments (e.g. a VS Code extension) where `import.meta.url`
+   * cannot locate the library inside the bundle and the bundle itself isn't
+   * importable from a worker. Normal Node/browser ESM usage leaves this unset
+   * and the backend resolves its own module URL automatically.
+   */
+  workerUrl?: string;
+}
+
 export interface OptionsType<T extends FactorsType> {
   strength?: number;
   subModels?: SubModelType[];

@@ -1,0 +1,26 @@
+{
+  "case": "3^4",
+  "strength": 2,
+  "rows": 9,
+  "factors": 4,
+  "value_encoding": "0-based level index per factor",
+  "best_known_pairwise_org": 9,
+  "vs_best_known": "equal",
+  "independently_verified": true,
+  "verifier": "verify_ca.py (itertools-only, shares no code with the SA generator)",
+  "required_pairs": 54,
+  "missing_pairs": 0,
+  "duplicate_rows": 0,
+  "levels": [3, 3, 3, 3],
+  "matrix": [
+    [1, 2, 0, 0],
+    [1, 1, 2, 2],
+    [0, 0, 0, 2],
+    [0, 1, 1, 0],
+    [1, 0, 1, 1],
+    [2, 2, 1, 2],
+    [2, 0, 2, 0],
+    [0, 2, 2, 1],
+    [2, 1, 0, 1]
+  ]
+}
