@@ -73,8 +73,10 @@ Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/item
 > random best-of-N search (greedy, except `2^100` which needs the `simple`
 > criterion). **`greedy + Optimize`** = the `default` array fed through
 > `optimize`, shown as the **total** wall-clock time (greedy `make` + `optimize`)
-> as `single-thread / optimizeParallel(8 workers)`. Reproduction and
-> independent-verification code lives in [`evidence/repro/`](./evidence/repro/).
+> as `single-thread / optimizeParallel(8 workers)`. Full results with
+> independent verification are in
+> [`evidence/VERIFICATION.md`](./evidence/VERIFICATION.md); reproduction and
+> verification code lives in [`evidence/repro/`](./evidence/repro/).
 
 | Combination | default | random best | greedy&nbsp;+&nbsp;optimize |
 |---|---|---|---|
