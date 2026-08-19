@@ -779,6 +779,8 @@ def _coop_worker(shm_ctrl_name, shm_best_name, ctrl_len, best_len, params,
                 try:
                     progress_queue.put_nowait((rows, elapsed_ms))
                 except Exception:
+                    # Progress is best-effort: drop this update if the queue is
+                    # full or already closed rather than stalling the worker.
                     pass
 
         sa.reduce_cooperative(
@@ -801,10 +803,9 @@ def _run_cooperative(base, variants, max_n, K, patience, int_rows,
     then falls back to a single process).
     """
     import threading
-    import multiprocessing
-    from multiprocessing import shared_memory
+    from multiprocessing import get_context, shared_memory
 
-    ctx = multiprocessing.get_context("spawn")
+    ctx = get_context("spawn")
 
     ctrl_len = 3 + max_n + 1
     best_len = max_n * K

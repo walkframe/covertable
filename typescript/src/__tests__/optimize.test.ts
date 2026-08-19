@@ -1,5 +1,5 @@
 import { make, Controller } from "../index";
-import { combinations, range, getItems, product, all } from "../lib";
+import { combinations, range, getItems, product } from "../lib";
 import type { FactorsType, Expression } from "../types";
 
 // -- helpers ---------------------------------------------------------------

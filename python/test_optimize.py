@@ -7,8 +7,6 @@ held, no growth, reproducibility, no mutation), not absolute row counts.
 import json
 from itertools import combinations, product
 
-import pytest
-
 from covertable import make, Controller
 from covertable.lib import get_items
 

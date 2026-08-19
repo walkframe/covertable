@@ -60,7 +60,8 @@ def summarize(levels):
 if __name__ == "__main__":
     path = sys.argv[1]
     t = int(sys.argv[2]) if len(sys.argv) > 2 else 2
-    data = json.load(open(path))
+    with open(path) as fh:
+        data = json.load(fh)
     # array key: "matrix" (evidence schema) or "rows" (raw dump schema)
     matrix = data.get("matrix")
     if not isinstance(matrix, list):
