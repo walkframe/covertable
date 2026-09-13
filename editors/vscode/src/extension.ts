@@ -33,11 +33,10 @@ function getConfig(resource?: vscode.Uri) {
     criterion: cfg.get<CriterionName>('criterion', 'greedy'),
     sorter: cfg.get<SorterName>('sorter', 'random'),
     caseSensitive: cfg.get<boolean>('caseSensitive', false),
+    formula: cfg.get<boolean>('formula.enable', true),
     optimizeEnable: cfg.get<boolean>('optimize.enable', false),
     optimizeBudgetMs: cfg.get<number>('optimize.budgetMs', 5000),
     optimizeWorkers: cfg.get<number>('optimize.workers', 4),
-    format: cfg.get<'tsv' | 'csv'>('output.format', 'tsv'),
-    includeHeader: cfg.get<boolean>('output.includeHeader', true),
     promptFileName: cfg.get<boolean>('output.promptFileName', true),
     diagnosticsEnabled: cfg.get<boolean>('diagnostics.enable', true),
   };
@@ -47,13 +46,21 @@ function issueToDiagnostic(
   doc: vscode.TextDocument,
   issue: PictModelIssue,
 ): vscode.Diagnostic {
-  // Issues carry a 1-based line but no column, so we span the whole line.
   const lineIdx = Math.min(Math.max(issue.line - 1, 0), doc.lineCount - 1);
   const line = doc.lineAt(lineIdx);
-  const range = new vscode.Range(
-    line.range.start.translate(0, line.firstNonWhitespaceCharacterIndex),
-    line.range.end,
-  );
+  // When an issue carries a token position (e.g. an unknown `[Col]` reference in
+  // a formula), underline just that token; otherwise span the whole line.
+  let range: vscode.Range;
+  if (issue.column != null) {
+    const startCol = Math.min(Math.max(issue.column - 1, 0), line.range.end.character);
+    const endCol = Math.min(startCol + (issue.length ?? 1), line.range.end.character);
+    range = new vscode.Range(lineIdx, startCol, lineIdx, endCol);
+  } else {
+    range = new vscode.Range(
+      line.range.start.translate(0, line.firstNonWhitespaceCharacterIndex),
+      line.range.end,
+    );
+  }
   const severity =
     issue.severity === 'warning'
       ? vscode.DiagnosticSeverity.Warning
@@ -71,13 +78,13 @@ function refreshDiagnostics(
   if (doc.languageId !== LANGUAGE_ID) {
     return;
   }
-  const { caseSensitive, diagnosticsEnabled } = getConfig(doc.uri);
+  const { caseSensitive, formula, diagnosticsEnabled } = getConfig(doc.uri);
   if (!diagnosticsEnabled) {
     collection.delete(doc.uri);
     return;
   }
   try {
-    const model = new PictModel(doc.getText(), { caseInsensitive: !caseSensitive });
+    const model = new PictModel(doc.getText(), { caseInsensitive: !caseSensitive, formula });
     collection.set(doc.uri, model.issues.map((i) => issueToDiagnostic(doc, i)));
   } catch (err) {
     // Parsing itself should never throw in non-strict mode, but guard anyway.
@@ -101,25 +108,45 @@ function formatTable(
   header: string[],
   rows: Record<string, string | number>[],
   format: 'tsv' | 'csv',
-  includeHeader: boolean,
 ): string {
   const sep = format === 'csv' ? ',' : '\t';
   const cell = (v: string | number) => {
     const s = String(v ?? '');
     return format === 'csv' ? csvField(s) : s.replace(/\t/g, ' ');
   };
-  const lines: string[] = [];
-  if (includeHeader) {
-    lines.push(header.map(cell).join(sep));
-  }
+  // The header row is always emitted: a `.pict.tsv`/`.pict.csv` file is defined
+  // to carry a header (so viewers can treat row 1 as labels and data starts at
+  // A1, keeping formula-column cell references aligned).
+  const lines: string[] = [header.map(cell).join(sep)];
   for (const row of rows) {
     lines.push(header.map((key) => cell(row[key])).join(sep));
   }
   return lines.join('\n') + '\n';
 }
 
+/** Shape of the unsaved state reported by the GridSheet extension's API. */
+interface GridsheetUnsaved {
+  dirty: boolean;
+  evalDirty: boolean;
+}
+
+/**
+ * Ask the GridSheet viewer whether `uri` is open in a grid with unsaved changes
+ * (in-grid edits or computed values the user hasn't saved). Returns undefined
+ * when GridSheet isn't installed/active or exposes no such API — in which case
+ * there is nothing open to protect. Never force-activates the extension.
+ */
+async function gridsheetUnsavedState(uri: vscode.Uri): Promise<GridsheetUnsaved | undefined> {
+  const ext = vscode.extensions.getExtension('walkframe.csv-gridsheet');
+  if (!ext || !ext.isActive) {
+    return undefined;
+  }
+  const api = ext.exports as { getUnsavedState?: (uri: string) => GridsheetUnsaved | undefined } | undefined;
+  return api?.getUnsavedState?.(uri.toString());
+}
+
 /** Source file's base name without extension, e.g. `.../sample.pict` → `sample`. */
-function defaultBaseName(doc: vscode.TextDocument): string {
+function sourceBase(doc: vscode.TextDocument): string {
   const name =
     doc.uri.scheme === 'file'
       ? path.basename(doc.uri.fsPath)
@@ -130,9 +157,12 @@ function defaultBaseName(doc: vscode.TextDocument): string {
 
 /**
  * Write the generated table to `fileName` next to the model and open it.
- * An existing file at that path is overwritten. When the source itself is an
- * unsaved buffer (no directory to write into), the result is opened as an
- * untitled document instead, its contents replaced on re-generation.
+ * An existing file at that path is overwritten. When the same file is already
+ * open (e.g. in a GridSheet grid from a previous run), its tab is closed first and
+ * reopened on the fresh content — revealing an already-open custom editor doesn't
+ * make it re-read the file, so a plain overwrite wouldn't show. When the source
+ * itself is an unsaved buffer (no directory to write into), the result is opened
+ * as an untitled document instead, its contents replaced on re-generation.
  */
 async function openResult(
   sourceDoc: vscode.TextDocument,
@@ -144,15 +174,43 @@ async function openResult(
 
   if (sourceDoc.uri.scheme === 'file') {
     const target = vscode.Uri.file(path.join(path.dirname(sourceDoc.uri.fsPath), fileName));
-    // fs.writeFile creates or overwrites — this is the intended default.
+    const targetStr = target.toString();
+
+    // Opening an already-open custom editor only *reveals* it — it won't re-read
+    // the file — so a re-generation wouldn't show up. Close any tab already showing
+    // this file first, then (over)write and open fresh. The document is clean while
+    // the grid holds edits only in memory (save-only), so closing never prompts;
+    // the pre-generation confirm already covered any unsaved changes.
+    const stale = vscode.window.tabGroups.all
+      .flatMap((g) => g.tabs)
+      .filter((t) => (t.input as { uri?: vscode.Uri } | undefined)?.uri?.toString() === targetStr);
+    if (stale.length > 0) {
+      await vscode.window.tabGroups.close(stale);
+    }
+
+    // Create or overwrite on disk, then open the fresh content.
     await vscode.workspace.fs.writeFile(target, new TextEncoder().encode(content));
+
+    // Same-vendor integration: when enabled (default) and the GridSheet viewer
+    // (walkframe.csv-gridsheet) is installed, open the covering array as an
+    // editable spreadsheet grid; otherwise fall back to a plain-text document.
+    const openInGridsheet = vscode.workspace
+      .getConfiguration('pict')
+      .get<boolean>('output.openInGridsheet', true);
+    if (openInGridsheet && vscode.extensions.getExtension('walkframe.csv-gridsheet')) {
+      const gridViewType = format === 'csv' ? 'gridsheet.csv' : 'gridsheet.tsv';
+      await vscode.commands.executeCommand('vscode.openWith', target, gridViewType, {
+        viewColumn: vscode.ViewColumn.Beside,
+        preserveFocus: false,
+      });
+      return;
+    }
+
     const doc = await vscode.workspace.openTextDocument(target);
     await vscode.languages.setTextDocumentLanguage(doc, langId);
-    // Keep focus on the source model so the PICT footer/commands stay available
-    // and the user can immediately tweak-and-regenerate.
     await vscode.window.showTextDocument(doc, {
       viewColumn: vscode.ViewColumn.Beside,
-      preserveFocus: true,
+      preserveFocus: false,
     });
     return;
   }
@@ -185,14 +243,14 @@ async function generate(): Promise<void> {
 
   const doc = editor.document;
   const {
-    strength, criterion, sorter, caseSensitive,
+    strength, criterion, sorter, caseSensitive, formula,
     optimizeEnable, optimizeBudgetMs, optimizeWorkers,
-    format, includeHeader, promptFileName,
+    promptFileName,
   } = getConfig(doc.uri);
 
   let model: PictModel;
   try {
-    model = new PictModel(doc.getText(), { caseInsensitive: !caseSensitive });
+    model = new PictModel(doc.getText(), { caseInsensitive: !caseSensitive, formula });
   } catch (err) {
     void vscode.window.showErrorMessage(
       `PICT: failed to parse model — ${err instanceof Error ? err.message : String(err)}`,
@@ -212,21 +270,26 @@ async function generate(): Promise<void> {
     }
   }
 
-  const header = Object.keys(model.parameters);
-  if (header.length === 0) {
+  // Output header includes formula (computed) columns in declaration order;
+  // combinatorial generation still needs at least one real parameter.
+  const header = model.columnOrder;
+  if (Object.keys(model.parameters).length === 0) {
     void vscode.window.showWarningMessage('PICT: no parameters found in the model.');
     return;
   }
 
-  // Decide the output file name up-front (default: <model-basename>.<format>),
-  // so a long run is never interrupted by a prompt at the end.
-  const defaultName = `${defaultBaseName(doc)}.${format}`;
+  // Decide the output file name up-front (default extension `.pict.tsv`), so a
+  // long run is never interrupted by a prompt at the end. It is only a default:
+  // the name is fully editable in the prompt below (the base is pre-selected),
+  // so it can be changed freely — including the extension.
+  const base = sourceBase(doc);
+  const defaultName = `${base}.pict.tsv`;
   let fileName = defaultName;
   if (promptFileName) {
     const input = await vscode.window.showInputBox({
       title: 'PICT: output file name',
       value: defaultName,
-      valueSelection: [0, defaultName.lastIndexOf('.')],
+      valueSelection: [0, base.length],
       prompt: 'Saved next to the model. An existing file with this name is overwritten.',
       validateInput: (v) => (v.trim() === '' ? 'File name cannot be empty' : undefined),
     });
@@ -236,13 +299,38 @@ async function generate(): Promise<void> {
     fileName = input.trim();
   }
 
-  // Honor the extension the user typed: .csv → CSV, .tsv → TSV, else the setting.
-  const lower = fileName.toLowerCase();
-  const effFormat: 'tsv' | 'csv' = lower.endsWith('.csv')
-    ? 'csv'
-    : lower.endsWith('.tsv')
-      ? 'tsv'
-      : format;
+  // Format follows the file extension: `.csv` → CSV, anything else → TSV. TSV is
+  // just tab-separated text, so it is the safe default for `.tsv`, `.txt`, or any
+  // other extension the user picks.
+  const effFormat: 'tsv' | 'csv' = fileName.toLowerCase().endsWith('.csv') ? 'csv' : 'tsv';
+
+  // If the target is already open in a GridSheet grid with unsaved changes,
+  // confirm before the (later) overwrite — before spending time generating. The
+  // grid keeps edits in memory until saved, so the document/disk can't reveal
+  // them; GridSheet's extension API does.
+  if (doc.uri.scheme === 'file') {
+    const target = vscode.Uri.file(path.join(path.dirname(doc.uri.fsPath), fileName));
+    let exists = true;
+    try {
+      await vscode.workspace.fs.stat(target);
+    } catch {
+      exists = false;
+    }
+    if (exists) {
+      const unsaved = await gridsheetUnsavedState(target);
+      if (unsaved && (unsaved.dirty || unsaved.evalDirty)) {
+        const proceed = 'Regenerate';
+        const choice = await vscode.window.showWarningMessage(
+          `"${fileName}" is open with unsaved changes. Regenerate and overwrite them?`,
+          { modal: true },
+          proceed,
+        );
+        if (choice !== proceed) {
+          return; // keep the open grid as-is
+        }
+      }
+    }
+  }
 
   const makeOptions = {
     strength,
@@ -372,7 +460,19 @@ async function generate(): Promise<void> {
     }
   }
 
-  const content = formatTable(header, rows, effFormat, includeHeader);
+  // Fill formula (computed) columns: each `[Col]` reference is rewritten to the
+  // cell it occupies on this row (see PictModel.renderFormula). Done after any
+  // optimize pass so row indices match the final output order.
+  const formulaColumns = model.formulaColumns;
+  if (formulaColumns.length > 0) {
+    for (let i = 0; i < rows.length; i++) {
+      for (const fc of formulaColumns) {
+        rows[i][fc.name] = model.renderFormula(fc.name, i);
+      }
+    }
+  }
+
+  const content = formatTable(header, rows, effFormat);
   await openResult(doc, fileName, content, effFormat);
 
   const elapsedMs = Date.now() - started;

@@ -13,9 +13,10 @@ the generator).
   progressions below are the fleet's global best over time.
 - Reproduction and verification code is bundled in [`repro/`](./repro/)
   (generator `sa.ts`, independent verifier `verify_ca.py`, inputs `starts/`).
-- Numbers are bun measurements. **A Python port is planned but expected to be
-  ~15× slower** on the same algorithm (Python ≈ 0.27M it/s vs bun ≈ 4.3M it/s),
-  so under an identical budget it would likely reach larger (worse) row counts.
+- Numbers are bun measurements. **The Python port ships the same algorithm
+  (`optimize` / `optimize_parallel`) but runs ~15× slower** (Python ≈ 0.27M it/s
+  vs bun ≈ 4.3M it/s), so under an identical budget it would likely reach larger
+  (worse) row counts.
 - Values are 0-based level indices. In the TSV, each column is a factor and each
   row is a test case.
 

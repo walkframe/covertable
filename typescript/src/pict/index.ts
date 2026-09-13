@@ -9,5 +9,9 @@ export type {
   PictModelIssue,
   IssueSeverity,
   IssueSource,
+  ColumnKind,
+  ColumnDescriptor,
   CommentBlock,
 } from './types';
+export { numToColLetter } from './formula';
+export type { FormulaColumn } from './formula';

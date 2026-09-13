@@ -1309,3 +1309,163 @@ IF [NAME] = "Alice" [STATUS] = "Active";
     expect(errorMessages(model)[0]).toMatch(/Expected "THEN" but found/);
   });
 });
+
+describe('PictModel formula columns', () => {
+  it('detects a formula column without treating it as a factor', () => {
+    const model = new PictModel(`
+Type: Single, Span
+Size: 10, 100
+AI: =AI("summarize", [Size])
+`);
+    // Formula column is not a combinatorial parameter.
+    expect(Object.keys(model.parameters)).toEqual(['Type', 'Size']);
+    // But it does appear in the output header, in declaration order.
+    expect(model.columnOrder).toEqual(['Type', 'Size', 'AI']);
+    expect(model.formulaColumns.map((c) => c.name)).toEqual(['AI']);
+    expect(model.formulaColumns[0].template).toBe('=AI("summarize", [Size])');
+    expect(model.issues.filter((i) => i.severity === 'error')).toHaveLength(0);
+  });
+
+  it('formula: false parses an "=" line as an ordinary parameter', () => {
+    const model = new PictModel(
+      `
+Type: Single, Span
+AI: =AI("x", [Type])
+`,
+      { formula: false },
+    );
+    // No formula columns; the "=" line is a normal (comma-split) parameter.
+    expect(model.formulaColumns).toHaveLength(0);
+    expect(Object.keys(model.parameters)).toEqual(['Type', 'AI']);
+    expect(model.renderFormula('AI', 0)).toBe('');
+  });
+
+  it('strips a trailing ";" from a formula line (constraint-terminator habit)', () => {
+    const model = new PictModel(`
+Type: Single, Span
+Size: 10, 100
+AI: =AI("summarize", [Size]) ;
+`);
+    // The template drops the trailing `;` (and the space before it)...
+    expect(model.formulaColumns[0].template).toBe('=AI("summarize", [Size])');
+    // ...so the emitted cell is a valid formula, not `=AI(..., B1);`.
+    expect(model.renderFormula('AI', 0)).toBe('=AI("summarize", B1)');
+  });
+
+  it('rewrites [Col] to the column letter + 1-based data row (header not counted)', () => {
+    const model = new PictModel(`
+Type: Single, Span
+Size: 10, 100
+AI: =AI("summarize", [Size])
+`);
+    // Size is the 2nd column → B; first data row → row 1.
+    expect(model.renderFormula('AI', 0)).toBe('=AI("summarize", B1)');
+    expect(model.renderFormula('AI', 1)).toBe('=AI("summarize", B2)');
+    expect(model.renderFormula('AI', 9)).toBe('=AI("summarize", B10)');
+  });
+
+  it('resolves multiple references and column names with spaces', () => {
+    const model = new PictModel(`
+Type: Single, Span
+Size: 10, 100
+Format method: Quick, Slow
+Note: =CONCAT([Type], "/", [Format method], "@", [Size])
+`);
+    // Type=A, Size=B, Format method=C, Note=D
+    expect(model.renderFormula('Note', 2)).toBe('=CONCAT(A3, "/", C3, "@", B3)');
+  });
+
+  it('matches references case-insensitively', () => {
+    const model = new PictModel(`
+Type: Single, Span
+Size: 10, 100
+AI: =AI([size])
+`);
+    expect(model.issues.filter((i) => i.severity === 'error')).toHaveLength(0);
+    expect(model.renderFormula('AI', 0)).toBe('=AI(B1)');
+  });
+
+  it('a formula column can reference an earlier formula column', () => {
+    const model = new PictModel(`
+Size: 10, 100
+Summary: =AI("describe", [Size])
+Check: =LEN([Summary])
+`);
+    // Size=A, Summary=B, Check=C
+    expect(model.columnOrder).toEqual(['Size', 'Summary', 'Check']);
+    expect(model.renderFormula('Check', 0)).toBe('=LEN(B1)');
+  });
+
+  it('flags an unknown column reference with a formula-source issue', () => {
+    const model = new PictModel(`
+Type: Single, Span
+Size: 10, 100
+AI: =AI([Nope])
+`);
+    const formulaIssues = model.issues.filter((i) => i.source === 'formula');
+    expect(formulaIssues).toHaveLength(1);
+    expect(formulaIssues[0].severity).toBe('error');
+    expect(formulaIssues[0].line).toBe(4);
+    // Points at the exact `[Nope]` token so an editor can underline just it.
+    expect(formulaIssues[0].column).toBe(9); // 1-based; `[` in "AI: =AI([Nope])"
+    expect(formulaIssues[0].length).toBe(6); // length of "[Nope]"
+    expect(formulaIssues[0].message).toMatch(/Unknown column reference "\[Nope\]"/);
+    // Unknown refs are left untouched rather than corrupting the formula.
+    expect(model.renderFormula('AI', 0)).toBe('=AI([Nope])');
+  });
+
+  it('renderFormula returns "" for a non-formula column', () => {
+    const model = new PictModel(`
+Type: Single, Span
+Size: 10, 100
+`);
+    expect(model.renderFormula('Type', 0)).toBe('');
+  });
+});
+
+describe('PictModel constraint field references', () => {
+  it('flags an unknown [Field] in a constraint at the exact token', () => {
+    const model = new PictModel(`
+FileSystem: NTFS, ext4
+OS: Windows, Linux
+
+IF [FileSystemaaa] = "NTFS" THEN [OS] = "Windows";
+`);
+    const refIssues = model.issues.filter(
+      (i) => i.source === 'constraint' && /Unknown field reference/.test(i.message),
+    );
+    expect(refIssues).toHaveLength(1);
+    expect(refIssues[0].severity).toBe('error');
+    expect(refIssues[0].line).toBe(5);
+    expect(refIssues[0].column).toBe(4); // 1-based: `[` in "IF [FileSystemaaa] ..."
+    expect(refIssues[0].length).toBe('[FileSystemaaa]'.length);
+    expect(refIssues[0].message).toMatch(/\[FileSystemaaa\]/);
+  });
+
+  it('accepts valid [Field] references (case-insensitive)', () => {
+    const model = new PictModel(`
+FileSystem: NTFS, ext4
+OS: Windows, Linux
+
+IF [filesystem] = "NTFS" THEN [OS] = "Windows";
+`);
+    const refIssues = model.issues.filter((i) => /Unknown field reference/.test(i.message));
+    expect(refIssues).toHaveLength(0);
+  });
+
+  it('flags every unknown reference across a multi-line constraint block', () => {
+    const model = new PictModel(`
+A: 1, 2
+B: 3, 4
+
+IF [A] = 1 THEN [Bogus] = 3;
+IF [Nope] = 2 THEN [B] = 4;
+`);
+    const refIssues = model.issues.filter((i) => /Unknown field reference/.test(i.message));
+    expect(refIssues.map((i) => [i.line, i.column, i.message])).toEqual([
+      [5, 17, 'Unknown field reference "[Bogus]"'],
+      [6, 4, 'Unknown field reference "[Nope]"'],
+    ]);
+  });
+});
+

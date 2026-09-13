@@ -1,1 +1,4 @@
 python/.venv
+
+# local clone of jaccz/pairwise docs (not part of this repo)
+/pairwise

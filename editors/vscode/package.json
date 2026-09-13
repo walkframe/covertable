@@ -2,7 +2,7 @@
   "name": "pict-covertable",
   "displayName": "PICT Pairwise Testing with CoverTable",
   "description": "Syntax highlighting, diagnostics, and covering-array generation for Microsoft PICT model files, powered by the covertable engine.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "walkframe",
   "license": "Apache-2.0",
   "packageManager": "pnpm@9.15.9",
@@ -112,6 +112,11 @@
           "default": false,
           "description": "Match constraint comparisons and alias lookups case-sensitively. When off (default), matching is case-insensitive."
         },
+        "pict.formula.enable": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Treat a parameter line whose value begins with `=` as a **formula (computed) column**: emitted verbatim on every output row, with each `[Column]` reference rewritten to the cell it occupies on that row (e.g. `Expected: =CLAUDE.BOOL(\"...\", [Size])`). On by default. Turn off to parse such lines as ordinary comma-separated parameters instead."
+        },
         "pict.optimize.enable": {
           "type": "boolean",
           "default": false,
@@ -129,24 +134,15 @@
           "minimum": 1,
           "markdownDescription": "Number of parallel worker threads for the optimizer (cooperative island model). `> 1` keeps the editor responsive during optimization and reliably finds a better result; `1` runs single-threaded (may briefly block). Only used when `pict.optimize.enable` is on."
         },
-        "pict.output.format": {
-          "type": "string",
-          "enum": [
-            "tsv",
-            "csv"
-          ],
-          "default": "tsv",
-          "description": "Column separator used for the generated result document."
-        },
-        "pict.output.includeHeader": {
-          "type": "boolean",
-          "default": true,
-          "description": "Include a header row with the parameter names."
-        },
         "pict.output.promptFileName": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Ask for the output file name before generating (pre-filled with `<model>.tsv`/`.csv`). Turn off to open the result directly with the default name."
+          "markdownDescription": "Ask for the output file name before generating (pre-filled with `<model>.pict.tsv`). Turn off to write the result directly with the default name. The format follows the extension: `.csv` → CSV, anything else → TSV."
+        },
+        "pict.output.openInGridsheet": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "When the **GridSheet** viewer (`walkframe.csv-gridsheet`) is installed, open the generated covering array as an editable spreadsheet grid instead of plain text. Turn off to always open the result as plain text. No effect when GridSheet is not installed."
         },
         "pict.diagnostics.enable": {
           "type": "boolean",

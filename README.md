@@ -10,6 +10,39 @@ Try the online demo: **[Compatible PICT](https://covertable.walkframe.com/tools/
 
 Prefer your editor? Install the **[VS Code extension](https://marketplace.visualstudio.com/items?itemName=walkframe.pict-covertable)** for PICT syntax highlighting, live diagnostics, and one-click covering-array generation.
 
+## Quick start
+
+TypeScript — `npm install covertable`:
+
+```ts
+import { make } from "covertable";
+
+const rows = make({
+  device: ["iPhone", "Pixel", "Galaxy"],
+  os: ["iOS", "Android"],
+  browser: ["Chrome", "Firefox", "Safari"],
+});
+// 3-wise instead of pairwise: make(factors, { strength: 3 })
+```
+
+Python — `pip install covertable` (3.9+):
+
+```python
+from covertable import make
+
+rows = make({
+    "device": ["iPhone", "Pixel", "Galaxy"],
+    "os": ["iOS", "Android"],
+    "browser": ["Chrome", "Firefox", "Safari"],
+}, strength=2)
+```
+
+Each row covers new value pairs; together the rows cover **every** pair across the
+factors in far fewer cases than the full cross product. Add constraints, PICT
+models, weights, and the SA optimizer as needed — see below and the
+[documentation](https://covertable.walkframe.com). AI agents: see
+[`AGENTS.md`](./AGENTS.md) and [`/llms.txt`](https://covertable.walkframe.com/llms.txt ).
+
 ## Algorithm
 
 CoverTable uses a **one-test-at-a-time greedy algorithm** to generate covering arrays.

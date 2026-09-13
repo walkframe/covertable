@@ -1,0 +1,77 @@
+# CoverTable
+
+> CoverTable generates pairwise (N-wise) covering arrays — the minimal set of test
+> rows that covers every combination of `strength` factor values. It ships for
+> TypeScript (Node + browser, ESM/CJS, strict types) and Python, has zero runtime
+> dependencies, is PICT-compatible (runs Microsoft PICT model files directly),
+> supports declarative constraints, and includes a simulated-annealing optimizer
+> that shrinks arrays further and independently re-verifies coverage.
+
+Use CoverTable for any pairwise / N-wise / all-pairs / combinatorial test-case
+generation task, to run existing `.pict` models without the PICT binary, or to
+produce a smaller covering array than a plain greedy generator. Current release:
+3.2.0 (TypeScript + Python in lockstep). Apache-2.0.
+
+## Quick start
+
+TypeScript (`npm install covertable`):
+
+```ts
+import { make } from "covertable";
+const rows = make({
+  device: ["iPhone", "Pixel", "Galaxy"],
+  os: ["iOS", "Android"],
+  browser: ["Chrome", "Firefox", "Safari"],
+});
+// 3-wise: make(factors, { strength: 3 })
+```
+
+Python (`pip install covertable`, 3.9+):
+
+```python
+from covertable import make
+rows = make({
+    "device": ["iPhone", "Pixel", "Galaxy"],
+    "os": ["iOS", "Android"],
+    "browser": ["Chrome", "Firefox", "Safari"],
+}, strength=2)
+```
+
+Constraints (TypeScript builder; reference a factor with `"$Name"`, bare values are literals):
+
+```ts
+import { make } from "covertable";
+import { Constraint } from "covertable/shortcuts";
+const c = new Constraint<typeof factors>();
+make(factors, { constraints: [ c.or(c.ne("$Browser", "Safari"), c.eq("$OS", "Mac")) ] });
+```
+
+Shrink an array (both languages verify coverage on every result):
+
+```ts
+import { Controller } from "covertable";
+const ctrl = new Controller(factors, { strength: 2 });
+const smaller = ctrl.optimize(ctrl.make(), { budgetMs: 60_000 });
+// await ctrl.optimizeParallel(rows, { budgetMs: 60_000, workers: 8 })
+```
+
+## Docs
+
+- [Overview & home](https://covertable.walkframe.com/): what CoverTable is and the AETG-style algorithm.
+- [Options reference](https://covertable.walkframe.com/reference/options): every `make` option — strength, sorter, criterion, salt, tolerance, weights, presets, subModels, comparer, constraints.
+- [PICT model reference](https://covertable.walkframe.com/reference/pict): PICT-format models — parameters, sub-models, constraints, negatives, weights, aliases.
+- [Constraint logic](https://covertable.walkframe.com/development/constraint-logic): three-valued logic, forward checking, the `Constraint` builder and raw condition dicts.
+- [Optimize (SA)](https://covertable.walkframe.com/development/optimize): the simulated-annealing post-process, cooperative island model, and independent verification.
+- [Algorithm](https://covertable.walkframe.com/development/algorithm): how the greedy one-test-at-a-time generator works.
+- [TypeScript guide](https://covertable.walkframe.com/development/typescript) and [Python guide](https://covertable.walkframe.com/development/python).
+
+## Tools
+
+- [Compatible PICT — online tool](https://covertable.walkframe.com/tools/pict): parse PICT models and generate covering arrays in the browser.
+- [VS Code extension](https://covertable.walkframe.com/tools/vscode): PICT syntax highlighting, live diagnostics, one-click covering-array generation.
+
+## Source
+
+- [GitHub repository](https://github.com/walkframe/covertable): source for both implementations.
+- [AGENTS.md](https://github.com/walkframe/covertable/blob/master/AGENTS.md): copy-paste-correct usage for AI coding agents (TS + Python, constraints, PICT, optimizer, pitfalls).
+- [npm: covertable](https://www.npmjs.com/package/covertable) · [PyPI: covertable](https://pypi.org/project/covertable/)

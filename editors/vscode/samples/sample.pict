@@ -22,6 +22,8 @@ Locale:     en-US, ja-JP, de-DE, zh-CN, ar-EG
 Protocol:   TCP, UDP, QUIC
 Port:       80, 443, 8080, ~0
 
+Expected:   =PRODUCT([Cores], [Memory])
+
 # A sub-model gives these factors their own order:
 { OS, FileSystem } @ 3
 { Arch, Cores, Memory } @ 2

@@ -6,6 +6,16 @@ type Token = {
   type: TokenType;
   value: string;
   line: number; // 1-based line number where this token starts
+  col?: number; // 0-based column on `line` where this token starts (REF tokens only)
+};
+
+/** A `[Field]` reference in the constraint text, with its source position. */
+export type ConstraintRef = {
+  /** The referenced field name (bracket contents, trimmed). */
+  key: string;
+  line: number; // 1-based
+  col: number;  // 0-based column of the `[`
+  length: number; // length of the whole `[...]` token
 };
 
 enum TokenType {
@@ -90,6 +100,9 @@ export class PictConstraintsLexer {
   // Set of factor keys each filter depends on. Same length as `filters`.
   // Empty set entries correspond to errors / null filters.
   public filterKeys: Set<string>[] = [];
+  // Every `[Field]` reference seen while tokenizing, with source positions.
+  // Used to validate references against the known parameters.
+  public refs: ConstraintRef[] = [];
 
   constructor(
     private input: string,
@@ -116,6 +129,12 @@ export class PictConstraintsLexer {
     let buffer = '';
     let bufferLine = this.startLine;
     let currentLine = this.startLine;
+    // Index in `constraints` where the current line begins, so a character's
+    // 0-based column is `index - lineStartIndex`. Since the constraint section
+    // is sliced as whole lines, this column also holds in the original input.
+    let lineStartIndex = 0;
+    let refStartIndex = 0;      // index of the `[` for the ref being read
+    let refLineStartIndex = 0;  // lineStartIndex captured when that `[` was seen
     let insideQuotes = false;
     let insideBraces = false;
     let insideBrackets = false;
@@ -151,10 +170,20 @@ export class PictConstraintsLexer {
       } else if (char === '[') {
         flushBuffer();
         insideBrackets = true;
+        refStartIndex = i;
+        refLineStartIndex = lineStartIndex;
         startBuffer(char);
       } else if (char === ']' && insideBrackets) {
         startBuffer(char);
-        tokens.push(classifyToken(buffer, bufferLine));
+        const refToken = classifyToken(buffer, bufferLine);
+        refToken.col = refStartIndex - refLineStartIndex; // 0-based
+        tokens.push(refToken);
+        this.refs.push({
+          key: buffer.slice(1, -1).trim(),
+          line: bufferLine,
+          col: refToken.col,
+          length: buffer.length,
+        });
         insideBrackets = false;
         buffer = '';
       } else if (char === '{') {
@@ -195,15 +224,15 @@ export class PictConstraintsLexer {
       } else if (isWhiteSpace(char) && !insideBraces && !insideBrackets) {
         flushBuffer();
         let whitespaceBuffer = char;
-        if (char === '\n') currentLine++;
+        if (char === '\n') { currentLine++; lineStartIndex = i + 1; }
         while (i + 1 < constraints.length && isWhiteSpace(constraints[i + 1])) {
           i++;
           whitespaceBuffer += constraints[i];
-          if (constraints[i] === '\n') currentLine++;
+          if (constraints[i] === '\n') { currentLine++; lineStartIndex = i + 1; }
         }
         addToken(TokenType.WHITESPACE, whitespaceBuffer, currentLine);
       } else if (isWhiteSpace(char) && (insideBraces || insideBrackets)) {
-        if (char === '\n') currentLine++;
+        if (char === '\n') { currentLine++; lineStartIndex = i + 1; }
         startBuffer(char);
       } else {
         startBuffer(char);

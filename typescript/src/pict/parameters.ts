@@ -1,4 +1,5 @@
-import type { PictFactorsType, PictModelIssue, SourceLine } from './types';
+import type { ColumnDescriptor, PictFactorsType, PictModelIssue, SourceLine } from './types';
+import { iterRefs, isFormulaValue, type FormulaColumn } from './formula';
 
 // Split comma-separated values respecting quoted strings
 export function splitValues(input: string): string[] {
@@ -93,24 +94,41 @@ export function isParameterLine(trimmed: string): boolean {
   return true;
 }
 
-export function parseParameters(lines: SourceLine[]): {
+export interface ParseParametersOptions {
+  /**
+   * Treat a value part beginning with `=` as a formula column. Default: true.
+   * When false, such a line is parsed as an ordinary parameter (its value is
+   * split on commas like any other), which is the pre-formula behaviour.
+   */
+  formula?: boolean;
+}
+
+export function parseParameters(
+  lines: SourceLine[],
+  options: ParseParametersOptions = {},
+): {
   factors: PictFactorsType;
   aliases: Map<string, string>;
   negatives: Map<string, Set<string | number>>;
   weights: { [factorKey: string]: { [index: number]: number } };
+  columns: ColumnDescriptor[];
+  formulaColumns: FormulaColumn[];
   issues: PictModelIssue[];
 } {
+  const { formula = true } = options;
   const factors: PictFactorsType = {};
   const aliases = new Map<string, string>();
   const negatives = new Map<string, Set<string | number>>();
   const weights: { [factorKey: string]: { [index: number]: number } } = {};
+  const columns: ColumnDescriptor[] = [];
+  const formulaColumns: FormulaColumn[] = [];
   const issues: PictModelIssue[] = [];
   let factorIndex = 0;
 
-  const addIssue = (line: number, message: string) => {
+  const addIssue = (line: number, message: string, source: "factor" | "formula" = "factor") => {
     issues.push({
       severity: "error",
-      source: "factor",
+      source,
       index: factorIndex,
       line,
       message,
@@ -131,6 +149,25 @@ export function parseParameters(lines: SourceLine[]): {
     const key = trimmed.slice(0, colonIndex).trim();
     if (key === '') {
       addIssue(line, `Empty parameter name in line: ${trimmed}`);
+      factorIndex++;
+      continue;
+    }
+
+    // Formula column: value part begins with `=`. It is not a combinatorial
+    // factor — it is emitted verbatim on every row with `[Col]` refs rewritten.
+    const rhsRaw = trimmed.slice(colonIndex + 1);
+    const rhs = rhsRaw.trim();
+    if (formula && isFormulaValue(rhs)) {
+      // Column where the template begins in the *original* line: trim() only
+      // strips the leading indent, so a trimmed offset maps to indent + offset.
+      const indent = text.length - text.trimStart().length;
+      const leadingRhsSpaces = rhsRaw.length - rhsRaw.trimStart().length;
+      const templateCol = indent + colonIndex + 1 + leadingRhsSpaces;
+      // Drop a trailing `;` (people often mirror the constraint-line terminator):
+      // the emitted cell must be a valid formula like `=FN(...)`, not `=FN(...);`.
+      const template = rhs.replace(/\s*;+\s*$/, '');
+      formulaColumns.push({ name: key, template, line, templateCol });
+      columns.push({ name: key, kind: 'formula' });
       factorIndex++;
       continue;
     }
@@ -161,6 +198,7 @@ export function parseParameters(lines: SourceLine[]): {
       }
 
       factors[key] = values;
+      columns.push({ name: key, kind: 'param' });
       if (negativeSet.size > 0) {
         negatives.set(key, negativeSet);
       }
@@ -172,5 +210,28 @@ export function parseParameters(lines: SourceLine[]): {
     }
     factorIndex++;
   }
-  return { factors, aliases, negatives, weights, issues };
+
+  // Validate `[Col]` references in formula columns against the known columns
+  // (case-insensitive). An unknown name would emit a broken formula, so flag the
+  // exact `[...]` token (each occurrence) so editors can underline just that ref.
+  if (formulaColumns.length > 0) {
+    const known = new Set(columns.map((c) => c.name.toLowerCase()));
+    for (const fc of formulaColumns) {
+      for (const ref of iterRefs(fc.template)) {
+        if (!known.has(ref.name.toLowerCase())) {
+          issues.push({
+            severity: "error",
+            source: "formula",
+            index: 0,
+            line: fc.line,
+            column: fc.templateCol + ref.index + 1, // 1-based
+            length: ref.length,
+            message: `Unknown column reference "[${ref.name}]" in formula "${fc.name}"`,
+          });
+        }
+      }
+    }
+  }
+
+  return { factors, aliases, negatives, weights, columns, formulaColumns, issues };
 }

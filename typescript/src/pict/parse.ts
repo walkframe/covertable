@@ -1,5 +1,6 @@
 import type { SubModelType } from '../types';
-import type { CommentBlock, PictFactorsType, PictModelIssue, SourceLine } from './types';
+import type { ColumnDescriptor, CommentBlock, PictFactorsType, PictModelIssue, SourceLine } from './types';
+import type { FormulaColumn } from './formula';
 import { isParameterLine, parseParameters } from './parameters';
 import { parseSubModel, subModelPattern } from './subModels';
 import { PictConstraintsLexer } from './constraints';
@@ -7,6 +8,12 @@ import { PictConstraintsLexer } from './constraints';
 export interface ParseOptions {
   /** Match constraint comparisons and alias lookups case-insensitively. Default: true. */
   caseInsensitive?: boolean;
+  /**
+   * Treat a parameter line whose value begins with `=` as a formula (computed)
+   * column. Default: true. When false, such lines are parsed as ordinary
+   * comma-separated parameters (the pre-formula behaviour).
+   */
+  formula?: boolean;
 }
 
 export interface ParseResult {
@@ -17,6 +24,10 @@ export interface ParseResult {
   subModels: SubModelType[];
   lexer: PictConstraintsLexer | null;
   issues: PictModelIssue[];
+  /** Output columns in source-declaration order (parameters and formula columns). */
+  columns: ColumnDescriptor[];
+  /** Formula (computed) columns, in source-declaration order. */
+  formulaColumns: FormulaColumn[];
   /** Comment blocks, each classified as a field description or freestanding. */
   comments: CommentBlock[];
 }
@@ -122,13 +133,13 @@ export function classifyComments(input: string): CommentBlock[] {
  * caller can decide how to handle them.
  */
 export function parse(input: string, options: ParseOptions = {}): ParseResult {
-  const { caseInsensitive = true } = options;
+  const { caseInsensitive = true, formula = true } = options;
   const sections = splitSections(input);
   const issues: PictModelIssue[] = [];
 
   // Parameters
-  const { factors, aliases, negatives, weights, issues: paramIssues } =
-    parseParameters(sections.parameterLines);
+  const { factors, aliases, negatives, weights, columns, formulaColumns, issues: paramIssues } =
+    parseParameters(sections.parameterLines, { formula });
   issues.push(...paramIssues);
 
   // Normalize alias keys for case-insensitive lookup
@@ -174,6 +185,23 @@ export function parse(input: string, options: ParseOptions = {}): ParseResult {
         message: err,
       });
     });
+
+    // Validate `[Field]` references against the declared parameters
+    // (case-insensitive). A typo'd field names no real parameter, so flag the
+    // exact `[...]` token — mirroring the formula-column check.
+    const knownFields = new Set(Object.keys(factors).map((k) => k.toLowerCase()));
+    lexer.refs.forEach((ref, refIndex) => {
+      if (knownFields.has(ref.key.toLowerCase())) return;
+      issues.push({
+        severity: "error",
+        source: "constraint",
+        index: refIndex,
+        line: ref.line,
+        column: ref.col + 1, // 1-based
+        length: ref.length,
+        message: `Unknown field reference "[${ref.key}]"`,
+      });
+    });
   }
 
   return {
@@ -184,6 +212,8 @@ export function parse(input: string, options: ParseOptions = {}): ParseResult {
     subModels,
     lexer,
     issues,
+    columns,
+    formulaColumns,
     comments: classifyComments(input),
   };
 }

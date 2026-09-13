@@ -24,7 +24,16 @@ export interface CommentBlock {
 }
 
 export type IssueSeverity = "error" | "warning";
-export type IssueSource = "factor" | "subModel" | "constraint";
+export type IssueSource = "factor" | "subModel" | "constraint" | "formula";
+
+/** The kind of an output column: a combinatorial parameter or a formula column. */
+export type ColumnKind = "param" | "formula";
+
+/** An output column in source-declaration order (parameters and formula columns interleaved). */
+export interface ColumnDescriptor {
+  name: string;
+  kind: ColumnKind;
+}
 
 export interface PictModelIssue {
   severity: IssueSeverity;
@@ -32,6 +41,10 @@ export interface PictModelIssue {
   index: number; // 0-based index within the source
   line: number;  // 1-based line number in the original input
   message: string;
+  /** 1-based start column on `line`, when the issue points at a specific token. */
+  column?: number;
+  /** Length of the flagged token, when `column` is set. */
+  length?: number;
 }
 
 export class PictModelError extends Error {

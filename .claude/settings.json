@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(pip3 index:*)",
-      "Bash(python3 -m pip install covertable==999)"
+      "Bash(python3 -m pip install covertable==999)",
+      "Bash(gh pr *)"
     ]
   }
 }

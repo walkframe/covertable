@@ -42,6 +42,7 @@ new PictModel(input: string, options?: PictModelOptions)
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `caseInsensitive` | `boolean` | `true` | When `true` (default, matching PICT), constraint comparisons and alias lookups ignore case. |
+| `formula` | `boolean` | `true` | When `true` (default), a parameter line whose value begins with `=` becomes a formula (computed) column, emitted verbatim per row with each `[Column]` reference rewritten to that row's cell. Set `false` to parse such lines as ordinary comma-separated parameters. |
 | `strict` | `boolean` | `false` | When `true`, the constructor throws `PictModelError` if any error-severity issue is collected. |
 
 The input string is split into three sections:

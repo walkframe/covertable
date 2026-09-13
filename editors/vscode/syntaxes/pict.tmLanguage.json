@@ -5,6 +5,7 @@
   "patterns": [
     { "include": "#comment" },
     { "include": "#subModel" },
+    { "include": "#formulaParameter" },
     { "include": "#parameter" },
     { "include": "#constraint" }
   ],
@@ -27,6 +28,62 @@
         { "match": "\\b\\d+\\b", "name": "constant.numeric.strength.pict" },
         { "match": ",", "name": "punctuation.separator.pict" },
         { "match": "[^,{}@\\s][^,{}@]*", "name": "variable.other.factor.pict" }
+      ]
+    },
+
+    "formulaParameter": {
+      "begin": "^\\s*(?![Ii][Ff]\\b)([^:\\[\\n]+?)\\s*(:)\\s*(?==)",
+      "beginCaptures": {
+        "1": { "name": "entity.name.tag.parameter.pict" },
+        "2": { "name": "punctuation.separator.key-value.pict" }
+      },
+      "end": "$",
+      "name": "meta.parameter.formula.pict",
+      "patterns": [
+        { "include": "#formulaBody" }
+      ]
+    },
+
+    "formulaBody": {
+      "patterns": [
+        { "include": "#comment" },
+        { "include": "#string" },
+        {
+          "match": "=",
+          "name": "keyword.operator.formula.pict"
+        },
+        {
+          "match": "\\[[^\\]\\n]*\\]",
+          "name": "variable.other.factor.pict"
+        },
+        {
+          "match": "\\b[A-Za-z_][A-Za-z0-9_.]*(?=\\s*\\()",
+          "name": "entity.name.function.pict"
+        },
+        {
+          "match": "(?i)\\b(TRUE|FALSE|NULL)\\b",
+          "name": "constant.language.pict"
+        },
+        {
+          "match": "<>|>=|<=|<|>|&",
+          "name": "keyword.operator.comparison.pict"
+        },
+        {
+          "match": "\\*\\*|[+\\-*/%^]",
+          "name": "keyword.operator.arithmetic.pict"
+        },
+        {
+          "match": "\\b-?\\d+(?:\\.\\d+)?\\b",
+          "name": "constant.numeric.pict"
+        },
+        {
+          "match": "[()]",
+          "name": "punctuation.section.parens.pict"
+        },
+        {
+          "match": ",",
+          "name": "punctuation.separator.pict"
+        }
       ]
     },
 

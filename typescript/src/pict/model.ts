@@ -8,14 +8,21 @@ import type {
   SuggestRowType,
 } from '../types';
 import { Controller } from '../controller';
-import type { CommentBlock, PictFactorsType, PictModelIssue } from './types';
+import type { ColumnDescriptor, CommentBlock, PictFactorsType, PictModelIssue } from './types';
 import { PictModelError } from './types';
 import { parse } from './parse';
+import { numToColLetter, rewriteFormula, type FormulaColumn } from './formula';
 import type { PictConstraintsLexer } from './constraints';
 
 export interface PictModelOptions {
   caseInsensitive?: boolean;
   strict?: boolean;
+  /**
+   * Treat a parameter line whose value begins with `=` as a formula (computed)
+   * column, emitted verbatim per row with `[Col]` refs rewritten. Default: true.
+   * Set false to parse such lines as ordinary comma-separated parameters.
+   */
+  formula?: boolean;
 }
 
 export class PictModel {
@@ -25,13 +32,17 @@ export class PictModel {
   private _weights: { [factorKey: string]: { [index: number]: number } };
   private _lexer: PictConstraintsLexer | null;
   private _comments: CommentBlock[];
+  private _columns: ColumnDescriptor[];
+  private _formulaColumns: FormulaColumn[];
+  /** Lower-cased column name → spreadsheet letter, for formula rewriting. */
+  private _letterByName: Map<string, string>;
   private _controller: Controller<PictFactorsType> | null = null;
   private _rawRows: SuggestRowType<PictFactorsType>[] = [];
   public issues: PictModelIssue[];
 
   constructor(input: string, options: PictModelOptions = {}) {
-    const { caseInsensitive = true, strict = false } = options;
-    const result = parse(input, { caseInsensitive });
+    const { caseInsensitive = true, strict = false, formula = true } = options;
+    const result = parse(input, { caseInsensitive, formula });
 
     this._parameters = result.factors;
     this._subModels = result.subModels;
@@ -39,7 +50,14 @@ export class PictModel {
     this._weights = result.weights;
     this._lexer = result.lexer;
     this._comments = result.comments;
+    this._columns = result.columns;
+    this._formulaColumns = result.formulaColumns;
     this.issues = result.issues;
+
+    // Column letters follow the output header position (1st column = A).
+    this._letterByName = new Map(
+      this._columns.map((c, i) => [c.name.toLowerCase(), numToColLetter(i + 1)]),
+    );
 
     if (strict && this.issues.some(i => i.severity === "error")) {
       throw new PictModelError(this.issues);
@@ -54,6 +72,27 @@ export class PictModel {
   get comments(): CommentBlock[] { return this._comments; }
   get progress(): number { return this._controller?.progress ?? 0; }
   get stats() { return this._controller?.stats ?? null; }
+
+  /** Output column names in source-declaration order (parameters + formula columns). */
+  get columnOrder(): string[] { return this._columns.map((c) => c.name); }
+  /** Output columns with their kind, in source-declaration order. */
+  get columns(): ColumnDescriptor[] { return this._columns; }
+  /** Formula (computed) columns, in source-declaration order. */
+  get formulaColumns(): FormulaColumn[] { return this._formulaColumns; }
+
+  /**
+   * Render a formula column's template for the given 0-based data-row index,
+   * rewriting each `[ColumnName]` to its cell for that row (column letter by the
+   * column's output position, row number = index + 1; the header row is not
+   * counted). Returns `''` when `columnName` is not a formula column.
+   */
+  renderFormula(columnName: string, dataRowIndex: number): string {
+    const col = this._formulaColumns.find((c) => c.name === columnName);
+    if (col == null) return '';
+    return rewriteFormula(col.template, dataRowIndex, (name) =>
+      this._letterByName.get(name.toLowerCase()),
+    );
+  }
 
   /**
    * Evaluate all constraints and the negative-value rule against a
