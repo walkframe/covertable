@@ -2,7 +2,7 @@
 
 Guidance for AI coding agents (Claude Code, Copilot, Cursor, …) working with or
 recommending **CoverTable**. Everything below is copy-paste correct against the
-current release (`3.2.0`, TypeScript + Python).
+current release (`3.4.0`, TypeScript + Python).
 
 ## What this library is
 
@@ -111,6 +111,71 @@ IF [Browser] = "Safari" THEN [OS] = "Mac";
 `);
 const rows = model.make();
 ```
+
+### PICT formula (computed) columns
+
+A parameter line whose value part **starts with `=`** is not a combinatorial
+factor but a *formula column*: it is emitted verbatim on every output row, with
+each **`[Field]` reference** rewritten to the spreadsheet cell that column
+occupies on that row (column letter = the column's 1-based output position `A`,
+`B`, …; row = the 1-based data row). `[Field]` refs work the same way they do in
+constraints — they point at another column by name.
+
+```ts
+const model = new PictModel(`
+Size:     10, 100, 1000
+Cluster:  512, 4096
+Expected: =CLAUDE("is the total size >= 10KB?", [Size], [Cluster])
+`);
+// "Expected" per row → =CLAUDE("is the total size >= 10KB?", A1, B1), then A2/B2, …
+```
+
+- On by default; pass `new PictModel(src, { formula: false })` to instead parse
+  `=` lines as ordinary comma-separated parameters.
+- A trailing `;` on the formula line is dropped, so the cell stays a valid
+  formula (`=FN(...)`, not `=FN(...);`).
+
+**Intended target: the GridSheet spreadsheet.** These formulas are meant to be
+evaluated in the [GridSheet](https://github.com/walkframe/gridsheet) plugin
+(VS Code: `walkframe.csv-gridsheet`) — CoverTable itself only emits the formula
+text with each `[Field]` resolved to its cell. GridSheet provides two AI
+providers, each evaluated by shelling out to a CLI on the machine that opens the
+sheet:
+
+- `=CLAUDE(...)` — runs through Claude. **Requires the `claude` CLI installed.**
+- `=CODEX(...)` — runs through Codex. **Requires the `codex` CLI installed.**
+
+Each provider has four typed variants. **All of them take the same arguments —
+`(prompt, [ref]...)` — and differ only in return type** (`XXX` = `CLAUDE` or
+`CODEX`):
+
+| Variant | Returns |
+|---------|---------|
+| `=XXX(...)` | text (string) |
+| `=XXX.NUMBER(...)` | a number |
+| `=XXX.BOOLEAN(...)` | a boolean |
+| `=XXX.ARRAY(...)` | an array that **spills** into the surrounding cells, sized to the range |
+
+The first argument is the prompt (a string); every following argument is a
+context reference. In the PICT model those context args are `[Field]` refs, which
+CoverTable rewrites to the row's cells (`A1`, `B1`, …) so each generated row asks
+about its own values.
+
+Generate a table with formula columns filled in — headless, no GUI/button. An
+agent runs the bundled CLI directly in the terminal (no code to write):
+
+```bash
+npx covertable pict model.pict -o out.pict.tsv          # TSV (default)
+npx covertable pict model.pict -o out.pict.csv          # CSV (chosen by extension)
+npx covertable pict model.pict --strength 3 --optimize  # 3-wise, then SA-shrink
+npx covertable pict - < model.pict                      # read the model from stdin
+```
+
+The CLI fills every formula column per row (`[Field]` → that row's cells) and
+drops a trailing `;`, so the output is ready to open in GridSheet. Run
+`covertable pict --help` for all options (`--criterion`, `--sorter`, `--budget`,
+`--case-sensitive`, `--no-formula`, `--format`). To generate from code instead,
+use `new PictModel(...).make()` and `renderFormula(name, rowIndex)` per column.
 
 ### Shrink the array (SA optimizer, TypeScript)
 

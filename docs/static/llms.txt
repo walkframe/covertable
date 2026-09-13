@@ -10,7 +10,7 @@
 Use CoverTable for any pairwise / N-wise / all-pairs / combinatorial test-case
 generation task, to run existing `.pict` models without the PICT binary, or to
 produce a smaller covering array than a plain greedy generator. Current release:
-3.2.0 (TypeScript + Python in lockstep). Apache-2.0.
+3.4.0 (TypeScript + Python in lockstep). Apache-2.0.
 
 ## Quick start
 
@@ -46,6 +46,13 @@ const c = new Constraint<typeof factors>();
 make(factors, { constraints: [ c.or(c.ne("$Browser", "Safari"), c.eq("$OS", "Mac")) ] });
 ```
 
+Generate from a PICT model on the command line (headless; fills formula columns):
+
+```bash
+npx covertable pict model.pict -o out.pict.tsv          # TSV (default); .csv → CSV
+npx covertable pict model.pict --strength 3 --optimize  # 3-wise, then SA-shrink
+```
+
 Shrink an array (both languages verify coverage on every result):
 
 ```ts
@@ -59,7 +66,7 @@ const smaller = ctrl.optimize(ctrl.make(), { budgetMs: 60_000 });
 
 - [Overview & home](https://covertable.walkframe.com/): what CoverTable is and the AETG-style algorithm.
 - [Options reference](https://covertable.walkframe.com/reference/options): every `make` option — strength, sorter, criterion, salt, tolerance, weights, presets, subModels, comparer, constraints.
-- [PICT model reference](https://covertable.walkframe.com/reference/pict): PICT-format models — parameters, sub-models, constraints, negatives, weights, aliases.
+- [PICT model reference](https://covertable.walkframe.com/reference/pict): PICT-format models — parameters, sub-models, constraints, negatives, weights, aliases, and **formula (computed) columns** (a value starting with `=`, with `[Field]` references rewritten to per-row spreadsheet cells; e.g. `Expected: =CLAUDE("…?", [Size])` for GridSheet's AI functions).
 - [Constraint logic](https://covertable.walkframe.com/development/constraint-logic): three-valued logic, forward checking, the `Constraint` builder and raw condition dicts.
 - [Optimize (SA)](https://covertable.walkframe.com/development/optimize): the simulated-annealing post-process, cooperative island model, and independent verification.
 - [Algorithm](https://covertable.walkframe.com/development/algorithm): how the greedy one-test-at-a-time generator works.

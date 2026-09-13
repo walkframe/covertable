@@ -36,5 +36,30 @@ make([machine, os, browser]);
 ]
 ```
 
+# PICT models & formula columns
+
+covertable reads Microsoft **PICT** model files directly. A parameter line whose
+value starts with `=` is a **formula (computed) column**: it is emitted on every
+generated row, with each `[Field]` reference rewritten to that row's spreadsheet
+cell — handy for feeding each test case into a spreadsheet (e.g. GridSheet's
+`=CLAUDE(...)` / `=CODEX(...)` AI functions).
+
+```
+Size:     10, 100, 1000
+Cluster:  512, 4096
+Expected: =CLAUDE("is the total size >= 10KB?", [Size], [Cluster])
+```
+
+# Command line
+
+```bash
+npx covertable pict model.pict -o out.pict.tsv          # TSV (default); .csv → CSV
+npx covertable pict model.pict --strength 3 --optimize  # 3-wise, then SA-shrink
+covertable pict --help                                  # all options
+```
+
+The CLI fills formula columns per row and drops a trailing `;`, so the output is
+ready to open in a spreadsheet.
+
 # Advanced usage
 Advanced usage is [here](https://covertable.walkframe.com)

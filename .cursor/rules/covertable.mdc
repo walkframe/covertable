@@ -1,0 +1,23 @@
+---
+description: CoverTable library + PICT model guidance (API, formula columns, CLI)
+alwaysApply: true
+---
+
+Full guidance for this repo is in **@AGENTS.md** — treat it as the single source
+of truth. Key points to remember when working here:
+
+- CoverTable generates pairwise / N-wise **covering arrays**; it consumes
+  Microsoft **PICT** model files directly (parameters, constraints, sub-models,
+  weights, negatives, aliases).
+- **PICT formula (computed) columns**: a parameter line whose value starts with
+  `=` is emitted per output row as a formula, with each `[Field]` reference
+  rewritten to that row's spreadsheet cell — e.g.
+  `Expected: =CLAUDE("is the total size >= 10KB?", [Size], [Cluster])`.
+  `=CLAUDE(...)` / `=CODEX(...)` (and `.NUMBER` / `.BOOLEAN` / `.ARRAY` variants)
+  are **GridSheet** AI functions, evaluated in the sheet; CoverTable only emits
+  the formula text.
+- **Generate headlessly** (no GUI button) with the CLI:
+  `npx covertable pict model.pict -o out.pict.tsv` (`--strength`, `--optimize`,
+  `--format`, `--no-formula`; `-` reads the model from stdin).
+
+See @AGENTS.md for the complete API, examples, and dev commands.

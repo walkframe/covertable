@@ -119,6 +119,35 @@ model.issues;                       // parse issues; with strict:true the ctor t
 - Negative (`~`) values are re-prefixed with `~` in the output rows for display.
 - `model.make(options)` merges the model's own constraints/subModels/weights with any you pass.
 
+### Formula (computed) columns
+
+A parameter line whose value **starts with `=`** is not a combinatorial factor but a *formula column*: emitted verbatim on every output row, with each `[Field]` reference rewritten to the spreadsheet cell that column occupies on that row (column letter = 1-based output position `A`, `B`, …; row = 1-based data row). Fill them after generating with `model.renderFormula(name, rowIndex)`; `model.columnOrder` and `model.formulaColumns` list them.
+
+```ts
+const model = new PictModel(`
+Size:     10, 100, 1000
+Cluster:  512, 4096
+Expected: =CLAUDE("is the total size >= 10KB?", [Size], [Cluster])
+`);
+model.renderFormula("Expected", 0);  // → =CLAUDE("is the total size >= 10KB?", A1, B1)
+```
+
+- On by default; `new PictModel(src, { formula: false })` parses `=` lines as ordinary comma-separated parameters instead.
+- A trailing `;` on a formula line is dropped, so the cell stays a valid formula (`=FN(...)`, not `=FN(...);`).
+- These formulas are meant to be evaluated in **GridSheet** (VS Code `walkframe.csv-gridsheet`), which provides AI functions `=CLAUDE(prompt, [ref]...)` / `=CODEX(prompt, [ref]...)` (plus `.NUMBER` / `.BOOLEAN` / `.ARRAY`-spill variants; same args, differing return type). `=CLAUDE*` needs the `claude` CLI installed, `=CODEX*` the `codex` CLI. CoverTable only emits the formula text with `[Field]` resolved to cells.
+
+### Generate from the terminal (CLI)
+
+`covertable` ships a headless CLI — an agent can run it directly instead of the VS Code "Generate" button. It fills formula columns and drops trailing `;`.
+
+```bash
+covertable pict model.pict -o out.pict.tsv          # TSV (default); .csv → CSV
+covertable pict model.pict --strength 3 --optimize  # 3-wise, then SA-shrink
+covertable pict - < model.pict                      # read the model from stdin
+```
+
+Options: `--criterion greedy|simple`, `--sorter random|hash`, `--budget <ms>`, `--case-sensitive`, `--no-formula`, `--format tsv|csv`. Model errors are printed to stderr and exit non-zero.
+
 ## Shrinking the array: `Controller.optimize` (SA post-process)
 
 The greedy `make` result can be shrunk further with simulated annealing. Build a `Controller` (so `strength`/`constraints`/`comparer` are shared and can't drift), `make`, then `optimize`:
